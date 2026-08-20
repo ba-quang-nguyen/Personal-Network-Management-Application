@@ -2464,8 +2464,9 @@ function setPhotoNote(id, idx, note) { Store.setPhotoNote(id, idx, note); }
 function toggleActive(id) {
   const p = byId(id);
   if (!p) return;
-  Store.setActive(id, p.active !== false);
-  toast(t(p.active !== false ? "toast_active_on" : "toast_active_off", { name: p.name.split(" ")[0] }));
+  const next = p.active === false;
+  Store.setActive(id, next);
+  toast(t(next ? "toast_active_on" : "toast_active_off", { name: p.name.split(" ")[0] }));
 }
 
 /* ============================================================

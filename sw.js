@@ -3,7 +3,7 @@
    Precache danh sách tĩnh (mock không có build nên tên file cố định).
    KHÔNG BAO GIỜ cache host Firebase/Google — dữ liệu realtime đi qua SDK.
    ============================================================ */
-const CACHE = 'nm-v8';
+const CACHE = 'nm-v9';
 const PRECACHE = [
   './',
   './index.html',
@@ -67,15 +67,32 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (url.origin !== self.location.origin) return; // cross-origin (Firebase/fonts) → network
   if (!shouldCache(e.request.url)) return;
-  e.respondWith(
-    caches.match(e.request).then(
-      (cached) =>
-        cached ||
-        fetch(e.request).then((res) => {
+  const isAppShell =
+    e.request.mode === 'navigate' ||
+    ['document', 'script', 'style'].includes(e.request.destination) ||
+    /\.(?:html|js|css)$/i.test(url.pathname);
+
+  if (isAppShell) {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(e.request, copy));
           return res;
-        }),
-    ),
+        })
+        .catch(() => caches.match(e.request)),
+    );
+    return;
+  }
+
+  e.respondWith(
+    caches.match(e.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(e.request).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy));
+        return res;
+      });
+    }),
   );
 });
