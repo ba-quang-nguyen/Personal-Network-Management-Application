@@ -3,7 +3,7 @@
    Precache danh sách tĩnh (mock không có build nên tên file cố định).
    KHÔNG BAO GIỜ cache host Firebase/Google — dữ liệu realtime đi qua SDK.
    ============================================================ */
-const CACHE = 'nm-v1';
+const CACHE = 'nm-v2';
 const PRECACHE = [
   './',
   './index.html',
