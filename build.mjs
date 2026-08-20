@@ -26,18 +26,18 @@ let html = read("index.html");
 
 // CSS
 html = html.replace(
-  '<link rel="stylesheet" href="css/styles.css?v=5" />',
+  '<link rel="stylesheet" href="css/styles.css?v=7" />',
   () => "<style>\n" + read("css/styles.css") + "\n</style>",
 );
 // JS — đúng thứ tự nạp
-html = inlineScript(html, '<script src="js/data.js?v=5"></script>', "js/data.js");
-html = inlineScript(html, '<script src="js/store.js?v=5"></script>', "js/store.js");
+html = inlineScript(html, '<script src="js/data.js?v=7"></script>', "js/data.js");
+html = inlineScript(html, '<script src="js/store.js?v=7"></script>', "js/store.js");
 html = inlineScript(html, '<script src="js/firebase-config.js"></script>', "js/firebase-config.js");
-html = inlineScript(html, '<script src="js/google-maps-config.js?v=6"></script>', "js/google-maps-config.js");
-html = inlineScript(html, '<script src="js/ai-proxy-config.js?v=6"></script>', "js/ai-proxy-config.js");
-html = inlineScript(html, '<script src="js/firebase.js?v=5"></script>', "js/firebase.js");
-html = inlineScript(html, '<script src="js/i18n.js?v=5"></script>', "js/i18n.js");
-html = inlineScript(html, '<script src="js/app.js?v=5"></script>', "js/app.js");
+html = inlineScript(html, '<script src="js/google-maps-config.js?v=7"></script>', "js/google-maps-config.js");
+html = inlineScript(html, '<script src="js/ai-proxy-config.js?v=7"></script>', "js/ai-proxy-config.js");
+html = inlineScript(html, '<script src="js/firebase.js?v=7"></script>', "js/firebase.js");
+html = inlineScript(html, '<script src="js/i18n.js?v=7"></script>', "js/i18n.js");
+html = inlineScript(html, '<script src="js/app.js?v=7"></script>', "js/app.js");
 
 // SDK Firebase (compat) — inline vào bản single-file để offline hoàn toàn.
 // DÙNG function replacement để $& / $` trong mã SDK không bị diễn giải (bug chèn cả file HTML).
