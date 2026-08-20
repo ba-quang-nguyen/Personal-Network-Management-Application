@@ -624,53 +624,25 @@ const LENSES = {
 const MANUAL_SECTIONS = [
   { key: "basic", title: "Basic information", fields: [
     { k: "name", label: "Full name", control: "text", tier: "quick", req: true, autocomplete: "name" },
-    { k: "kana", label: "Kana", control: "text", autocomplete: "off" },
-    { k: "nickname", label: "Nickname", control: "text", autocomplete: "nickname" },
-    { k: "gender", label: "Gender", control: "select", options: ["", "Male", "Female", "Other"] },
-    { k: "birthday", label: "Birthday", control: "text", tier: "quick", phKey: "birthday_flexible_ph", autocomplete: "bday" },
-    { k: "nationality", label: "Nationality", control: "text", autocomplete: "country-name" },
-    { k: "languages", label: "Languages", control: "chips" },
-    { k: "currentCity", label: "Current city", control: "location", tier: "quick", phKey: "location_ph", autocomplete: "address-level2" },
-    { k: "hometown", label: "Hometown", control: "text", autocomplete: "off" },
-    { k: "country", label: "Country of residence", control: "text", autocomplete: "country-name" },
-    { k: "email", label: "Email", control: "email", autocomplete: "email", inputmode: "email" },
-    { k: "phone", label: "Phone", control: "tel", autocomplete: "tel", inputmode: "tel" }
-  ]},
-  { key: "work", title: "Professional information", fields: [
-    { k: "company", label: "Company", control: "text", tier: "quick", autocomplete: "organization" },
-    { k: "department", label: "Department", control: "text", autocomplete: "organization-title" },
-    { k: "title", label: "Position", control: "text", autocomplete: "organization-title" },
-    { k: "industry", label: "Industry", control: "text" },
-    { k: "profession", label: "Profession", control: "text" },
-    { k: "expertise", label: "Expertise", control: "chips" },
-    { k: "previousCompanies", label: "Previous companies", control: "chips" },
-    { k: "skills", label: "Skills", control: "chips" },
-    { k: "businessTopics", label: "Business topics", control: "chips" }
-  ]},
-  { key: "personal", title: "Personal information", fields: [
-    { k: "spouse", label: "Spouse / partner", control: "text" },
-    { k: "children", label: "Children", control: "text" },
-    { k: "familyNotes", label: "Family notes", control: "text" },
-    { k: "hobbies", label: "Hobbies", control: "chips" },
-    { k: "sports", label: "Sports", control: "chips" },
-    { k: "favoriteFood", label: "Favorite food", control: "text" },
-    { k: "favoriteDrink", label: "Favorite drink", control: "text" },
-    { k: "schools", label: "Schools / university", control: "text" },
-    { k: "pets", label: "Pets", control: "text" }
-  ]},
-  { key: "relationship", title: "Relationship information", fields: [
     { k: "relationshipType", label: "Relationship type", control: "select", tier: "quick", options: ["", "Key contact", "Client", "Partner", "Investor", "Mentor", "Friend", "Collaborator", "Acquaintance"] },
-    { k: "strength", label: "Relationship strength", control: "select", options: ["", "close", "important", "normal", "weak"] },
-    { k: "frequency", label: "Contact rhythm", control: "select", options: ["", "monthly", "2months", "quarterly", "biannual", "yearly", "custom"] },
-    { k: "firstMetDate", label: "First met — date", control: "text" },
-    { k: "firstMetPlace", label: "First met — place", control: "text" },
-    { k: "introducedBy", label: "Introduced by", control: "text" },
-    { k: "helpGiven", label: "What I've helped with", control: "chips" },
-    { k: "helpReceived", label: "What they've helped me with", control: "chips" },
-    { k: "promises", label: "Promises / follow-ups", control: "chips" }
+    { k: "company", label: "Company", control: "text", tier: "quick", autocomplete: "organization" },
+    { k: "currentCity", label: "Current city", control: "location", tier: "quick", phKey: "location_ph", autocomplete: "address-level2" },
+    { k: "birthday", label: "Birthday", control: "text", tier: "quick", phKey: "birthday_flexible_ph", autocomplete: "bday" }
   ]},
-  { key: "notes", title: "Free notes", fields: [
-    { k: "notes", label: "Anything else", control: "textarea", tier: "quick", phKey: "quick_note_ph" }
+  { key: "work", title: "Work notes", fields: [
+    { k: "workNotes", label: "Work notes", control: "textarea", phKey: "work_notes_ph" }
+  ]},
+  { key: "family", title: "Family notes", fields: [
+    { k: "familyNotes", label: "Family notes", control: "textarea", phKey: "family_notes_ph" }
+  ]},
+  { key: "interests", title: "Interests notes", fields: [
+    { k: "interestsNotes", label: "Interests notes", control: "textarea", phKey: "interests_notes_ph" }
+  ]},
+  { key: "relationship", title: "Relationship notes", fields: [
+    { k: "relationshipNotes", label: "Relationship notes", control: "textarea", phKey: "relationship_notes_ph" }
+  ]},
+  { key: "notes", title: "Other notes", fields: [
+    { k: "notes", label: "Other notes", control: "textarea", phKey: "quick_note_ph" }
   ]}
 ];
 
@@ -680,11 +652,10 @@ const MANUAL_FIELDS = MANUAL_SECTIONS.flatMap((sec) =>
 const MANUAL_FIELD_MAP = Object.fromEntries(MANUAL_FIELDS.map((field) => [field.sec + "." + field.k, field]));
 const MANUAL_QUICK_FIELDS = [
   "basic.name",
-  "relationship.relationshipType",
-  "work.company",
+  "basic.relationshipType",
+  "basic.company",
   "basic.currentCity",
   "basic.birthday",
-  "notes.notes",
 ];
 const MANUAL_ARRAY_FIELDS = new Set([
   "languages", "expertise", "skills", "hobbies", "sports", "businessTopics", "previousCompanies",
@@ -716,7 +687,7 @@ function createManualDraft(person, prefill, review) {
       if (field.k === "kana") value = person.nameJa || "";
       else if (field.k === "firstMetDate") value = person.firstMet && person.firstMet.date !== "—" ? person.firstMet.date || "" : "";
       else if (field.k === "firstMetPlace") value = person.firstMet ? person.firstMet.place || "" : "";
-      else if (field.k !== "notes") value = person[field.k] == null ? "" : person[field.k];
+      else value = person[field.k] == null ? "" : person[field.k];
     }
     if ((field.k === "company" || field.k === "title") && value === "—") value = "";
     draft[key] = field.control === "chips" || MANUAL_ARRAY_FIELDS.has(field.k)
@@ -730,7 +701,7 @@ function manualDraftToFields(draft) {
   const fields = {};
   MANUAL_FIELDS.forEach((field) => {
     const value = draft[field.sec + "." + field.k];
-    if (field.k === "notes" || field.k === "firstMetDate" || field.k === "firstMetPlace") return;
+    if (field.k === "firstMetDate" || field.k === "firstMetPlace") return;
     const target = field.k === "kana" ? "nameJa" : field.k;
     fields[target] = field.control === "chips" || MANUAL_ARRAY_FIELDS.has(field.k)
       ? manualArrayValue(value)

@@ -3,7 +3,7 @@
    Quản lý mảng PEOPLE toàn cục + persist localStorage + đồng bộ đa tab.
    UI (app.js) chỉ đọc/ghi dữ liệu qua Store — không đụng localStorage trực tiếp.
    ============================================================ */
-const STORE_VERSION = 1;
+const STORE_VERSION = 2;
 const STORE_KEY = 'nm-data';
 
 const Store = (() => {
@@ -70,6 +70,11 @@ const Store = (() => {
     if (!Array.isArray(p.mutual)) p.mutual = [];
     if (!Array.isArray(p.interests)) p.interests = [];
     if (!Array.isArray(p.hobbies)) p.hobbies = [];
+    if (typeof p.workNotes !== 'string') p.workNotes = p.workNotes == null ? '' : String(p.workNotes);
+    if (typeof p.familyNotes !== 'string') p.familyNotes = p.familyNotes == null ? '' : String(p.familyNotes);
+    if (typeof p.interestsNotes !== 'string') p.interestsNotes = p.interestsNotes == null ? '' : String(p.interestsNotes);
+    if (typeof p.relationshipNotes !== 'string') p.relationshipNotes = p.relationshipNotes == null ? '' : String(p.relationshipNotes);
+    if (typeof p.notes !== 'string') p.notes = p.notes == null ? '' : String(p.notes);
     if (!p.firstMet) p.firstMet = { date: '—', place: '', how: '' };
     if (!p.last) p.last = { type: '—', when: '—', place: '', summary: '', tags: [] };
     if (!p.followUp) p.followUp = { when: '—', what: '', kind: 'reconnect' };
@@ -83,8 +88,9 @@ const Store = (() => {
       const raw = localStorage.getItem(STORE_KEY);
       if (raw) {
         const env = JSON.parse(raw);
-        if (env && env.version === STORE_VERSION && Array.isArray(env.people)) {
+        if (env && Array.isArray(env.people) && (!env.version || env.version <= STORE_VERSION)) {
           PEOPLE = env.people.map(normalize);
+          if (env.version !== STORE_VERSION) persist();
           return true;
         }
       }

@@ -110,7 +110,7 @@ function setView(v) {
 /* ============================================================
    ROUTER (+ back / history stack)
    ============================================================ */
-let currentScreen = "home", profileId = null, peopleTab = "people", profileTab = "overview";
+let currentScreen = "home", profileId = null, profileTab = "overview";
 const navStack = [];
 
 function go(screen, opts = {}, isBack = false) {
@@ -118,12 +118,12 @@ function go(screen, opts = {}, isBack = false) {
   if (fbEnabled() && !fbUser && screen !== "login") {
     screen = "login";
   }
-  const prevScreen = currentScreen, prevProfile = profileId, prevTab = peopleTab;
+  const prevScreen = currentScreen, prevProfile = profileId;
 
   if (!isBack) {
     if (screen === "profile" || screen === "refresh") {
       // entering a sub-screen: remember where we came from
-      navStack.push({ screen: prevScreen, personId: prevProfile, tab: prevTab, map: Object.assign({}, mapState) });
+      navStack.push({ screen: prevScreen, personId: prevProfile, map: Object.assign({}, mapState) });
     } else {
       // top-level navigation resets history
       navStack.length = 0;
@@ -133,7 +133,6 @@ function go(screen, opts = {}, isBack = false) {
   if (screen === "profile" && opts.personId && opts.personId !== profileId && !opts.profileTab) profileTab = "overview";
   currentScreen = screen;
   profileId = opts.personId || null;
-  if (opts.tab) peopleTab = opts.tab;
   if (opts.profileTab) profileTab = opts.profileTab;
 
   $$(".screen").forEach((s) => s.classList.remove("active"));
@@ -1044,7 +1043,6 @@ function renderProfile(id) {
     '<button class="btn small" id="act-followup">' + t("btn_followup") + "</button>" +
     '<button class="btn small refresh-open" data-id="' + p.id + '">' + icon("refresh", 12) + " " + t("btn_refresh") + "</button>" +
     '<button class="btn small" id="act-connections">' + icon("graph", 12) + " " + t("btn_connections") + "</button>" +
-    '<button class="btn small ghost" id="act-delete">' + icon("trash", 12) + " " + t("btn_delete") + "</button>" +
     "</div></div>";
 
   const tabs =
@@ -1068,11 +1066,6 @@ function renderProfile(id) {
     '<div class="pick-row" style="margin-top:7px">' + STRENGTHS.map((s) => '<button class="pick strength-pick' + (s.id === p.strength ? " on" : "") + '" data-s="' + s.id + '">' + strengthLabel(s.id) + "</button>").join("") + "</div>" +
     '<div style="margin-top:12px;font-size:11.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.6px">' + t("fact_rhythm") + "</div>" +
     '<div class="pick-row" style="margin-top:7px">' + FREQUENCIES.map((f) => '<button class="pick freq-pick' + (f.id === p.frequency ? " on" : "") + '" data-f="' + f.id + '">' + frequencyLabel(f.id) + "</button>").join("") + "</div>" +
-    '<div style="margin-top:14px;font-size:11.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.6px">' + t("profile_network_status") + "</div>" +
-    '<div class="pick-row" style="margin-top:7px">' +
-    '<button class="pick active-pick' + (!inactive ? " on" : "") + '" data-active="1">' + t("profile_active") + "</button>" +
-    '<button class="pick active-pick' + (inactive ? " on" : "") + '" data-active="0">' + t("profile_inactive") + "</button>" +
-    "</div>" +
     '<p style="font-size:11px;color:var(--ink-3);margin-top:9px">' + t("profile_care_note") + "</p></div>" +
     '<div class="card"><div class="card-title">' + icon("cake", 13) + " " + t("profile_important_dates") + "</div>" +
     (p.dates.length ? kvList(p.dates.map((d) => ({ k: d.label, v: d.when }))) : '<span class="chip ghost">' + t("no_dates_yet") + "</span>") + "</div>" +
@@ -1100,6 +1093,8 @@ function renderProfile(id) {
 
   const personal = fieldCard(t("profile_tab_personal"), [
     ...(p.familyNotes ? [{ k: t("fact_family"), v: p.familyNotes }] : []),
+    ...(p.interestsNotes ? [{ k: t("fact_interests_notes"), v: p.interestsNotes }] : []),
+    ...(p.notes ? [{ k: t("fact_other_notes"), v: p.notes }] : []),
     ...(p.spouse ? [{ k: t("fact_spouse"), v: p.spouse }] : []),
     ...(p.children ? [{ k: t("fact_children"), v: p.children }] : []),
     ...(p.hobbies && p.hobbies.length ? [{ k: t("fact_hobbies"), v: p.hobbies.join(", ") }] : []),
@@ -1114,6 +1109,7 @@ function renderProfile(id) {
   ], "book");
 
   const work = fieldCard(t("profile_tab_work"), [
+    ...(p.workNotes ? [{ k: t("fact_work_notes"), v: p.workNotes }] : []),
     { k: t("fact_company"), v: p.company },
     ...(p.department ? [{ k: t("fact_department"), v: p.department }] : []),
     { k: t("fact_position"), v: p.title },
@@ -1127,6 +1123,7 @@ function renderProfile(id) {
   ], "brief");
 
   const relationship = fieldCard(t("profile_tab_relationship"), [
+    ...(p.relationshipNotes ? [{ k: t("fact_relationship_notes"), v: p.relationshipNotes }] : []),
     { k: t("fact_type"), v: relTypeLabel(p.relationshipType) },
     { k: t("fact_strength"), v: strengthLabel(st.id) },
     ...(freq ? [{ k: t("fact_rhythm"), v: frequencyLabel(freq.id) }] : []),
@@ -1167,14 +1164,19 @@ function renderProfile(id) {
 
   const bodies = { overview, personal, work, relationship, timeline: timelineCard, photos: photosTab };
   if (!bodies[profileTab]) profileTab = "overview";
-  $("#screen-profile").innerHTML = head + tabs + '<div id="profile-body">' + bodies[profileTab] + "</div>";
+  const profileEndActions =
+    '<div class="profile-end-actions" aria-label="' + esc(t("profile_end_actions")) + '">' +
+    '<div class="profile-end-copy"><b>' + t("profile_end_actions") + "</b><span>" + t("profile_end_actions_desc") + "</span></div>" +
+    '<div class="profile-end-buttons">' +
+    '<button class="btn small ghost" id="act-archive">' + (inactive ? t("btn_restore_contact") : t("btn_archive_contact")) + "</button>" +
+    '<button class="btn small ghost danger-link" id="act-delete">' + icon("trash", 12) + " " + t("btn_delete_contact") + "</button>" +
+    "</div></div>";
+  $("#screen-profile").innerHTML = head + tabs + '<div id="profile-body">' + bodies[profileTab] + "</div>" + profileEndActions;
 
   $$(".tab", $("#screen-profile")).forEach((tb) =>
     tb.addEventListener("click", () => {
       profileTab = tb.dataset.tab;
-      $$(".tab", $("#screen-profile")).forEach((x) => x.classList.toggle("active", x === tb));
-      $("#profile-body").innerHTML = bodies[profileTab];
-      bindProfile();
+      renderProfile(profileId);
     })
   );
 
@@ -1190,6 +1192,12 @@ function bindProfile() {
   $("#act-edit").addEventListener("click", () => openCapture("manual", { personId: p.id, edit: true }));
   $("#act-followup").addEventListener("click", () => { toast(t("toast_followup_added")); });
   $("#act-connections").addEventListener("click", () => go("map", { map: { lens: "people", focusId: p.id, topic: "" } }));
+  $("#act-archive").addEventListener("click", () => {
+    const next = p.active === false;
+    Store.setActive(p.id, next);
+    toast(t(next ? "toast_active_on" : "toast_active_off", { name: p.name.split(" ")[0] }));
+    renderProfile(p.id);
+  });
   $("#act-delete").addEventListener("click", () => {
     if (!confirm(t("delete_person_confirm", { name: p.name }))) return;
     Store.deletePerson(p.id);
@@ -1206,12 +1214,6 @@ function bindProfile() {
   $$(".freq-pick", scope).forEach((b) => b.addEventListener("click", () => {
     Store.setFrequency(p.id, b.dataset.f);
     toast(t("toast_rhythm", { label: frequencyLabel(b.dataset.f) }));
-    renderProfile(p.id);
-  }));
-  $$(".active-pick", scope).forEach((b) => b.addEventListener("click", () => {
-    const next = b.dataset.active === "1";
-    Store.setActive(p.id, next);
-    toast(t(next ? "toast_active_on" : "toast_active_off", { name: p.name.split(" ")[0] }));
     renderProfile(p.id);
   }));
   const done = $("#act-done"), snooze = $("#act-snooze");
@@ -1362,15 +1364,6 @@ function renderSettings() {
     '<div class="screen-head"><div class="kicker">' + t("settings_kicker") + "</div>" +
     '<h1 class="screen-title">' + t("settings_title") + "</h1>" +
     '<p class="screen-sub">' + t("settings_sub") + "</p></div>" +
-    '<div class="card"><div class="card-title">' + icon("users", 13) + " " + t("settings_network") + "</div>" +
-    '<div class="setting-row"><div><b>' + t("settings_network_desc") + "</b></div></div>" +
-    PEOPLE.map((p) =>
-      '<div class="setting-row"><div><b>' + esc(p.name) + "</b><span>" + esc(p.company) + "</span></div>" +
-      '<div style="display:flex;align-items:center;gap:8px">' +
-      '<button class="btn small ghost net-delete" data-id="' + p.id + '">' + icon("trash", 12) + " " + t("btn_delete") + "</button>" +
-      '<span class="net-switch' + (p.active !== false ? " on" : "") + '" data-id="' + p.id + '" role="switch" aria-checked="' + (p.active !== false) + '"><i></i></span></div></div>'
-    ).join("") +
-    "</div>" +
     '<div class="card"><div class="card-title">' + icon("merge", 13) + " " + t("settings_duplicates") + "</div>" +
     (dups.length
       ? dups.map((g) =>
@@ -1445,15 +1438,6 @@ function renderSettings() {
   });
   const lb = $("#logout-btn");
   if (lb) lb.addEventListener("click", () => { Firebase.signOut().catch(() => { /* ignore */ }); });
-  $$(".net-delete", $("#screen-settings")).forEach((b) => b.addEventListener("click", () => {
-    const person = byId(b.dataset.id);
-    if (!person) return;
-    if (!confirm(t("delete_person_confirm", { name: person.name }))) return;
-    Store.deletePerson(person.id);
-    renderSettings();
-    toast(t("toast_person_deleted", { name: person.name }));
-  }));
-  $$(".net-switch", $("#screen-settings")).forEach((b) => b.addEventListener("click", () => { toggleActive(b.dataset.id); renderSettings(); }));
 }
 
 /* ============================================================
@@ -1520,14 +1504,35 @@ function aiProxyReady() {
 
 function buildExtractPrefill(parsed, rawText) {
   const source = parsed || {};
+  const workNotes = [
+    source.title ? "Role/title: " + source.title : "",
+    source.department ? "Department: " + source.department : "",
+    source.businessTopics && source.businessTopics.length ? "Business topics: " + source.businessTopics.join(", ") : "",
+  ].filter(Boolean).join("\n");
+  const interestsNotes = [
+    source.hobbies && source.hobbies.length ? "Hobbies: " + source.hobbies.join(", ") : "",
+    source.interests && source.interests.length ? "Interests: " + source.interests.join(", ") : "",
+  ].filter(Boolean).join("\n");
+  const relationshipNotes = [
+    source.introducedBy ? "Introduced by: " + source.introducedBy : "",
+    source.firstMetPlace ? "First met place: " + source.firstMetPlace : "",
+    source.followUpWhat ? "Follow-up: " + source.followUpWhat : "",
+    source.promises && source.promises.length ? "Promises: " + source.promises.join(", ") : "",
+  ].filter(Boolean).join("\n");
   const prefill = {
     name: source.name || "",
     relationshipType: source.relationshipType || "",
     company: source.company || "",
-    department: source.department || "",
-    title: source.title || "",
     currentCity: source.currentCity || "",
     birthday: source.birthday || "",
+    workNotes,
+    familyNotes: source.familyNotes || "",
+    interestsNotes,
+    relationshipNotes,
+    followUpWhat: source.followUpWhat || "",
+    promises: source.promises || [],
+    department: source.department || "",
+    title: source.title || "",
     email: source.email || "",
     phone: source.phone || "",
     languages: source.languages || [],
@@ -1535,9 +1540,6 @@ function buildExtractPrefill(parsed, rawText) {
     interests: source.interests || [],
     businessTopics: source.businessTopics || [],
     introducedBy: source.introducedBy || "",
-    firstMetPlace: source.firstMetPlace || "",
-    followUpWhat: source.followUpWhat || "",
-    promises: source.promises || [],
     notes: source.notes || rawText || "",
   };
   if (prefill.followUpWhat && !prefill.promises.length) prefill.promises = [prefill.followUpWhat];
@@ -1673,7 +1675,7 @@ function manualVisibleFields() {
   if (!cap.review) return MANUAL_QUICK_FIELDS.map((key) => MANUAL_FIELD_MAP[key]).filter(Boolean);
   const detected = new Set(["basic.name"]);
   MANUAL_FIELDS.forEach((field) => {
-    if (field.k !== "notes" && manualHasValue((cap.prefill || {})[field.k])) detected.add(manualKey(field));
+    if (manualHasValue((cap.prefill || {})[field.k])) detected.add(manualKey(field));
   });
   const order = [...MANUAL_QUICK_FIELDS, ...MANUAL_FIELDS.map(manualKey)];
   return [...new Set(order)].filter((key) => detected.has(key)).map((key) => MANUAL_FIELD_MAP[key]).filter(Boolean);
@@ -1685,9 +1687,9 @@ function manualSectionCount(sectionKey) {
 
 function manualAccordionHTML(visibleKeys) {
   if (!cap.advancedOpen) return "";
-  const sections = MANUAL_SECTIONS.filter((section) => section.key !== "notes");
+  const sections = MANUAL_SECTIONS.filter((section) => section.key !== "basic");
   const sectionHTML = sections.map((section) => {
-    const fields = MANUAL_FIELDS.filter((field) => field.sec === section.key && field.k !== "notes" && !visibleKeys.has(manualKey(field)));
+    const fields = MANUAL_FIELDS.filter((field) => field.sec === section.key && !visibleKeys.has(manualKey(field)));
     if (!fields.length) return "";
     const open = !!cap.openSections[section.key];
     const count = manualSectionCount(section.key);
@@ -1765,6 +1767,19 @@ function captureSource() {
   return cap.review ? (cap.sourceMode || "text") : "manual";
 }
 
+function hiddenStructuredPrefillFields(prefill) {
+  const allowed = [
+    "department", "title", "email", "phone", "languages", "hobbies", "interests",
+    "businessTopics", "introducedBy", "promises",
+  ];
+  const out = {};
+  allowed.forEach((key) => {
+    const value = prefill && prefill[key];
+    if (manualHasValue(value)) out[key] = Array.isArray(value) ? [...value] : String(value).trim();
+  });
+  return out;
+}
+
 function saveManualCapture() {
   const body = $("#capture-body");
   const editing = cap.personId ? byId(cap.personId) : null;
@@ -1777,31 +1792,35 @@ function saveManualCapture() {
     return;
   }
 
-  const fields = manualDraftToFields(cap.formDraft);
+  const fields = Object.assign(
+    {},
+    cap.review ? hiddenStructuredPrefillFields(cap.prefill || {}) : {},
+    manualDraftToFields(cap.formDraft),
+  );
   const note = String(cap.formDraft["notes.notes"] || "").trim();
   const source = captureSource();
   const sourceLabel = source === "voice" ? "Voice memo" : source === "card" ? "Card scan" : source === "text" ? "Text note" : "Manual entry";
-  const firstMetDate = String(cap.formDraft["relationship.firstMetDate"] || "").trim();
-  const firstMetPlace = String(cap.formDraft["relationship.firstMetPlace"] || "").trim();
+  const existingFirstMet = editing && editing.firstMet ? editing.firstMet : null;
   const transMemory = cap.text ? { when: "Today", text: cap.text } : null;
   const noteMemory = note ? { when: "Today", text: note } : null;
-  const followUpFromPrefill = cap.prefill.followUpWhat
+  const followUpFromPrefill = cap.prefill && cap.prefill.followUpWhat
     ? { when: "—", what: cap.prefill.followUpWhat, kind: "action" }
     : null;
 
   fields.name = name;
   fields.initials = name.split(" ").filter(Boolean).map((word) => word[0]).join("").slice(0, 2).toUpperCase();
   fields.company = fields.company || (editing ? "" : "—");
-  fields.title = fields.title || (editing ? "" : "—");
   fields.relationshipType = fields.relationshipType || (editing ? "" : "New");
-  fields.strength = fields.strength || (editing ? "" : "normal");
+  if (!editing) fields.title = fields.title || "—";
+  if (!editing) fields.strength = fields.strength || "normal";
   fields.location = [fields.currentCity, fields.country].filter(Boolean).join(", ") || (editing ? "" : "—");
   fields.firstMet = {
-    date: firstMetDate || (editing ? "" : "Today"),
-    place: firstMetPlace,
-    how: editing && editing.firstMet ? editing.firstMet.how || "" : "",
+    date: existingFirstMet ? existingFirstMet.date || "" : "Today",
+    place: existingFirstMet ? existingFirstMet.place || "" : "",
+    how: existingFirstMet ? existingFirstMet.how || "" : "",
   };
-  const aboutParts = [fields.title, fields.company].filter((value) => value && value !== "—");
+  const titleForAbout = fields.title || (editing && editing.title !== "—" ? editing.title : "");
+  const aboutParts = [titleForAbout, fields.company].filter((value) => value && value !== "—");
   fields.about = name + (aboutParts.length ? " — " + aboutParts.join(" at ") : "") +
     (cap.review ? " Captured from " + source + " today." : ".");
 
@@ -2267,13 +2286,19 @@ function renderTranscriptCheck() {
 
 /** Map kết quả parse → các trường của form manual. */
 function parsedToPrefill(p) {
+  const workNotes = p.title ? "Role/title: " + p.title : "";
+  const interestsNotes = [
+    p.hobbies && p.hobbies.length ? "Hobbies: " + p.hobbies.join(", ") : "",
+    p.interests && p.interests.length ? "Interests: " + p.interests.join(", ") : "",
+  ].filter(Boolean).join("\n");
+  const relationshipNotes = p.followUpWhat ? "Follow-up: " + p.followUpWhat : "";
   return {
     name: p.name || "",
     company: p.company || "",
-    title: p.title || "",
     currentCity: p.currentCity || "",
-    hobbies: (p.hobbies || []).join(", "),
-    interests: p.interests || [],
+    workNotes,
+    interestsNotes,
+    relationshipNotes,
     followUpWhat: p.followUpWhat || "",
     notes: p.notes || "",
   };
@@ -2307,8 +2332,17 @@ function parseCardOcrText(text) {
   const department = labeled.department || nonContact.find((l) => /(division|department|team|dept\.?|事業部|部|課|phòng|ban)/i.test(l) && l !== title) || "";
   const cityLine = labeled.address || lines.find((l) => /(tokyo|osaka|kyoto|yokohama|ho chi minh|hanoi|ha noi|danang|da nang|singapore|japan|vietnam|〒|区|市|県|quận|phường)/i.test(l)) || "";
   const name = labeled.name || pickCardName(nonContact, company, title, department);
-  const notes = [web && "Website: " + web, raw].filter(Boolean).join("\n\n");
-  return { name, company, department, title, email: labeled.email || email, phone: labeled.phone || phone, currentCity: cityLine, notes };
+  const cardEmail = labeled.email || email;
+  const cardPhone = labeled.phone || phone;
+  const workNotes = [
+    title ? "Role/title: " + title : "",
+    department ? "Department: " + department : "",
+    cardEmail ? "Email: " + cardEmail : "",
+    cardPhone ? "Phone: " + cardPhone : "",
+    web ? "Website: " + web : "",
+  ].filter(Boolean).join("\n");
+  const notes = raw;
+  return { name, company, department, title, email: cardEmail, phone: cardPhone, currentCity: cityLine, workNotes, notes };
 }
 
 function pickCardName(lines, company, title, department) {
@@ -2626,13 +2660,12 @@ function init() {
   $("#capture-close").addEventListener("click", closeCapture);
   $("#capture-modal").addEventListener("click", (e) => { if (e.target.id === "capture-modal") closeCapture(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeCapture(); });
-  // people segmented
-  $$("#people-segmented button").forEach((b) => b.addEventListener("click", () => { peopleTab = b.dataset.tab; renderPeople(); }));
-
   // ask
   $("#ask-bar-home").addEventListener("click", () => { go("ask"); setTimeout(() => $("#ask-input").focus(), 60); });
   $("#ask-submit").addEventListener("click", () => runAsk($("#ask-input").value.trim() || QUICK_QUESTIONS[0]));
   $("#ask-input").addEventListener("keydown", (e) => { if (e.key === "Enter") runAsk($("#ask-input").value.trim() || QUICK_QUESTIONS[0]); });
+  $("#ask-back-home").addEventListener("click", () => go("home"));
+  $("#care-back-home").addEventListener("click", () => go("home"));
 
   // theme / view toggles (web sidebar)
   $("#theme-toggle").addEventListener("click", toggleTheme);

@@ -14,8 +14,8 @@
   "features": [
     { "id": "store", "name": "js/store.js — data layer", "status": "pass", "evidence": "CRUD + persist + đa tab + export/import roundtrip; node smoke test PASS" },
     { "id": "sample", "name": "Sample data (SAMPLE_PEOPLE)", "status": "pass", "evidence": "10 người hư cấu + nút Load sample (home/people/settings)" },
-    { "id": "crud", "name": "CRUD thật nối vào mọi UI mock", "status": "pass", "evidence": "quick create/edit + advanced fields + strength/rhythm/active + photos → Store persist" },
-    { "id": "quick-add", "name": "Tạo nhanh progressive manual input", "status": "pass", "evidence": "6 trường nhanh, chỉ tên bắt buộc; advanced accordion + counts; chip input; location suggestions/off-map unknown; duplicate hint; dirty-close confirm; create/edit/review dùng chung cap.formDraft; browser QA 390px/430px vi/en/ja" },
+    { "id": "crud", "name": "CRUD thật nối vào mọi UI mock", "status": "pass", "evidence": "quick create/edit + category notes + strength/rhythm + profile-end archive/delete + photos → Store persist" },
+    { "id": "quick-add", "name": "Tạo nhanh progressive manual input", "status": "pass", "evidence": "Basic chỉ còn tên bắt buộc + relationship/company/location/birthday; advanced chuyển thành 5 note category lớn (work/family/interests/relationship/other); giữ dữ liệu chi tiết cũ + AI extraction nội bộ; duplicate hint; dirty-close confirm; create/edit/review dùng chung cap.formDraft" },
     { "id": "followup", "name": "Follow-up done/snooze thật", "status": "pass", "evidence": "done → ghi meeting + xoá followUp; snooze/dismiss → snoozedUntil" },
     { "id": "export-import", "name": "Export/Import JSON + Delete all thật", "status": "pass", "evidence": "download/upload JSON, confirm delete-all, roundtrip test PASS" },
     { "id": "merge", "name": "Merge trùng tên (settings)", "status": "pass", "evidence": "findDuplicates + mergePeople (gộp meetings/memories/photos/tags)" },

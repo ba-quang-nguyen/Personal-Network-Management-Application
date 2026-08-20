@@ -251,6 +251,8 @@ body.view-web .main { flex: 1; min-width: 0; padding: 34px 40px 80px; max-width:
 .btn.small { padding: 6px 12px; font-size: 12px; border-radius: 9px; }
 .btn.ghost { border-color: transparent; color: var(--ink-2); }
 .btn.ghost:hover { background: var(--surface-2); color: var(--ink); }
+.btn.danger-link { color: var(--ink-3); }
+.btn.danger-link:hover { background: var(--danger-soft); color: var(--accent); }
 .btn:disabled { opacity: 0.5; cursor: default; }
 
 .segmented { display: flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 3px; }
@@ -970,11 +972,22 @@ body.view-mobile .mode-grid { grid-template-columns: repeat(2, 1fr); }
 .setting-row .net-switch { margin-left: auto; }
 .inactive-card { transition: transform 0.12s, border-color 0.15s; }
 .inactive-card:hover { transform: translateY(-1px); border-color: var(--line-strong); }
+.profile-end-actions {
+  margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  color: var(--ink-3);
+}
+.profile-end-copy { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.profile-end-copy b { font-size: 12px; color: var(--ink-2); }
+.profile-end-copy span { font-size: 11.5px; }
+.profile-end-buttons { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 
 /* ---------- small viewport / mobile-view refinements ---------- */
 body.view-mobile .map-iframe { height: 320px; }
 body.view-mobile .photo-gallery { grid-template-columns: 1fr; }
 body.view-mobile .photo-tile img { height: 160px; }
+body.view-mobile .profile-end-actions { align-items: flex-start; flex-direction: column; }
+body.view-mobile .profile-end-buttons { justify-content: flex-start; }
 
 /* ---------- location lens: Google map with photo markers ---------- */
 .focus-bar.hidden { display: none; }
