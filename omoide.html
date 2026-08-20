@@ -3439,6 +3439,21 @@ const FIREBASE_CONFIG = {
 
 </script>
 <script>
+/* js/ai-proxy-config.js
+   Public client config for the optional AI extraction proxy.
+   Safe to commit: this file must never contain provider API secrets.
+*/
+(function initAIProxyConfig() {
+  const isLocal = typeof location !== "undefined" &&
+    (location.hostname === "127.0.0.1" || location.hostname === "localhost");
+  window.AI_PROXY_CONFIG = Object.freeze({
+    baseUrl: isLocal ? "http://127.0.0.1:8787/api/ai" : "",
+    timeoutMs: 22000,
+  });
+}());
+
+</script>
+<script>
 /* ============================================================
    Network Management — Firebase backend (BUILD-GUIDE seam)
    Chỉ kích hoạt khi FIREBASE_CONFIG đã điền (js/firebase-config.js).
@@ -3746,7 +3761,7 @@ const STR = {
     voice_hint_add: "Tell me what changed — new job, family, interests, promises…",
     voice_hint_new: "Talk like you're telling a friend — who, what, what's next",
     rec_stop: "Stop & let AI organize",
-    ai_organizing: "AI is organizing…", ai_step_2: "2 · AI",
+    ai_organizing: "AI is organizing…", ai_step_2: "2 · AI", ai_proxy_secure: "Secure AI extraction via backend proxy.", ai_proxy_fallback: "AI proxy unavailable — using local extraction fallback.",
     prog_transcribe: "Transcribing your voice",
     prog_resolve: "Resolving the person — no duplicates",
     prog_extract: "Extracting profile updates vs interaction memory",
@@ -3835,7 +3850,7 @@ const STR = {
     toast_followup_added: "Follow-up added — Oct 26 · “Reconnect”",
     toast_good_luck: "Good luck. You're 30 seconds ahead of the room.",
     toast_nakamura: "Nakamura Tetsuya created — Kansai Robotics",
-    toast_voice_only: "Voice demo only — would open text input",
+    toast_voice_only: "Voice demo only — would open text input", toast_ai_fallback: "AI proxy unavailable — local extraction used.",
     toast_no_match: "No one matches — try another search.",
 
     home_welcome: "Welcome to your private network memory",
@@ -4032,7 +4047,7 @@ const STR = {
     voice_hint_add: "Kể điều gì đã thay đổi — việc mới, gia đình, sở thích, lời hứa…",
     voice_hint_new: "Nói như kể với bạn bè — ai, chuyện gì, bước tiếp theo",
     rec_stop: "Dừng & để AI sắp xếp",
-    ai_organizing: "AI đang sắp xếp…", ai_step_2: "2 · AI",
+    ai_organizing: "AI đang sắp xếp…", ai_step_2: "2 · AI", ai_proxy_secure: "Trích xuất AI đang đi qua backend proxy an toàn.", ai_proxy_fallback: "Proxy AI chưa sẵn sàng — tạm dùng bộ trích xuất cục bộ.",
     prog_transcribe: "Đang chuyển giọng nói thành văn bản",
     prog_resolve: "Đang xác định người — không tạo trùng",
     prog_extract: "Đang tách cập nhật hồ sơ và ký ức tương tác",
@@ -4121,7 +4136,7 @@ const STR = {
     toast_followup_added: "Đã thêm theo dõi",
     toast_good_luck: "Chúc may mắn. Bạn đang đi trước cả căn phòng 30 giây.",
     toast_nakamura: "Đã tạo Nakamura Tetsuya — Kansai Robotics",
-    toast_voice_only: "Chỉ demo giọng nói — sẽ mở ô nhập chữ",
+    toast_voice_only: "Chỉ demo giọng nói — sẽ mở ô nhập chữ", toast_ai_fallback: "Proxy AI chưa sẵn sàng — đã dùng bộ trích xuất cục bộ.",
     toast_no_match: "Không ai khớp — thử tìm kiếm khác.",
 
     home_welcome: "Chào mừng đến bộ nhớ mạng lưới riêng tư của bạn",
@@ -4318,7 +4333,7 @@ const STR = {
     voice_hint_add: "変わったことを話してください — 仕事、家族、関心、約束…",
     voice_hint_new: "友人に話すように — 誰が、何を、次に何を",
     rec_stop: "停止してAIに整理させる",
-    ai_organizing: "AIが整理中…", ai_step_2: "2 · AI",
+    ai_organizing: "AIが整理中…", ai_step_2: "2 · AI", ai_proxy_secure: "安全なバックエンドプロキシ経由でAI抽出を実行中です。", ai_proxy_fallback: "AIプロキシが使えないため、ローカル抽出に切り替えます。",
     prog_transcribe: "音声を文字起こし中",
     prog_resolve: "人物を特定中 — 重複なし",
     prog_extract: "プロフィール更新とやり取り記憶を抽出中",
@@ -4407,7 +4422,7 @@ const STR = {
     toast_followup_added: "フォローアップ追加 — 10月26日 · 「再連絡」",
     toast_good_luck: "頑張ってください。部屋の誰よりも30秒先を行っています。",
     toast_nakamura: "中村哲也を作成 — Kansai Robotics",
-    toast_voice_only: "音声デモのみ — テキスト入力に切り替わります",
+    toast_voice_only: "音声デモのみ — テキスト入力に切り替わります", toast_ai_fallback: "AIプロキシが使えないため、ローカル抽出を使用しました。",
     toast_no_match: "該当なし — 検索条件を変えてください。",
 
     home_welcome: "あなたのプライベートな人脈メモリへようこそ",
@@ -6012,15 +6027,23 @@ function openCapture(mode, opts = {}) {
     mode: mode || null, sourceMode: mode || null, step: 1, timer: null, seconds: 0, open: true,
     personId: opts.personId || null, addInfo: !!opts.addInfo, edit: !!opts.edit, text: "", photo: "",
     prefill: opts.prefill || {}, review: false, formDraft: null, initialFormDraft: "", formCircles: [],
-    advancedOpen: false, openSections: {}, dirty: false, nameFocused: false,
+    advancedOpen: false, openSections: {}, dirty: false, nameFocused: false, aiAbort: null,
   };
   $("#capture-modal").classList.add("open");
   renderCapture();
 }
 
+function abortCapAI() {
+  if (cap.aiAbort) {
+    try { cap.aiAbort.abort(); } catch (e) { /* ignore */ }
+  }
+  cap.aiAbort = null;
+}
+
 function closeCapture(force = false) {
   if (force !== true && cap.mode === "manual" && cap.dirty && !confirm(t("discard_changes"))) return false;
   clearInterval(cap.timer);
+  abortCapAI();
   cap.open = false;
   $("#capture-modal").classList.remove("open");
   return true;
@@ -6041,6 +6064,124 @@ function manualSnapshot() {
 
 function refreshManualDirty() {
   cap.dirty = !!cap.initialFormDraft && manualSnapshot() !== cap.initialFormDraft;
+}
+
+function aiProxyConfig() {
+  return window.AI_PROXY_CONFIG || {};
+}
+
+function aiProxyBaseUrl() {
+  const base = String(aiProxyConfig().baseUrl || "").trim().replace(/\/$/, "");
+  return base;
+}
+
+function aiProxyReady() {
+  return !!aiProxyBaseUrl();
+}
+
+function buildExtractPrefill(parsed, rawText) {
+  const source = parsed || {};
+  const prefill = {
+    name: source.name || "",
+    relationshipType: source.relationshipType || "",
+    company: source.company || "",
+    department: source.department || "",
+    title: source.title || "",
+    currentCity: source.currentCity || "",
+    birthday: source.birthday || "",
+    email: source.email || "",
+    phone: source.phone || "",
+    languages: source.languages || [],
+    hobbies: source.hobbies || [],
+    interests: source.interests || [],
+    businessTopics: source.businessTopics || [],
+    introducedBy: source.introducedBy || "",
+    firstMetPlace: source.firstMetPlace || "",
+    followUpWhat: source.followUpWhat || "",
+    promises: source.promises || [],
+    notes: source.notes || rawText || "",
+  };
+  if (prefill.followUpWhat && !prefill.promises.length) prefill.promises = [prefill.followUpWhat];
+  return prefill;
+}
+
+function existingPeopleHints() {
+  return Store.people().slice(0, 60).map((person) => ({
+    id: person.id,
+    name: person.name || "",
+    company: person.company || "",
+    currentCity: person.currentCity || "",
+  }));
+}
+
+async function requestProxyExtraction(mode, text) {
+  const baseUrl = aiProxyBaseUrl();
+  if (!baseUrl) {
+    const err = new Error("proxy-disabled");
+    err.code = "proxy-disabled";
+    throw err;
+  }
+  abortCapAI();
+  const controller = new AbortController();
+  cap.aiAbort = controller;
+  const timeoutMs = Number(aiProxyConfig().timeoutMs || 15000);
+  const timer = setTimeout(() => controller.abort("timeout"), timeoutMs);
+  try {
+    const response = await fetch(baseUrl + "/extract", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        mode,
+        locale: LANG,
+        text,
+        existingPeople: existingPeopleHints(),
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload || payload.ok !== true || !payload.extraction) {
+      const err = new Error(payload && payload.error ? payload.error : "proxy-failed");
+      err.code = "proxy-failed";
+      throw err;
+    }
+    return payload.extraction;
+  } finally {
+    clearTimeout(timer);
+    cap.aiAbort = null;
+  }
+}
+
+function renderAIWaiting(kind) {
+  setCapTitle(t("ai_organizing"), t("ai_step_2"));
+  const body = $("#capture-body");
+  body.innerHTML =
+    '<div class="progress-step active"><span class="sp">1</span>' + t("prog_read") + "</div>" +
+    '<div class="progress-step active"><span class="sp">2</span>' + t("prog_resolve_short") + "</div>" +
+    '<div class="progress-step active"><span class="sp">3</span>' + t("prog_extract_short") + "</div>" +
+    '<p style="font-size:12px;color:var(--ink-3);margin-top:12px">' + esc(aiProxyReady() ? t("ai_proxy_secure") : t("ai_proxy_fallback")) + "</p>" +
+    '<div class="modal-foot"><button class="btn ghost" id="proc-cancel">' + t("btn_cancel") + "</button></div>";
+  $("#proc-cancel").addEventListener("click", () => {
+    abortCapAI();
+    if (kind === "card") {
+      cap.step = 3;
+      renderCapture();
+      return;
+    }
+    cap.step = 4;
+    renderCapture();
+  });
+}
+
+async function extractCapturePrefill(mode, text, fallback) {
+  const local = fallback || (mode === "card" ? parseCardOcrText(text || "") : parsedToPrefill(parseCaptureText(text || "")));
+  try {
+    const extraction = await requestProxyExtraction(mode, text || "");
+    return buildExtractPrefill(extraction, text || "");
+  } catch (err) {
+    if (err && err.name === "AbortError") throw err;
+    toast(t("toast_ai_fallback"));
+    return local;
+  }
 }
 
 function manualOptionLabel(field, value) {
@@ -6796,13 +6937,22 @@ async function handleCardPhoto(e) {
 }
 
 /** Vào màn confirm (form manual) với trường đã tự điền từ text/voice. */
-function enterReviewFromText() {
+async function enterReviewFromText() {
   const parsed = parseCaptureText(cap.text || "");
   const matched = cap.personId ? byId(cap.personId) : resolvePersonFromText(cap.text || "");
-  cap.sourceMode = cap.sourceMode === "voice" ? "voice" : "text";
+  const sourceMode = cap.sourceMode === "voice" ? "voice" : "text";
+  renderAIWaiting(sourceMode);
+  let prefill = parsedToPrefill(parsed);
+  try {
+    prefill = await extractCapturePrefill(sourceMode, cap.text || "", prefill);
+  } catch (err) {
+    if (err && err.name === "AbortError") return;
+  }
+  if (!cap.open) return;
+  cap.sourceMode = sourceMode;
   cap.mode = "manual";
   cap.review = true;
-  cap.prefill = parsedToPrefill(parsed);
+  cap.prefill = prefill;
   cap.personId = matched ? matched.id : null;
   cap.edit = !!matched;
   cap.formDraft = null;
@@ -6811,14 +6961,22 @@ function enterReviewFromText() {
 }
 
 /** Vào màn confirm với trường từ namecard (chỉ trường CÓ dữ liệu). */
-function enterReviewFromCard() {
+async function enterReviewFromCard() {
   const pre = parseCardOcrText(cap.ocrText || "") || cardDemoFields();
   const matched = resolvePersonFromText(pre.name || "");
+  renderAIWaiting("card");
+  let prefill = pre;
+  try {
+    prefill = await extractCapturePrefill("card", cap.ocrText || "", pre);
+  } catch (err) {
+    if (err && err.name === "AbortError") return;
+  }
+  if (!cap.open) return;
   cap.sourceMode = "card";
   cap.mode = "manual";
   cap.review = true;
   cap.text = cap.ocrText || "";
-  cap.prefill = pre;
+  cap.prefill = prefill;
   cap.personId = matched ? matched.id : null;
   cap.edit = !!matched;
   cap.formDraft = null;

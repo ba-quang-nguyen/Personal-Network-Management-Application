@@ -1483,15 +1483,23 @@ function openCapture(mode, opts = {}) {
     mode: mode || null, sourceMode: mode || null, step: 1, timer: null, seconds: 0, open: true,
     personId: opts.personId || null, addInfo: !!opts.addInfo, edit: !!opts.edit, text: "", photo: "",
     prefill: opts.prefill || {}, review: false, formDraft: null, initialFormDraft: "", formCircles: [],
-    advancedOpen: false, openSections: {}, dirty: false, nameFocused: false,
+    advancedOpen: false, openSections: {}, dirty: false, nameFocused: false, aiAbort: null,
   };
   $("#capture-modal").classList.add("open");
   renderCapture();
 }
 
+function abortCapAI() {
+  if (cap.aiAbort) {
+    try { cap.aiAbort.abort(); } catch (e) { /* ignore */ }
+  }
+  cap.aiAbort = null;
+}
+
 function closeCapture(force = false) {
   if (force !== true && cap.mode === "manual" && cap.dirty && !confirm(t("discard_changes"))) return false;
   clearInterval(cap.timer);
+  abortCapAI();
   cap.open = false;
   $("#capture-modal").classList.remove("open");
   return true;
@@ -1512,6 +1520,124 @@ function manualSnapshot() {
 
 function refreshManualDirty() {
   cap.dirty = !!cap.initialFormDraft && manualSnapshot() !== cap.initialFormDraft;
+}
+
+function aiProxyConfig() {
+  return window.AI_PROXY_CONFIG || {};
+}
+
+function aiProxyBaseUrl() {
+  const base = String(aiProxyConfig().baseUrl || "").trim().replace(/\/$/, "");
+  return base;
+}
+
+function aiProxyReady() {
+  return !!aiProxyBaseUrl();
+}
+
+function buildExtractPrefill(parsed, rawText) {
+  const source = parsed || {};
+  const prefill = {
+    name: source.name || "",
+    relationshipType: source.relationshipType || "",
+    company: source.company || "",
+    department: source.department || "",
+    title: source.title || "",
+    currentCity: source.currentCity || "",
+    birthday: source.birthday || "",
+    email: source.email || "",
+    phone: source.phone || "",
+    languages: source.languages || [],
+    hobbies: source.hobbies || [],
+    interests: source.interests || [],
+    businessTopics: source.businessTopics || [],
+    introducedBy: source.introducedBy || "",
+    firstMetPlace: source.firstMetPlace || "",
+    followUpWhat: source.followUpWhat || "",
+    promises: source.promises || [],
+    notes: source.notes || rawText || "",
+  };
+  if (prefill.followUpWhat && !prefill.promises.length) prefill.promises = [prefill.followUpWhat];
+  return prefill;
+}
+
+function existingPeopleHints() {
+  return Store.people().slice(0, 60).map((person) => ({
+    id: person.id,
+    name: person.name || "",
+    company: person.company || "",
+    currentCity: person.currentCity || "",
+  }));
+}
+
+async function requestProxyExtraction(mode, text) {
+  const baseUrl = aiProxyBaseUrl();
+  if (!baseUrl) {
+    const err = new Error("proxy-disabled");
+    err.code = "proxy-disabled";
+    throw err;
+  }
+  abortCapAI();
+  const controller = new AbortController();
+  cap.aiAbort = controller;
+  const timeoutMs = Number(aiProxyConfig().timeoutMs || 15000);
+  const timer = setTimeout(() => controller.abort("timeout"), timeoutMs);
+  try {
+    const response = await fetch(baseUrl + "/extract", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        mode,
+        locale: LANG,
+        text,
+        existingPeople: existingPeopleHints(),
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload || payload.ok !== true || !payload.extraction) {
+      const err = new Error(payload && payload.error ? payload.error : "proxy-failed");
+      err.code = "proxy-failed";
+      throw err;
+    }
+    return payload.extraction;
+  } finally {
+    clearTimeout(timer);
+    cap.aiAbort = null;
+  }
+}
+
+function renderAIWaiting(kind) {
+  setCapTitle(t("ai_organizing"), t("ai_step_2"));
+  const body = $("#capture-body");
+  body.innerHTML =
+    '<div class="progress-step active"><span class="sp">1</span>' + t("prog_read") + "</div>" +
+    '<div class="progress-step active"><span class="sp">2</span>' + t("prog_resolve_short") + "</div>" +
+    '<div class="progress-step active"><span class="sp">3</span>' + t("prog_extract_short") + "</div>" +
+    '<p style="font-size:12px;color:var(--ink-3);margin-top:12px">' + esc(aiProxyReady() ? t("ai_proxy_secure") : t("ai_proxy_fallback")) + "</p>" +
+    '<div class="modal-foot"><button class="btn ghost" id="proc-cancel">' + t("btn_cancel") + "</button></div>";
+  $("#proc-cancel").addEventListener("click", () => {
+    abortCapAI();
+    if (kind === "card") {
+      cap.step = 3;
+      renderCapture();
+      return;
+    }
+    cap.step = 4;
+    renderCapture();
+  });
+}
+
+async function extractCapturePrefill(mode, text, fallback) {
+  const local = fallback || (mode === "card" ? parseCardOcrText(text || "") : parsedToPrefill(parseCaptureText(text || "")));
+  try {
+    const extraction = await requestProxyExtraction(mode, text || "");
+    return buildExtractPrefill(extraction, text || "");
+  } catch (err) {
+    if (err && err.name === "AbortError") throw err;
+    toast(t("toast_ai_fallback"));
+    return local;
+  }
 }
 
 function manualOptionLabel(field, value) {
@@ -2267,13 +2393,22 @@ async function handleCardPhoto(e) {
 }
 
 /** Vào màn confirm (form manual) với trường đã tự điền từ text/voice. */
-function enterReviewFromText() {
+async function enterReviewFromText() {
   const parsed = parseCaptureText(cap.text || "");
   const matched = cap.personId ? byId(cap.personId) : resolvePersonFromText(cap.text || "");
-  cap.sourceMode = cap.sourceMode === "voice" ? "voice" : "text";
+  const sourceMode = cap.sourceMode === "voice" ? "voice" : "text";
+  renderAIWaiting(sourceMode);
+  let prefill = parsedToPrefill(parsed);
+  try {
+    prefill = await extractCapturePrefill(sourceMode, cap.text || "", prefill);
+  } catch (err) {
+    if (err && err.name === "AbortError") return;
+  }
+  if (!cap.open) return;
+  cap.sourceMode = sourceMode;
   cap.mode = "manual";
   cap.review = true;
-  cap.prefill = parsedToPrefill(parsed);
+  cap.prefill = prefill;
   cap.personId = matched ? matched.id : null;
   cap.edit = !!matched;
   cap.formDraft = null;
@@ -2282,14 +2417,22 @@ function enterReviewFromText() {
 }
 
 /** Vào màn confirm với trường từ namecard (chỉ trường CÓ dữ liệu). */
-function enterReviewFromCard() {
+async function enterReviewFromCard() {
   const pre = parseCardOcrText(cap.ocrText || "") || cardDemoFields();
   const matched = resolvePersonFromText(pre.name || "");
+  renderAIWaiting("card");
+  let prefill = pre;
+  try {
+    prefill = await extractCapturePrefill("card", cap.ocrText || "", pre);
+  } catch (err) {
+    if (err && err.name === "AbortError") return;
+  }
+  if (!cap.open) return;
   cap.sourceMode = "card";
   cap.mode = "manual";
   cap.review = true;
   cap.text = cap.ocrText || "";
-  cap.prefill = pre;
+  cap.prefill = prefill;
   cap.personId = matched ? matched.id : null;
   cap.edit = !!matched;
   cap.formDraft = null;

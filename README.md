@@ -9,6 +9,7 @@ CRM quan hệ cá nhân — bộ nhớ riêng tư cho các mối quan hệ của
 
 ```bash
 python3 -m http.server 8000   # mở http://localhost:8000
+node server/ai-proxy.mjs      # optional: backend proxy for DeepSeek extraction at http://127.0.0.1:8787
 node build.mjs                # sinh lại omoide.html (bản single-file)
 ```
 
@@ -20,6 +21,17 @@ node build.mjs                # sinh lại omoide.html (bản single-file)
 - Export/Import JSON, Merge trùng, Delete all.
 - i18n **vi / en / ja** (mặc định vi).
 
+## AI proxy (DeepSeek)
+
+Frontend public không giữ API key. Nếu muốn extraction thật cho voice/text/card:
+
+1. Copy `server/.env.example` thành `server/.env.local`.
+2. Điền `DEEPSEEK_API_KEY`.
+3. Chạy `node server/ai-proxy.mjs`.
+4. Mở app local bằng `http://127.0.0.1:8000` hoặc `http://localhost:8000`.
+
+Mặc định `js/ai-proxy-config.js` chỉ tự trỏ sang `http://127.0.0.1:8787/api/ai` khi chạy local. Bản GitHub Pages/public sẽ không gọi backend nào trừ khi bạn chủ động cấu hình `baseUrl` của proxy đã deploy.
+
 ## Firebase (tuỳ chọn)
 
 1. Tạo project → bật Firestore + Auth Email/Password.
@@ -29,5 +41,7 @@ node build.mjs                # sinh lại omoide.html (bản single-file)
 ## Deploy GitHub Pages (tự động)
 
 Push lên GitHub → Settings → Pages → source = **GitHub Actions** → workflow `.github/workflows/deploy.yml` chạy `node build.mjs --pages` và deploy `dist/`. URL: `https://<username>.github.io/network-management/`
+
+Lưu ý: GitHub Pages chỉ host frontend tĩnh. Muốn dùng AI extraction ở production, deploy `server/ai-proxy.mjs` lên một backend riêng rồi cấu hình `js/ai-proxy-config.js` với URL proxy public đó.
 
 Chi tiết xem `AGENTS.md`, `ARCHITECTURE.md`, `feature-list.json`.

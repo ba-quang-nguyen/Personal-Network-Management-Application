@@ -5,7 +5,7 @@
     { "id": "D1", "issue": "Frontend", "resolution": "Dùng CHÍNH mock omoide.html/index.html + js/ làm frontend (100% UI/UX), mobile trước", "why": "Người dùng chốt: mock là UI/UX mong muốn, không build lại React khác mock." },
     { "id": "D2", "issue": "Data layer", "resolution": "js/store.js (vanilla JS) — localStorage persist TOÀN BỘ + STORAGE_VERSION + đa tab", "why": "Triết lý BUILD-GUIDE: UI đọc/ghi qua store duy nhất." },
     { "id": "D3", "issue": "Data mặc định", "resolution": "Bắt đầu RỖNG; 10 người hư cấu = sample data (nút Load sample)", "why": "App cá nhân dùng data thật; sample để demo." },
-    { "id": "D4", "issue": "AI capture", "resolution": "Text thật (lưu raw + memory); Voice thật (Web Speech API); Card giữ demo scan + manual thật", "why": "Không LLM — OCR/ASR-cloud là stretch." },
+    { "id": "D4", "issue": "AI capture", "resolution": "Voice dùng Web Speech API; Text/Card/Voice review ưu tiên DeepSeek qua backend proxy, fallback heuristic local khi proxy không sẵn", "why": "Frontend public không giữ API key; extraction cần backend mỏng để an toàn." },
     { "id": "D5", "issue": "i18n", "resolution": "en + ja + vi (mặc định vi), 471 khoá/locale", "why": "Người dùng tiếng Việt; app bạn lang=vi." },
     { "id": "D6", "issue": "Backend", "resolution": "Firebase (Email/Password + Firestore users/{uid}/people) — Phase sau, cùng seam", "why": "Theo BUILD-GUIDE + app bạn; tái sử dụng rules đã test." },
     { "id": "D7", "issue": "React app/", "resolution": "Giữ nguyên làm tài liệu + nơi chứa firebase rules/config/test", "why": "Không xoá — tái sử dụng ở Phase Firebase." }
@@ -18,9 +18,10 @@
     { "id": "followup", "name": "Follow-up done/snooze thật", "status": "pass", "evidence": "done → ghi meeting + xoá followUp; snooze/dismiss → snoozedUntil" },
     { "id": "export-import", "name": "Export/Import JSON + Delete all thật", "status": "pass", "evidence": "download/upload JSON, confirm delete-all, roundtrip test PASS" },
     { "id": "merge", "name": "Merge trùng tên (settings)", "status": "pass", "evidence": "findDuplicates + mergePeople (gộp meetings/memories/photos/tags)" },
-    { "id": "text-mode", "name": "Capture text — nhận diện → confirm", "status": "pass", "evidence": "parseCaptureText 3 ngôn ngữ (vi/en/ja: tên/công ty/chức danh/TP/sở thích/follow-up) → màn kiểm tra transcript (textarea SỬA được trước khi fill) → màn confirm form tự điền, sửa rồi lưu; raw + memory + followUp tự gắn" },
-    { "id": "voice-mode", "name": "Capture voice — nhận diện → confirm", "status": "pass", "evidence": "Web Speech API (vi-VN/ja-JP/en-US) → màn kiểm tra transcript textarea sửa được (sửa lỗi nhận diện trước khi fill) → màn confirm form tự điền từ text đã sửa; fallback text; notes luôn giữ raw" },
-    { "id": "card-mode", "name": "Capture card — OCR free → review → confirm", "status": "pass", "evidence": "Tesseract.js client-side OCR từ ảnh danh thiếp, không API AI trả phí; user sửa raw OCR trước khi prefill form manual. Demo fallback vẫn có." },
+    { "id": "text-mode", "name": "Capture text — nhận diện → confirm", "status": "pass", "evidence": "Transcript review giữ nguyên; sau khi user xác nhận, app gọi backend proxy DeepSeek để trích field structured, fallback parseCaptureText local khi proxy lỗi/không cấu hình." },
+    { "id": "voice-mode", "name": "Capture voice — nhận diện → confirm", "status": "pass", "evidence": "Web Speech API (vi-VN/ja-JP/en-US) → transcript review textarea sửa được → backend proxy DeepSeek trích field; fallback local parser nếu proxy không sẵn; raw + memory vẫn giữ." },
+    { "id": "card-mode", "name": "Capture card — OCR free → review → confirm", "status": "pass", "evidence": "Tesseract.js client-side OCR từ ảnh danh thiếp; user sửa raw OCR trước khi gửi backend proxy DeepSeek để map field; fallback parseCardOcrText local vẫn giữ." },
+    { "id": "ai-proxy", "name": "Backend proxy cho AI extraction", "status": "pass", "evidence": "server/ai-proxy.mjs giữ DEEPSEEK_API_KEY ở backend, CORS allowlist local/github pages, /health + /api/ai/extract; verified với DeepSeek key thật trên sample tổng hợp." },
     { "id": "home", "name": "Home tính động", "status": "pass", "evidence": "care/upcoming/dates/recent/memories từ computeCareItems/home*; empty state + Load sample" },
     { "id": "care", "name": "Care queue tính động", "status": "pass", "evidence": "birthday/silence/promise/follow_up + snoozedUntil; badge đếm thật" },
     { "id": "ask", "name": "Ask tìm trên data thật", "status": "pass", "evidence": "analyze() data-driven (tên + từ khoá 7 field); test tanaka/suzuki/no-match PASS" },
@@ -33,7 +34,7 @@
     { "id": "mobile-verify", "name": "Kiểm tra trên điện thoại thật", "status": "todo", "evidence": "breakpoint 560px đã có; cần người dùng mở http://localhost:8000 từ điện thoại" }
   ],
   "nextUp": [
-    { "id": "mobile-verify", "why": "user tự mở localhost:8000 trên điện thoại/Chrome device mode" },
+    { "id": "mobile-verify", "why": "user tự mở localhost:8000 trên điện thoại/Chrome device mode với proxy local nếu muốn test AI thật" },
     { "id": "pwa", "why": "manifest + sw.js để cài lên màn hình chính" },
     { "id": "firebase", "why": "sync đa thiết bị theo BUILD-GUIDE (cần Firebase project)" },
     { "id": "deploy", "why": "URL GitHub Pages (cần repo)" }
