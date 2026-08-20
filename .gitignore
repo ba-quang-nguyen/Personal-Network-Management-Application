@@ -7,8 +7,7 @@ app/node_modules/
 .env.local
 .env.*.local
 
-# firebase config cá nhân (bản thật nằm ở js/firebase-config.js — có example kèm theo)
-js/firebase-config.js
+# firebase config web không chứa secret; để trống thì app chạy local-only
 
 # build
 dist/
