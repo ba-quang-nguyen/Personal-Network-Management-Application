@@ -1749,24 +1749,11 @@ function manualFieldHTML(field) {
     const month = validMonth(parseInt(parts.month, 10));
     const day = validDay(parseInt(parts.day, 10));
     const year = validYear(parseInt(parts.year, 10));
-    const dateValue = month && day && year ? String(year).padStart(4, "0") + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0") : "";
-    const monthOptions = ['<option value="">' + esc(t("birthday_month_ph")) + "</option>"]
-      .concat(Array.from({ length: 12 }, (_, index) => {
-        const option = index + 1;
-        return '<option value="' + option + '"' + (month === option ? " selected" : "") + ">" + esc(t("birthday_month_" + option)) + "</option>";
-      })).join("");
-    const dayOptions = ['<option value="">' + esc(t("birthday_day_ph")) + "</option>"]
-      .concat(Array.from({ length: 31 }, (_, index) => {
-        const option = index + 1;
-        return '<option value="' + option + '"' + (day === option ? " selected" : "") + ">" + option + "</option>";
-      })).join("");
     control = '<div class="birthday-parts" data-birthday-key="' + key + '">' +
-      '<select class="field-input" data-birthday-part="' + key + '" data-part="month" aria-label="' + esc(t("birthday_month_ph")) + '">' + monthOptions + "</select>" +
-      '<select class="field-input" data-birthday-part="' + key + '" data-part="day" aria-label="' + esc(t("birthday_day_ph")) + '">' + dayOptions + "</select>" +
+      '<input class="field-input" type="number" inputmode="numeric" min="1" max="31" data-birthday-part="' + key + '" data-part="day" placeholder="' + esc(t("birthday_day_ph")) + '" aria-label="' + esc(t("birthday_day_ph")) + '" value="' + esc(day || "") + '" />' +
+      '<input class="field-input" type="number" inputmode="numeric" min="1" max="12" data-birthday-part="' + key + '" data-part="month" placeholder="' + esc(t("birthday_month_ph")) + '" aria-label="' + esc(t("birthday_month_ph")) + '" value="' + esc(month || "") + '" />' +
       '<input class="field-input" type="number" inputmode="numeric" min="1" max="9999" data-birthday-part="' + key + '" data-part="year" placeholder="' + esc(t("birthday_year_ph")) + '" aria-label="' + esc(t("birthday_year_ph")) + '" value="' + esc(year || "") + '" />' +
-      "</div>" +
-      '<div class="birthday-calendar-row"><input class="field-input" type="date" data-birthday-date="' + key + '" value="' + esc(dateValue) + '" aria-label="' + esc(t("birthday_calendar")) + '" />' +
-      '<span>' + esc(t("birthday_partial_hint")) + "</span></div>";
+      "</div>";
   } else {
     const type = field.control === "email" || field.control === "tel" ? field.control : "text";
     control = '<input class="field-input" id="' + id + '" type="' + type + '" data-manual-key="' + key + '" placeholder="' + esc(placeholder) + '" value="' + esc(value || "") + '"' + attrs + " />";
@@ -2041,19 +2028,6 @@ function bindManualCapture(editing) {
     input.addEventListener("input", update);
     input.addEventListener("change", update);
   });
-  $$('[data-birthday-date]', body).forEach((input) => {
-    input.addEventListener("change", () => {
-      const parts = parseBirthdayParts(input.value) || {};
-      cap.formDraft[input.dataset.birthdayDate] = {
-        month: parts.month ? String(parts.month) : "",
-        day: parts.day ? String(parts.day) : "",
-        year: parts.year ? String(parts.year) : "",
-      };
-      refreshManualDirty();
-      renderManualCapture();
-    });
-  });
-
   const advanced = $("#manual-advanced-toggle");
   if (advanced) advanced.addEventListener("click", () => {
     cap.advancedOpen = !cap.advancedOpen;

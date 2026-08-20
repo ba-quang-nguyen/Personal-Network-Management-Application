@@ -768,13 +768,9 @@ textarea.story { min-height: 110px; resize: vertical; }
   margin-top: 5px; color: var(--ink-3); font-size: 10.5px; line-height: 1.4;
 }
 .birthday-parts {
-  display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .85fr) minmax(0, 1fr); gap: 8px;
+  display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, .9fr) minmax(0, 1fr); gap: 7px;
 }
-.birthday-calendar-row {
-  display: grid; grid-template-columns: minmax(0, 160px) 1fr; gap: 9px; align-items: center;
-  margin-top: 8px; color: var(--ink-3); font-size: 10.5px; line-height: 1.4;
-}
-.birthday-calendar-row .field-input { min-height: 40px; }
+.birthday-parts .field-input { min-height: 40px; text-align: center; padding-left: 8px; padding-right: 8px; }
 .field-inline-action {
   min-height: 44px; margin: -14px 0; display: inline-flex; align-items: center;
   color: var(--accent); font-weight: 700; font-size: 10.5px; flex-shrink: 0;
@@ -965,7 +961,6 @@ textarea.story { min-height: 110px; resize: vertical; }
   .profile-actions .btn { flex: 1; }
   .extract-grid { grid-template-columns: 1fr; }
   .form-grid { grid-template-columns: 1fr; }
-  .birthday-parts, .birthday-calendar-row { grid-template-columns: 1fr; }
   .screen-head-row { flex-direction: column; align-items: flex-start; gap: 10px; }
   .map-pop { position: static; width: 100%; margin-top: 12px; }
 }
@@ -983,8 +978,6 @@ body.view-mobile .modal-foot { justify-content: stretch; }
 body.view-mobile .modal-foot .btn { flex: 1; min-height: 44px; }
 body.view-mobile .ocr-preview { max-height: 220px; }
 body.view-mobile .voice-lang { flex-direction: column; gap: 6px; }
-body.view-mobile .birthday-parts,
-body.view-mobile .birthday-calendar-row { grid-template-columns: 1fr; }
 
 /* ============================================================
    Network Management v0.3 — additions
@@ -3153,11 +3146,7 @@ const STR = {
     field_helpReceived: "What they've helped me with", field_promises: "Promises / follow-ups",
     field_notes: "Other notes",
     birthday_flexible_ph: "22/11, Nov 22, or around 1990",
-    birthday_month_ph: "Month", birthday_day_ph: "Day", birthday_year_ph: "Year",
-    birthday_calendar: "Pick full birthday", birthday_partial_hint: "Use the calendar if you know the full date, or save partial details.",
-    birthday_month_1: "Jan", birthday_month_2: "Feb", birthday_month_3: "Mar", birthday_month_4: "Apr",
-    birthday_month_5: "May", birthday_month_6: "Jun", birthday_month_7: "Jul", birthday_month_8: "Aug",
-    birthday_month_9: "Sep", birthday_month_10: "Oct", birthday_month_11: "Nov", birthday_month_12: "Dec",
+    birthday_month_ph: "M", birthday_day_ph: "D", birthday_year_ph: "Y",
     location_ph: "Choose or type a city",
     work_notes_ph: "Job, department, role, company context, skills, projects",
     family_notes_ph: "Spouse, children, birthdays, family context",
@@ -5071,24 +5060,11 @@ function manualFieldHTML(field) {
     const month = validMonth(parseInt(parts.month, 10));
     const day = validDay(parseInt(parts.day, 10));
     const year = validYear(parseInt(parts.year, 10));
-    const dateValue = month && day && year ? String(year).padStart(4, "0") + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0") : "";
-    const monthOptions = ['<option value="">' + esc(t("birthday_month_ph")) + "</option>"]
-      .concat(Array.from({ length: 12 }, (_, index) => {
-        const option = index + 1;
-        return '<option value="' + option + '"' + (month === option ? " selected" : "") + ">" + esc(t("birthday_month_" + option)) + "</option>";
-      })).join("");
-    const dayOptions = ['<option value="">' + esc(t("birthday_day_ph")) + "</option>"]
-      .concat(Array.from({ length: 31 }, (_, index) => {
-        const option = index + 1;
-        return '<option value="' + option + '"' + (day === option ? " selected" : "") + ">" + option + "</option>";
-      })).join("");
     control = '<div class="birthday-parts" data-birthday-key="' + key + '">' +
-      '<select class="field-input" data-birthday-part="' + key + '" data-part="month" aria-label="' + esc(t("birthday_month_ph")) + '">' + monthOptions + "</select>" +
-      '<select class="field-input" data-birthday-part="' + key + '" data-part="day" aria-label="' + esc(t("birthday_day_ph")) + '">' + dayOptions + "</select>" +
+      '<input class="field-input" type="number" inputmode="numeric" min="1" max="31" data-birthday-part="' + key + '" data-part="day" placeholder="' + esc(t("birthday_day_ph")) + '" aria-label="' + esc(t("birthday_day_ph")) + '" value="' + esc(day || "") + '" />' +
+      '<input class="field-input" type="number" inputmode="numeric" min="1" max="12" data-birthday-part="' + key + '" data-part="month" placeholder="' + esc(t("birthday_month_ph")) + '" aria-label="' + esc(t("birthday_month_ph")) + '" value="' + esc(month || "") + '" />' +
       '<input class="field-input" type="number" inputmode="numeric" min="1" max="9999" data-birthday-part="' + key + '" data-part="year" placeholder="' + esc(t("birthday_year_ph")) + '" aria-label="' + esc(t("birthday_year_ph")) + '" value="' + esc(year || "") + '" />' +
-      "</div>" +
-      '<div class="birthday-calendar-row"><input class="field-input" type="date" data-birthday-date="' + key + '" value="' + esc(dateValue) + '" aria-label="' + esc(t("birthday_calendar")) + '" />' +
-      '<span>' + esc(t("birthday_partial_hint")) + "</span></div>";
+      "</div>";
   } else {
     const type = field.control === "email" || field.control === "tel" ? field.control : "text";
     control = '<input class="field-input" id="' + id + '" type="' + type + '" data-manual-key="' + key + '" placeholder="' + esc(placeholder) + '" value="' + esc(value || "") + '"' + attrs + " />";
@@ -5363,19 +5339,6 @@ function bindManualCapture(editing) {
     input.addEventListener("input", update);
     input.addEventListener("change", update);
   });
-  $$('[data-birthday-date]', body).forEach((input) => {
-    input.addEventListener("change", () => {
-      const parts = parseBirthdayParts(input.value) || {};
-      cap.formDraft[input.dataset.birthdayDate] = {
-        month: parts.month ? String(parts.month) : "",
-        day: parts.day ? String(parts.day) : "",
-        year: parts.year ? String(parts.year) : "",
-      };
-      refreshManualDirty();
-      renderManualCapture();
-    });
-  });
-
   const advanced = $("#manual-advanced-toggle");
   if (advanced) advanced.addEventListener("click", () => {
     cap.advancedOpen = !cap.advancedOpen;
