@@ -553,13 +553,13 @@ function homeMemories() {
    SEARCH (§15)
    ============================================================ */
 const QUICK_QUESTIONS = [
-  "Who works in AI?",
-  "Who lives in Ho Chi Minh?",
-  "Which investors do I know?",
-  "Who works at ABC Logistics?",
-  "What do I know about them?",
-  "Who in my network has children?",
-  "Who did I meet recently?"
+  "AI",
+  "Ho Chi Minh",
+  "Investor",
+  "ABC Logistics",
+  "Children",
+  "Golf",
+  "Vietnam"
 ];
 
 /* ============================================================

@@ -482,7 +482,7 @@ function renderCare() {
 }
 
 /* ============================================================
-   SEARCH / ASK
+   SEARCH
    ============================================================ */
 function renderAsk() {
   $("#q-chips").innerHTML = QUICK_QUESTIONS.map((q) => '<button class="q-chip">' + esc(q) + "</button>").join("");
@@ -507,37 +507,16 @@ function sourceRow(id, why, src) {
 }
 
 function analyze(q) {
-  const s = q.toLowerCase();
+  const s = String(q || "").trim().toLowerCase();
   const people = activePeople();
   if (!people.length) return { answer: t("ask_no_people"), sources: [], why: {} };
+  if (!s) return { answer: t("ask_hint"), sources: [], why: {} };
 
   const terms = s.split(/\s+/).filter((w) => w.length > 2);
   const hasTerm = (hay) => (terms.length ? terms.some((w) => hay.includes(w)) : hay.includes(s));
 
-  // Hỏi về một người cụ thể (tên xuất hiện trong câu hỏi)
-  const person = people.find(
-    (p) =>
-      s.includes(p.name.split(" ")[0].toLowerCase()) ||
-      (p.nameJa && s.includes(p.nameJa)) ||
-      (p.name.split(" ").length > 1 && s.includes(p.name.toLowerCase())),
-  );
-
   let sources = [];
   const why = {};
-
-  if (person) {
-    const last = person.last || {};
-    const answer =
-      "<b>" + esc(person.name) + "</b> — " + esc(person.title) + " at " + esc(person.company) + ". " + esc(person.about) +
-      (person.children ? " Family: " + esc(person.children) + "." : "") +
-      (person.followUp && person.followUp.what && person.followUp.what !== "—" ? " Follow-up: " + esc(person.followUp.what) + "." : "") +
-      (s.includes("discuss") || s.includes("talk") || s.includes("last")
-        ? " Last time (" + esc(last.when || "—") + ", " + esc(last.place || "") + "): “" + esc(last.summary || "") + "”"
-        : "");
-    sources = [person.id];
-    why[person.id] = t("ask_asked_about");
-    return { answer, sources, why };
-  }
 
   // Tìm theo từ khoá trên nhiều field
   const found = [];
@@ -548,20 +527,18 @@ function analyze(q) {
     }
   };
   people.forEach((p) => {
-    if (hasTerm((p.currentCity || "").toLowerCase() + " " + (p.country || "").toLowerCase())) add(p, t("ask_where"));
+    if (hasTerm(((p.name || "") + " " + (p.nameJa || "") + " " + (p.nickname || "")).toLowerCase())) add(p, t("ask_asked_about"));
+    else if (hasTerm((p.currentCity || "").toLowerCase() + " " + (p.country || "").toLowerCase())) add(p, t("ask_where"));
     else if (hasTerm((p.company || "").toLowerCase())) add(p, t("ask_company"));
-    else if (hasTerm((p.industry || "").toLowerCase() + " " + (p.title || "").toLowerCase())) add(p, t("ask_industry"));
-    else if (hasTerm(((p.interests || []).join(" ") + " " + (p.hobbies || []).join(" ") + " " + (p.tags || []).join(" ")).toLowerCase())) add(p, t("ask_interest"));
-    else if (hasTerm(((p.raw || "") + " " + (p.memories || []).map((m) => m.text).join(" ")).toLowerCase())) add(p, t("ask_memory"));
+    else if (hasTerm(((p.industry || "") + " " + (p.title || "") + " " + (p.department || "") + " " + (p.workNotes || "")).toLowerCase())) add(p, t("ask_industry"));
+    else if (hasTerm(((p.relationshipType || "") + " " + (p.firstMet && p.firstMet.how || "") + " " + (p.relationshipNotes || "")).toLowerCase())) add(p, t("ask_relationship"));
+    else if (hasTerm(((p.interests || []).join(" ") + " " + (p.hobbies || []).join(" ") + " " + (p.tags || []).join(" ") + " " + (p.interestsNotes || "")).toLowerCase())) add(p, t("ask_interest"));
+    else if (hasTerm(((p.notes || "") + " " + (p.familyNotes || "") + " " + (p.raw || "") + " " + (p.memories || []).map((m) => m.text).join(" ")).toLowerCase())) add(p, t("ask_memory"));
   });
 
   if (found.length) {
-    const answer =
-      t("ask_found", { n: found.length }) + " — " +
-      found.slice(0, 4).map((p) => "<b>" + esc(p.name) + "</b> (" + esc(p.company) + ")").join(", ") +
-      (found.length > 4 ? ", …" : "") + ".";
     sources = found.slice(0, 6).map((p) => p.id);
-    return { answer, sources, why };
+    return { answer: t("ask_found", { n: found.length }), sources, why };
   }
 
   return { answer: t("ask_none") + " " + t("ask_try"), sources: [], why: {} };
@@ -1291,7 +1268,7 @@ function buildRefresh(p) {
       { k: t("refresh_open_topic"), v: (p.followUp.what && p.followUp.what !== "—" ? p.followUp.what : (p.promises && p.promises[0]) || "Just catch up") }
     ],
     points: [
-      "Ask how things changed since " + p.last.when + ".",
+      "Check how things changed since " + p.last.when + ".",
       "Pick up on: " + (p.memories[0] ? p.memories[0].text : "their work at " + p.company) + ".",
       (p.followUp.what && p.followUp.what !== "—" ? "Drive forward: " + p.followUp.what + "." : "Note what's next — I'll file it.")
     ]
@@ -2663,8 +2640,8 @@ function init() {
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeCapture(); });
   // ask
   $("#ask-bar-home").addEventListener("click", () => { go("ask"); setTimeout(() => $("#ask-input").focus(), 60); });
-  $("#ask-submit").addEventListener("click", () => runAsk($("#ask-input").value.trim() || QUICK_QUESTIONS[0]));
-  $("#ask-input").addEventListener("keydown", (e) => { if (e.key === "Enter") runAsk($("#ask-input").value.trim() || QUICK_QUESTIONS[0]); });
+  $("#ask-submit").addEventListener("click", () => runAsk($("#ask-input").value.trim()));
+  $("#ask-input").addEventListener("keydown", (e) => { if (e.key === "Enter") runAsk($("#ask-input").value.trim()); });
   $("#ask-back-home").addEventListener("click", () => go("home"));
   $("#care-back-home").addEventListener("click", () => go("home"));
 

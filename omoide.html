@@ -1122,7 +1122,7 @@ body.view-mobile .location-map { height: 340px; }
 
         <div class="ask-bar" id="ask-bar-home">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          <span class="placeholder" data-i18n="home_ask_ph">Ask your network…</span>
+          <span class="placeholder" data-i18n="home_ask_ph">Search people, companies, notes…</span>
         </div>
 
         <div id="home-care"></div>
@@ -1156,21 +1156,21 @@ body.view-mobile .location-map { height: 340px; }
         <div id="care-list"></div>
       </section>
 
-      <!-- ASK -->
+      <!-- SEARCH -->
       <section class="screen" id="screen-ask">
         <div class="screen-head ask-hero">
           <button class="btn ghost" id="ask-back-home" style="margin-bottom:12px">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
             <span data-i18n="btn_back">Back</span>
           </button>
-          <div class="kicker" data-i18n="ask_kicker">Search / Ask my network</div>
-          <h1 class="screen-title" data-i18n="ask_title">Ask your network anything.</h1>
-          <p class="screen-sub" data-i18n="ask_sub">No exact names needed — search structured data and memories together.</p>
+          <div class="kicker" data-i18n="ask_kicker">Network search</div>
+          <h1 class="screen-title" data-i18n="ask_title">Search your network.</h1>
+          <p class="screen-sub" data-i18n="ask_sub">Find people by name, company, city, topic, notes, or memories.</p>
         </div>
         <div class="ask-input-wrap">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          <input id="ask-input" data-i18n-ph="ask_ph" placeholder="Who lives in Yokohama?" />
-          <button class="btn accent small" id="ask-submit" data-i18n="ask_btn">Ask</button>
+          <input id="ask-input" data-i18n-ph="ask_ph" placeholder="Search name, company, city, topic…" />
+          <button class="btn accent small" id="ask-submit" data-i18n="ask_btn">Search</button>
         </div>
         <div class="q-chips" id="q-chips"></div>
         <div id="ask-results"></div>
@@ -1802,13 +1802,13 @@ function homeMemories() {
    SEARCH (§15)
    ============================================================ */
 const QUICK_QUESTIONS = [
-  "Who works in AI?",
-  "Who lives in Ho Chi Minh?",
-  "Which investors do I know?",
-  "Who works at ABC Logistics?",
-  "What do I know about them?",
-  "Who in my network has children?",
-  "Who did I meet recently?"
+  "AI",
+  "Ho Chi Minh",
+  "Investor",
+  "ABC Logistics",
+  "Children",
+  "Golf",
+  "Vietnam"
 ];
 
 /* ============================================================
@@ -2711,7 +2711,7 @@ const STR = {
     you: "You",
     you_sub: "Private memory · offline-first",
 
-    nav_today: "Today", nav_people: "People", nav_care: "Care", nav_ask: "Ask", nav_map: "Map", nav_settings: "Settings",
+    nav_today: "Today", nav_people: "People", nav_care: "Care", nav_ask: "Search", nav_map: "Map", nav_settings: "Settings",
 
     btn_back: "Back", btn_add_info: "Add Information", btn_add_person: "Add person", btn_memory: "Memory",
     btn_edit: "Edit", btn_followup: "Follow-up", btn_refresh: "Quick Refresh", btn_connections: "Connections",
@@ -2720,14 +2720,14 @@ const STR = {
     btn_change: "Change", btn_remove: "Remove", btn_add_photo: "Add photo", btn_activate: "Activate",
     btn_merge: "Merge", btn_open: "Open", btn_export: "Export", btn_delete: "Delete",
     btn_archive_contact: "Archive contact", btn_restore_contact: "Restore contact", btn_delete_contact: "Delete contact",
-    capture_memory: "＋ Capture a memory", ask_btn: "Ask", btn_message_send: "Send message", btn_do_it: "Do it now",
+    capture_memory: "＋ Capture a memory", ask_btn: "Search", btn_message_send: "Send message", btn_do_it: "Do it now",
     btn_snooze_7d: "Snooze 7d", btn_dismiss: "Dismiss", btn_ready: "Ready — 30 sec ahead",
     btn_open_profile: "Open profile", btn_update_after: "Update after",
 
     home_title: "Today",
     home_sub: "Meet → Capture → Remember → Retrieve → Reconnect.",
     home_sub_dynamic: "{n} people in your network — here's who needs you today.",
-    home_ask_ph: "Ask your network…",
+    home_ask_ph: "Search people, companies, notes…",
     sec_care: "Relationship care", sec_upcoming: "Upcoming", sec_dates: "Upcoming birthdays & dates",
     sec_recent: "Recent people", sec_memories: "Recent memories",
     care_action_message: "Message", care_action_reconnect: "Reconnect", care_action_do: "Do it",
@@ -2746,11 +2746,11 @@ const STR = {
     reason_birthday: "Birthday soon", reason_inactive: "Rhythm missed",
     care_rhythm: "Rhythm: ", care_empty: "All caught up 🎉",
 
-    ask_kicker: "Search / Ask my network", ask_title: "Ask your network anything.",
-    ask_sub: "No exact names needed — search structured data and memories together.",
-    ask_ph: "Who lives in Yokohama?",
+    ask_kicker: "Network search", ask_title: "Search your network.",
+    ask_sub: "Find people by name, company, city, topic, notes, or memories.",
+    ask_ph: "Search name, company, city, topic…",
     search_name: "Search",
-    search_example: "matches structured data + memories",
+    search_example: "Local search across contacts, notes, and memories",
     search_answered: "{n} results",
 
     map_kicker: "Exploration", map_title: "Network map",
@@ -2962,13 +2962,13 @@ const STR = {
     text_new_person: "New person — this memory will create a profile",
     btn_type_instead: "Type instead",
     voice_unsupported: "Voice not supported here — switch to text.",
-    ask_hint: "Ask anything about your network — who lives where, who you met where, what you promised whom.",
-    ask_no_people: "Add people first — then ask me anything about them.",
-    ask_asked_about: "asked about this person",
+    ask_hint: "Search by name, company, city, role, topic, tag, note, or memory.",
+    ask_no_people: "Add people first — then search your network.",
+    ask_asked_about: "name",
     ask_where: "location", ask_company: "company", ask_industry: "work",
-    ask_interest: "interest / tag", ask_memory: "memory",
-    ask_found: "{n} people match",
-    ask_none: "No one matches that.",
+    ask_interest: "interest / tag", ask_memory: "note / memory", ask_relationship: "relationship",
+    ask_found: "{n} matches",
+    ask_none: "No matches.",
     ask_try: "Try a name, city, company, or topic.",
     people_none: "No people yet",
 
@@ -3518,7 +3518,7 @@ function renderCare() {
 }
 
 /* ============================================================
-   SEARCH / ASK
+   SEARCH
    ============================================================ */
 function renderAsk() {
   $("#q-chips").innerHTML = QUICK_QUESTIONS.map((q) => '<button class="q-chip">' + esc(q) + "</button>").join("");
@@ -3543,37 +3543,16 @@ function sourceRow(id, why, src) {
 }
 
 function analyze(q) {
-  const s = q.toLowerCase();
+  const s = String(q || "").trim().toLowerCase();
   const people = activePeople();
   if (!people.length) return { answer: t("ask_no_people"), sources: [], why: {} };
+  if (!s) return { answer: t("ask_hint"), sources: [], why: {} };
 
   const terms = s.split(/\s+/).filter((w) => w.length > 2);
   const hasTerm = (hay) => (terms.length ? terms.some((w) => hay.includes(w)) : hay.includes(s));
 
-  // Hỏi về một người cụ thể (tên xuất hiện trong câu hỏi)
-  const person = people.find(
-    (p) =>
-      s.includes(p.name.split(" ")[0].toLowerCase()) ||
-      (p.nameJa && s.includes(p.nameJa)) ||
-      (p.name.split(" ").length > 1 && s.includes(p.name.toLowerCase())),
-  );
-
   let sources = [];
   const why = {};
-
-  if (person) {
-    const last = person.last || {};
-    const answer =
-      "<b>" + esc(person.name) + "</b> — " + esc(person.title) + " at " + esc(person.company) + ". " + esc(person.about) +
-      (person.children ? " Family: " + esc(person.children) + "." : "") +
-      (person.followUp && person.followUp.what && person.followUp.what !== "—" ? " Follow-up: " + esc(person.followUp.what) + "." : "") +
-      (s.includes("discuss") || s.includes("talk") || s.includes("last")
-        ? " Last time (" + esc(last.when || "—") + ", " + esc(last.place || "") + "): “" + esc(last.summary || "") + "”"
-        : "");
-    sources = [person.id];
-    why[person.id] = t("ask_asked_about");
-    return { answer, sources, why };
-  }
 
   // Tìm theo từ khoá trên nhiều field
   const found = [];
@@ -3584,20 +3563,18 @@ function analyze(q) {
     }
   };
   people.forEach((p) => {
-    if (hasTerm((p.currentCity || "").toLowerCase() + " " + (p.country || "").toLowerCase())) add(p, t("ask_where"));
+    if (hasTerm(((p.name || "") + " " + (p.nameJa || "") + " " + (p.nickname || "")).toLowerCase())) add(p, t("ask_asked_about"));
+    else if (hasTerm((p.currentCity || "").toLowerCase() + " " + (p.country || "").toLowerCase())) add(p, t("ask_where"));
     else if (hasTerm((p.company || "").toLowerCase())) add(p, t("ask_company"));
-    else if (hasTerm((p.industry || "").toLowerCase() + " " + (p.title || "").toLowerCase())) add(p, t("ask_industry"));
-    else if (hasTerm(((p.interests || []).join(" ") + " " + (p.hobbies || []).join(" ") + " " + (p.tags || []).join(" ")).toLowerCase())) add(p, t("ask_interest"));
-    else if (hasTerm(((p.raw || "") + " " + (p.memories || []).map((m) => m.text).join(" ")).toLowerCase())) add(p, t("ask_memory"));
+    else if (hasTerm(((p.industry || "") + " " + (p.title || "") + " " + (p.department || "") + " " + (p.workNotes || "")).toLowerCase())) add(p, t("ask_industry"));
+    else if (hasTerm(((p.relationshipType || "") + " " + (p.firstMet && p.firstMet.how || "") + " " + (p.relationshipNotes || "")).toLowerCase())) add(p, t("ask_relationship"));
+    else if (hasTerm(((p.interests || []).join(" ") + " " + (p.hobbies || []).join(" ") + " " + (p.tags || []).join(" ") + " " + (p.interestsNotes || "")).toLowerCase())) add(p, t("ask_interest"));
+    else if (hasTerm(((p.notes || "") + " " + (p.familyNotes || "") + " " + (p.raw || "") + " " + (p.memories || []).map((m) => m.text).join(" ")).toLowerCase())) add(p, t("ask_memory"));
   });
 
   if (found.length) {
-    const answer =
-      t("ask_found", { n: found.length }) + " — " +
-      found.slice(0, 4).map((p) => "<b>" + esc(p.name) + "</b> (" + esc(p.company) + ")").join(", ") +
-      (found.length > 4 ? ", …" : "") + ".";
     sources = found.slice(0, 6).map((p) => p.id);
-    return { answer, sources, why };
+    return { answer: t("ask_found", { n: found.length }), sources, why };
   }
 
   return { answer: t("ask_none") + " " + t("ask_try"), sources: [], why: {} };
@@ -4327,7 +4304,7 @@ function buildRefresh(p) {
       { k: t("refresh_open_topic"), v: (p.followUp.what && p.followUp.what !== "—" ? p.followUp.what : (p.promises && p.promises[0]) || "Just catch up") }
     ],
     points: [
-      "Ask how things changed since " + p.last.when + ".",
+      "Check how things changed since " + p.last.when + ".",
       "Pick up on: " + (p.memories[0] ? p.memories[0].text : "their work at " + p.company) + ".",
       (p.followUp.what && p.followUp.what !== "—" ? "Drive forward: " + p.followUp.what + "." : "Note what's next — I'll file it.")
     ]
@@ -5699,8 +5676,8 @@ function init() {
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeCapture(); });
   // ask
   $("#ask-bar-home").addEventListener("click", () => { go("ask"); setTimeout(() => $("#ask-input").focus(), 60); });
-  $("#ask-submit").addEventListener("click", () => runAsk($("#ask-input").value.trim() || QUICK_QUESTIONS[0]));
-  $("#ask-input").addEventListener("keydown", (e) => { if (e.key === "Enter") runAsk($("#ask-input").value.trim() || QUICK_QUESTIONS[0]); });
+  $("#ask-submit").addEventListener("click", () => runAsk($("#ask-input").value.trim()));
+  $("#ask-input").addEventListener("keydown", (e) => { if (e.key === "Enter") runAsk($("#ask-input").value.trim()); });
   $("#ask-back-home").addEventListener("click", () => go("home"));
   $("#care-back-home").addEventListener("click", () => go("home"));
 
