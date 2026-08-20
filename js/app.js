@@ -95,11 +95,16 @@ function dateKey(s) {
    ============================================================ */
 let view = "mobile";
 
+function isCompactViewport() {
+  return typeof window !== "undefined" && window.matchMedia && window.matchMedia("(max-width: 560px)").matches;
+}
+
 function setView(v) {
-  view = v === "web" ? "web" : "mobile";
+  const requested = v === "web" ? "web" : "mobile";
+  view = isCompactViewport() ? "mobile" : requested;
   document.body.classList.toggle("view-mobile", view === "mobile");
   document.body.classList.toggle("view-web", view === "web");
-  try { localStorage.setItem("nm-view", view); } catch (e) {}
+  try { if (!isCompactViewport() || requested === "mobile") localStorage.setItem("nm-view", requested); } catch (e) {}
   renderDemoPanel();
 }
 
