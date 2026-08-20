@@ -1,0 +1,25 @@
+# deps
+node_modules/
+
+# env (local secrets)
+.env.local
+.env.*.local
+
+# firebase config cá nhân (bản thật nằm ở js/firebase-config.js — có example kèm theo)
+js/firebase-config.js
+
+# build
+dist/
+app/dist/
+
+# firebase emulator
+.emulator-data/
+.firebase/
+
+# logs / os
+*.log
+.DS_Store
+
+# editor
+.vscode/
+.idea/

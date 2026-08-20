@@ -1,0 +1,17 @@
+{
+  "name": "Network Management",
+  "short_name": "NM",
+  "description": "Private memory for your relationships — remembered, managed, offline-first.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f5f2",
+  "theme_color": "#e0452c",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+rules_version = '2';
+
+// Deny-by-default: mỗi nhánh phải khai tường minh.
+// App cá nhân 1 người dùng: mỗi user chỉ đọc/ghi được nhánh `users/{uid}/**` của chính mình.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    // Mọi collection khác: không khai → bị từ chối. Đúng ý muốn.
+  }
+}

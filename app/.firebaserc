@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "nm-app-dev",
+    "dev": "nm-app-dev",
+    "prod": "nm-app-prod"
+  }
+}
