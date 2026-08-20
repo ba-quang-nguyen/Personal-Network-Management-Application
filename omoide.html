@@ -769,6 +769,89 @@ textarea.story { min-height: 110px; resize: vertical; }
 .field-input::placeholder { color: var(--ink-3); font-size: 12px; }
 .field.full { grid-column: 1 / -1; }
 
+/* ---------- quick add: progressive manual form ---------- */
+.quick-form { grid-template-columns: 1fr; gap: 13px; }
+.quick-form .field-input, .accordion-body .field-input { min-height: 44px; }
+.manual-intro {
+  display: flex; flex-direction: column; gap: 3px; margin-bottom: 15px;
+  padding: 11px 13px; border-radius: 12px; background: var(--accent-soft); color: var(--accent);
+}
+.manual-intro b { font-size: 13px; }
+.manual-intro span { font-size: 11.5px; color: var(--ink-2); line-height: 1.45; }
+.manual-review-note {
+  display: flex; align-items: center; gap: 7px; color: var(--ok); background: var(--ok-soft);
+  padding: 9px 12px; border-radius: 10px; margin-bottom: 12px; font-size: 12.5px;
+}
+.field-help-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: 5px; color: var(--ink-3); font-size: 10.5px; line-height: 1.4;
+}
+.field-inline-action {
+  min-height: 44px; margin: -14px 0; display: inline-flex; align-items: center;
+  color: var(--accent); font-weight: 700; font-size: 10.5px; flex-shrink: 0;
+}
+.advanced-toggle {
+  width: 100%; min-height: 46px; margin-top: 15px; padding: 11px 13px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border: 1.5px solid var(--line-strong); border-radius: 12px; background: var(--surface);
+  color: var(--ink-2); font-size: 12.5px; font-weight: 700; text-align: left;
+}
+.advanced-toggle > span:first-child { display: inline-flex; align-items: center; gap: 7px; }
+.advanced-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.advanced-toggle[aria-expanded="true"] > span:first-child svg { transform: rotate(45deg); }
+.accordion-chevron { display: inline-flex; transition: transform 0.16s ease; }
+[aria-expanded="true"] > .accordion-chevron { transform: rotate(90deg); }
+.advanced-panel { margin-top: 9px; border: 1.5px solid var(--line); border-radius: 14px; overflow: hidden; }
+.manual-accordion + .manual-accordion { border-top: 1px solid var(--line); }
+.accordion-trigger {
+  width: 100%; min-height: 48px; padding: 11px 13px; display: flex; align-items: center;
+  justify-content: space-between; gap: 12px; color: var(--ink); background: var(--surface); text-align: left;
+}
+.accordion-trigger > span:first-child { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.accordion-trigger b { font-size: 12.5px; }
+.accordion-trigger:hover { background: var(--surface-2); }
+.accordion-count { color: var(--ink-3); font-size: 10.5px; font-weight: 600; white-space: nowrap; }
+.accordion-body { padding: 3px 13px 14px; background: var(--surface); }
+.accordion-body.form-grid { grid-template-columns: 1fr; gap: 11px; }
+.chip-input {
+  min-height: 44px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  width: 100%; padding: 6px 9px; background: var(--surface); border: 1.5px solid var(--line-strong);
+  border-radius: 10px;
+}
+.chip-input:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.chip-list { display: contents; }
+.input-chip {
+  display: inline-flex; align-items: center; gap: 5px; max-width: 100%;
+  padding: 5px 7px 5px 9px; border-radius: 999px; background: var(--surface-2);
+  color: var(--ink-2); font-size: 11px; font-weight: 600;
+}
+.input-chip > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.input-chip button { position: relative; width: 22px; height: 22px; display: grid; place-items: center; color: var(--ink-3); border-radius: 50%; }
+.input-chip button::before { content: ""; position: absolute; inset: -11px; }
+.input-chip button:hover { color: var(--ink); background: var(--line); }
+.chip-remove-icon { display: inline-flex; transform: rotate(45deg); }
+.chip-entry { flex: 1 1 140px; min-width: 110px; min-height: 30px; border: none; outline: none; background: none; color: var(--ink); font-size: 13px; }
+.chip-entry::placeholder { color: var(--ink-3); }
+.duplicate-hint {
+  margin-top: 11px; padding: 9px 11px; display: flex; align-items: center; gap: 7px;
+  border-radius: 10px; background: var(--warn-soft); color: var(--warn); font-size: 11.5px;
+}
+.duplicate-hint[hidden] { display: none; }
+.duplicate-hint span { flex: 1; min-width: 0; }
+.duplicate-hint button { color: inherit; font-weight: 800; white-space: nowrap; }
+.manual-optional-note { margin-top: 12px; color: var(--ink-3); font-size: 11.5px; }
+.manual-sticky-foot {
+  position: sticky; bottom: -26px; z-index: 4; margin: 16px -26px -26px; padding: 12px 26px calc(16px + env(safe-area-inset-bottom));
+  display: flex; justify-content: flex-end; gap: 9px; border-top: 1px solid var(--line); background: var(--surface);
+}
+.manual-sticky-foot .btn { min-height: 44px; }
+.manual-sticky-foot .btn.primary { min-width: 132px; }
+.advanced-toggle:focus-visible, .accordion-trigger:focus-visible, .field-inline-action:focus-visible,
+.input-chip button:focus-visible, .circle-pick:focus-visible, .manual-sticky-foot .btn:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px; box-shadow: 0 0 0 4px var(--accent-soft);
+}
+.btn:disabled { cursor: not-allowed; opacity: 0.45; transform: none; }
+
 .modal-foot { display: flex; justify-content: flex-end; gap: 9px; margin-top: 18px; flex-wrap: wrap; }
 .progress-step { display: flex; align-items: center; gap: 10px; color: var(--ink-2); font-size: 13px; padding: 8px 0; }
 .progress-step .sp {
@@ -852,6 +935,7 @@ textarea.story { min-height: 110px; resize: vertical; }
   textarea.story,
   .field-input,
   .field-textarea,
+  .chip-entry,
   .search-input input,
   .ask-input-wrap input,
   .focus-bar .fb-input input,
@@ -2340,14 +2424,38 @@ const circleOf = (id) => CIRCLES.find((c) => c.id === id);
    HOME / CARE — tính động từ PEOPLE (data thật của người dùng)
    ============================================================ */
 const MONTHS_MAP = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+function validMonthDay(month, day) {
+  if (!(month >= 1 && month <= 12 && day >= 1 && day <= 31)) return null;
+  const check = new Date(2000, month - 1, day);
+  return check.getMonth() === month - 1 && check.getDate() === day ? { month, day } : null;
+}
 function parseMonthDay(value) {
-  const m = /([A-Za-z]{3})\s*(\d{1,2})/.exec(String(value || ""));
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+
+  // ISO full date: year is optional knowledge for birthday reminders.
+  let m = /(?:^|\D)(\d{4})-(\d{1,2})-(\d{1,2})(?:\D|$)/.exec(raw);
+  if (m) return validMonthDay(parseInt(m[2], 10), parseInt(m[3], 10));
+
+  // Japanese: 11月22日.
+  m = /(\d{1,2})\s*月\s*(\d{1,2})\s*日/.exec(raw);
+  if (m) return validMonthDay(parseInt(m[1], 10), parseInt(m[2], 10));
+
+  // Vietnamese natural forms: 22 tháng 11 / tháng 11 ngày 22.
+  m = /(?:ngày\s*)?(\d{1,2})\s*(?:tháng|thg)\s*(\d{1,2})/i.exec(raw);
+  if (m) return validMonthDay(parseInt(m[2], 10), parseInt(m[1], 10));
+  m = /(?:tháng|thg)\s*(\d{1,2})\D+(?:ngày\s*)?(\d{1,2})/i.exec(raw);
+  if (m) return validMonthDay(parseInt(m[1], 10), parseInt(m[2], 10));
+
+  // Numeric input follows the app's Vietnamese-first day/month convention.
+  m = /(?:^|\D)(\d{1,2})\s*[\/.]\s*(\d{1,2})(?:\s*[\/.]\s*\d{2,4})?(?:\D|$)/.exec(raw);
+  if (m) return validMonthDay(parseInt(m[2], 10), parseInt(m[1], 10));
+
+  // Existing sample/import format: Nov 22.
+  m = /([A-Za-z]{3})\s*(\d{1,2})/.exec(raw);
   if (!m) return null;
   const month = MONTHS_MAP[(m[1][0] || "").toUpperCase() + (m[1] || "").slice(1).toLowerCase()];
-  if (!month) return null;
-  const day = parseInt(m[2], 10);
-  if (!(day >= 1 && day <= 31)) return null;
-  return { month, day };
+  return month ? validMonthDay(month, parseInt(m[2], 10)) : null;
 }
 function daysUntilBirthday(value, today) {
   const parsed = parseMonthDay(value);
@@ -2653,59 +2761,166 @@ const ADDINFO_DEMO = {
 const TEXT_DEMO =
   "I met Tanaka-san from ABC today. He is responsible for logistics DX. He is interested in warehouse robots and is considering a PoC next year. We agreed to meet again in October.";
 
-/* ---------- manual entry form definition (§7.5, §9) ---------- */
+/* ---------- quick/manual entry form definition (§7.5, §9) ---------- */
 const MANUAL_SECTIONS = [
   { key: "basic", title: "Basic information", fields: [
-    { k: "name", label: "Full name", type: "text", req: true },
-    { k: "kana", label: "Kana", type: "text" },
-    { k: "nickname", label: "Nickname", type: "text" },
-    { k: "gender", label: "Gender", type: "select", options: ["", "Male", "Female", "Other"] },
-    { k: "birthday", label: "Birthday", type: "text", ph: "e.g. Nov 22" },
-    { k: "nationality", label: "Nationality", type: "text" },
-    { k: "languages", label: "Languages", type: "text", ph: "comma separated" },
-    { k: "currentCity", label: "Current city", type: "text" },
-    { k: "hometown", label: "Hometown", type: "text" },
-    { k: "country", label: "Country of residence", type: "text" },
-    { k: "email", label: "Email", type: "text" },
-    { k: "phone", label: "Phone", type: "text" }
+    { k: "name", label: "Full name", control: "text", tier: "quick", req: true, autocomplete: "name" },
+    { k: "kana", label: "Kana", control: "text", autocomplete: "off" },
+    { k: "nickname", label: "Nickname", control: "text", autocomplete: "nickname" },
+    { k: "gender", label: "Gender", control: "select", options: ["", "Male", "Female", "Other"] },
+    { k: "birthday", label: "Birthday", control: "text", tier: "quick", phKey: "birthday_flexible_ph", autocomplete: "bday" },
+    { k: "nationality", label: "Nationality", control: "text", autocomplete: "country-name" },
+    { k: "languages", label: "Languages", control: "chips" },
+    { k: "currentCity", label: "Current city", control: "location", tier: "quick", phKey: "location_ph", autocomplete: "address-level2" },
+    { k: "hometown", label: "Hometown", control: "text", autocomplete: "off" },
+    { k: "country", label: "Country of residence", control: "text", autocomplete: "country-name" },
+    { k: "email", label: "Email", control: "email", autocomplete: "email", inputmode: "email" },
+    { k: "phone", label: "Phone", control: "tel", autocomplete: "tel", inputmode: "tel" }
   ]},
   { key: "work", title: "Professional information", fields: [
-    { k: "company", label: "Company", type: "text" },
-    { k: "department", label: "Department", type: "text" },
-    { k: "title", label: "Position", type: "text" },
-    { k: "industry", label: "Industry", type: "text" },
-    { k: "profession", label: "Profession", type: "text" },
-    { k: "expertise", label: "Expertise", type: "text", ph: "comma separated" },
-    { k: "previousCompanies", label: "Previous companies", type: "text" },
-    { k: "skills", label: "Skills", type: "text" },
-    { k: "businessTopics", label: "Business topics", type: "text" }
+    { k: "company", label: "Company", control: "text", tier: "quick", autocomplete: "organization" },
+    { k: "department", label: "Department", control: "text", autocomplete: "organization-title" },
+    { k: "title", label: "Position", control: "text", autocomplete: "organization-title" },
+    { k: "industry", label: "Industry", control: "text" },
+    { k: "profession", label: "Profession", control: "text" },
+    { k: "expertise", label: "Expertise", control: "chips" },
+    { k: "previousCompanies", label: "Previous companies", control: "chips" },
+    { k: "skills", label: "Skills", control: "chips" },
+    { k: "businessTopics", label: "Business topics", control: "chips" }
   ]},
   { key: "personal", title: "Personal information", fields: [
-    { k: "spouse", label: "Spouse / partner", type: "text" },
-    { k: "children", label: "Children", type: "text" },
-    { k: "familyNotes", label: "Family notes", type: "text" },
-    { k: "hobbies", label: "Hobbies", type: "text" },
-    { k: "sports", label: "Sports", type: "text" },
-    { k: "favoriteFood", label: "Favorite food", type: "text" },
-    { k: "favoriteDrink", label: "Favorite drink", type: "text" },
-    { k: "schools", label: "Schools / university", type: "text" },
-    { k: "pets", label: "Pets", type: "text" }
+    { k: "spouse", label: "Spouse / partner", control: "text" },
+    { k: "children", label: "Children", control: "text" },
+    { k: "familyNotes", label: "Family notes", control: "text" },
+    { k: "hobbies", label: "Hobbies", control: "chips" },
+    { k: "sports", label: "Sports", control: "chips" },
+    { k: "favoriteFood", label: "Favorite food", control: "text" },
+    { k: "favoriteDrink", label: "Favorite drink", control: "text" },
+    { k: "schools", label: "Schools / university", control: "text" },
+    { k: "pets", label: "Pets", control: "text" }
   ]},
   { key: "relationship", title: "Relationship information", fields: [
-    { k: "relationshipType", label: "Relationship type", type: "select", options: ["", "Key contact", "Client", "Partner", "Investor", "Mentor", "Friend", "Collaborator", "Acquaintance"] },
-    { k: "strength", label: "Relationship strength", type: "select", options: ["", "close", "important", "normal", "weak"] },
-    { k: "frequency", label: "Contact rhythm", type: "select", options: ["", "monthly", "2months", "quarterly", "biannual", "yearly", "custom"] },
-    { k: "firstMetDate", label: "First met — date", type: "text" },
-    { k: "firstMetPlace", label: "First met — place", type: "text" },
-    { k: "introducedBy", label: "Introduced by", type: "text" },
-    { k: "helpGiven", label: "What I've helped with", type: "text" },
-    { k: "helpReceived", label: "What they've helped me with", type: "text" },
-    { k: "promises", label: "Promises / follow-ups", type: "text" }
+    { k: "relationshipType", label: "Relationship type", control: "select", tier: "quick", options: ["", "Key contact", "Client", "Partner", "Investor", "Mentor", "Friend", "Collaborator", "Acquaintance"] },
+    { k: "strength", label: "Relationship strength", control: "select", options: ["", "close", "important", "normal", "weak"] },
+    { k: "frequency", label: "Contact rhythm", control: "select", options: ["", "monthly", "2months", "quarterly", "biannual", "yearly", "custom"] },
+    { k: "firstMetDate", label: "First met — date", control: "text" },
+    { k: "firstMetPlace", label: "First met — place", control: "text" },
+    { k: "introducedBy", label: "Introduced by", control: "text" },
+    { k: "helpGiven", label: "What I've helped with", control: "chips" },
+    { k: "helpReceived", label: "What they've helped me with", control: "chips" },
+    { k: "promises", label: "Promises / follow-ups", control: "chips" }
   ]},
   { key: "notes", title: "Free notes", fields: [
-    { k: "notes", label: "Anything else", type: "textarea", ph: "Unstructured info — AI will file it in the right place later." }
+    { k: "notes", label: "Anything else", control: "textarea", tier: "quick", phKey: "quick_note_ph" }
   ]}
 ];
+
+const MANUAL_FIELDS = MANUAL_SECTIONS.flatMap((sec) =>
+  sec.fields.map((field) => Object.assign({ sec: sec.key, tier: "advanced", control: "text" }, field)),
+);
+const MANUAL_FIELD_MAP = Object.fromEntries(MANUAL_FIELDS.map((field) => [field.sec + "." + field.k, field]));
+const MANUAL_QUICK_FIELDS = [
+  "basic.name",
+  "relationship.relationshipType",
+  "work.company",
+  "basic.currentCity",
+  "basic.birthday",
+  "notes.notes",
+];
+const MANUAL_ARRAY_FIELDS = new Set([
+  "languages", "expertise", "skills", "hobbies", "sports", "businessTopics", "previousCompanies",
+  "careerHistory", "travelInterests", "interests", "helpGiven", "helpReceived", "promises",
+]);
+
+function manualHasValue(value) {
+  if (Array.isArray(value)) return value.length > 0;
+  const clean = String(value == null ? "" : value).trim();
+  return !!clean && clean !== "—";
+}
+
+function manualArrayValue(value) {
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  return String(value || "").split(/[,，]/).map((item) => item.trim()).filter(Boolean);
+}
+
+function createManualDraft(person, prefill, review) {
+  const source = prefill || {};
+  const draft = {};
+  MANUAL_FIELDS.forEach((field) => {
+    const key = field.sec + "." + field.k;
+    let value = "";
+    if (field.k === "notes" && review) {
+      value = ""; // raw voice/text/card memory is stored separately
+    } else if (Object.prototype.hasOwnProperty.call(source, field.k) && manualHasValue(source[field.k])) {
+      value = source[field.k];
+    } else if (person) {
+      if (field.k === "kana") value = person.nameJa || "";
+      else if (field.k === "firstMetDate") value = person.firstMet && person.firstMet.date !== "—" ? person.firstMet.date || "" : "";
+      else if (field.k === "firstMetPlace") value = person.firstMet ? person.firstMet.place || "" : "";
+      else if (field.k !== "notes") value = person[field.k] == null ? "" : person[field.k];
+    }
+    if ((field.k === "company" || field.k === "title") && value === "—") value = "";
+    draft[key] = field.control === "chips" || MANUAL_ARRAY_FIELDS.has(field.k)
+      ? manualArrayValue(value)
+      : String(value == null ? "" : value);
+  });
+  return draft;
+}
+
+function manualDraftToFields(draft) {
+  const fields = {};
+  MANUAL_FIELDS.forEach((field) => {
+    const value = draft[field.sec + "." + field.k];
+    if (field.k === "notes" || field.k === "firstMetDate" || field.k === "firstMetPlace") return;
+    const target = field.k === "kana" ? "nameJa" : field.k;
+    fields[target] = field.control === "chips" || MANUAL_ARRAY_FIELDS.has(field.k)
+      ? manualArrayValue(value)
+      : String(value == null ? "" : value).trim();
+  });
+  return fields;
+}
+
+function locationSuggestions(people) {
+  const seen = new Set();
+  const out = [];
+  const add = (value) => {
+    const clean = String(value || "").trim();
+    const key = clean.toLocaleLowerCase();
+    if (!clean || clean === "—" || seen.has(key)) return;
+    seen.add(key);
+    out.push(clean);
+  };
+  (people || []).forEach((p) => add(p.currentCity));
+  Object.keys(CITY_GEO).forEach(add);
+  return out.slice(0, 30);
+}
+
+function normalizePersonName(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function findPotentialDuplicate(name, people, excludeId) {
+  const target = normalizePersonName(name);
+  if (target.length < 2) return null;
+  const targetParts = target.split(" ");
+  return (people || []).find((p) => {
+    if (!p || p.id === excludeId) return false;
+    const candidate = normalizePersonName(p.name);
+    if (!candidate) return false;
+    if (candidate === target) return true;
+    const parts = candidate.split(" ");
+    if (targetParts.length > 1 && parts.length > 1) {
+      return targetParts[0] === parts[0] && targetParts[targetParts.length - 1] === parts[parts.length - 1];
+    }
+    return target.length >= 5 && candidate.length >= 5 && (candidate.includes(target) || target.includes(candidate));
+  }) || null;
+}
 
 /* ============================================================
    Normalization — giờ do js/store.js (normalize) lo; mục này bỏ.
@@ -2719,6 +2934,11 @@ const CITY_GEO = {
   "Tokyo": [35.6762, 139.6503],
   "Yokohama": [35.4437, 139.638],
   "Osaka": [34.6937, 135.5023],
+  "Kyoto": [35.0116, 135.7681],
+  "Nagoya": [35.1815, 136.9066],
+  "Fukuoka": [33.5902, 130.4017],
+  "Hanoi": [21.0278, 105.8342],
+  "Da Nang": [16.0544, 108.2022],
   "Ho Chi Minh City": [10.8231, 106.6297],
   "Singapore": [1.3521, 103.8198]
 };
@@ -2727,7 +2947,8 @@ const CITY_GEO = {
 function personGeo(p) {
   let h = 0;
   for (const ch of String(p.id)) h = (h * 31 + ch.charCodeAt(0)) % 997;
-  const base = CITY_GEO[p.currentCity] || CITY_GEO["Tokyo"];
+  const base = CITY_GEO[p.currentCity];
+  if (!base) return null;
   const j = (h % 200) / 10000 - 0.01; // ±0.01° (~±1.1 km)
   return [base[0] + j, base[1] + j];
 }
@@ -3519,8 +3740,8 @@ const STR = {
     cap_add_info_desc: "Tell me anything new about this person — AI files it in the right sections.",
     cap_add_person_desc: "Four ways in — AI structures, you stay natural.",
     cap_every_mode_note: "Every mode stores raw + structured in parallel.",
-    mode_card: "Scan card", mode_voice: "Voice", mode_text: "Type", mode_manual: "Manual",
-    mode_card_sub: "名刺撮影", mode_voice_sub: "just talk", mode_text_sub: "a few lines", mode_manual_sub: "fill fields",
+    mode_card: "Scan card", mode_voice: "Voice", mode_text: "Type", mode_manual: "Quick add",
+    mode_card_sub: "名刺撮影", mode_voice_sub: "just talk", mode_text_sub: "a few lines", mode_manual_sub: "name is enough",
     voice_title: "Voice memo", voice_step_record: "1 · record",
     voice_hint_add: "Tell me what changed — new job, family, interests, promises…",
     voice_hint_new: "Talk like you're telling a friend — who, what, what's next",
@@ -3551,12 +3772,14 @@ const STR = {
     let_ai: "Let AI organize",
     prog_read: "Reading your note", prog_resolve_short: "Resolving the person", prog_extract_short: "Extracting facts & follow-up",
     here_understood: "Here's what I understood", edit_text: "Edit text",
-    manual_entry: "Manual entry", manual_step: "manual",
-    section_basic: "Basic information", section_work: "Professional information",
-    section_personal: "Personal information", section_relationship: "Relationship information", section_notes: "Free notes",
+    manual_entry: "Quick add", manual_step: "quick",
+    quick_intro: "Start with what you know", quick_intro_sub: "Only a name is required. Save now or add a few useful details.",
+    advanced_add: "Add details", advanced_hide: "Hide details", advanced_count: "{n} saved",
+    section_basic: "Contact & identity", section_work: "Work",
+    section_personal: "Personal", section_relationship: "Relationship care", section_notes: "Free notes", section_circles: "Circles",
     field_name: "Full name", field_kana: "Kana", field_nickname: "Nickname", field_gender: "Gender",
     field_birthday: "Birthday", field_nationality: "Nationality", field_languages: "Languages",
-    field_currentCity: "Current city", field_hometown: "Hometown", field_country: "Country of residence",
+    field_currentCity: "Current location", field_hometown: "Hometown", field_country: "Country of residence",
     field_email: "Email", field_phone: "Phone",
     field_company: "Company", field_department: "Department", field_title: "Position", field_industry: "Industry",
     field_profession: "Profession", field_expertise: "Expertise", field_previousCompanies: "Previous companies",
@@ -3568,9 +3791,15 @@ const STR = {
     field_frequency: "Contact rhythm", field_firstMetDate: "First met — date", field_firstMetPlace: "First met — place",
     field_introducedBy: "Introduced by", field_helpGiven: "What I've helped with",
     field_helpReceived: "What they've helped me with", field_promises: "Promises / follow-ups",
-    field_notes: "Anything else",
+    field_notes: "One thing to remember",
+    birthday_flexible_ph: "22/11, Nov 22, or around 1990", location_ph: "Choose or type a city",
+    quick_note_ph: "A context, interest, promise, or anything worth remembering",
+    location_hint: "Choose a suggestion or type another place.", location_other: "Type another",
+    chip_add_ph: "Type and press Enter", chip_remove: "Remove {value}",
+    duplicate_maybe: "{name} may already be in your network.", duplicate_open: "Open profile",
+    discard_changes: "Discard your unsaved changes?", name_required: "Add a name to create this person.",
     circles_optional: "Circles (optional)", circles_edit: "Circles",
-    all_fields_optional: "All fields optional — profiles grow over time.",
+    all_fields_optional: "Only the name is required — profiles grow over time.",
     save_changes: "Save changes",
     strength_close: "Close", strength_important: "Important", strength_normal: "Normal", strength_weak: "Weak",
     freq_monthly: "Monthly", freq_2months: "Every 2 months", freq_quarterly: "Quarterly",
@@ -3797,8 +4026,8 @@ const STR = {
     cap_add_info_desc: "Kể cho tôi bất cứ điều gì mới về người này — AI sẽ xếp vào đúng mục.",
     cap_add_person_desc: "Bốn cách nhập — AI cấu trúc, bạn cứ tự nhiên.",
     cap_every_mode_note: "Mọi chế độ đều lưu song song bản gốc + có cấu trúc.",
-    mode_card: "Quét danh thiếp", mode_voice: "Ghi âm", mode_text: "Gõ chữ", mode_manual: "Điền tay",
-    mode_card_sub: "chụp danh thiếp", mode_voice_sub: "cứ nói tự nhiên", mode_text_sub: "vài dòng", mode_manual_sub: "điền form",
+    mode_card: "Quét danh thiếp", mode_voice: "Ghi âm", mode_text: "Gõ chữ", mode_manual: "Tạo nhanh",
+    mode_card_sub: "chụp danh thiếp", mode_voice_sub: "cứ nói tự nhiên", mode_text_sub: "vài dòng", mode_manual_sub: "chỉ cần tên",
     voice_title: "Ghi âm", voice_step_record: "1 · ghi âm",
     voice_hint_add: "Kể điều gì đã thay đổi — việc mới, gia đình, sở thích, lời hứa…",
     voice_hint_new: "Nói như kể với bạn bè — ai, chuyện gì, bước tiếp theo",
@@ -3829,12 +4058,14 @@ const STR = {
     let_ai: "Để AI sắp xếp",
     prog_read: "Đang đọc ghi chú", prog_resolve_short: "Đang xác định người", prog_extract_short: "Đang trích xuất dữ kiện & theo dõi",
     here_understood: "Đây là điều tôi hiểu", edit_text: "Sửa văn bản",
-    manual_entry: "Điền tay", manual_step: "thủ công",
-    section_basic: "Thông tin cơ bản", section_work: "Thông tin nghề nghiệp",
-    section_personal: "Thông tin cá nhân", section_relationship: "Thông tin quan hệ", section_notes: "Ghi chú tự do",
+    manual_entry: "Tạo nhanh", manual_step: "nhập nhanh",
+    quick_intro: "Bắt đầu với điều bạn biết", quick_intro_sub: "Chỉ cần tên. Lưu ngay hoặc thêm vài thông tin hữu ích.",
+    advanced_add: "Thêm chi tiết", advanced_hide: "Ẩn chi tiết", advanced_count: "{n} mục",
+    section_basic: "Liên hệ & danh tính", section_work: "Công việc",
+    section_personal: "Cá nhân", section_relationship: "Chăm sóc quan hệ", section_notes: "Ghi chú tự do", section_circles: "Nhóm",
     field_name: "Họ tên", field_kana: "Kana", field_nickname: "Biệt danh", field_gender: "Giới tính",
     field_birthday: "Sinh nhật", field_nationality: "Quốc tịch", field_languages: "Ngôn ngữ",
-    field_currentCity: "Thành phố hiện tại", field_hometown: "Quê quán", field_country: "Quốc gia cư trú",
+    field_currentCity: "Nơi đang sống", field_hometown: "Quê quán", field_country: "Quốc gia cư trú",
     field_email: "Email", field_phone: "Điện thoại",
     field_company: "Công ty", field_department: "Phòng ban", field_title: "Chức vụ", field_industry: "Ngành",
     field_profession: "Nghề nghiệp", field_expertise: "Chuyên môn", field_previousCompanies: "Công ty cũ",
@@ -3846,9 +4077,15 @@ const STR = {
     field_frequency: "Nhịp liên lạc", field_firstMetDate: "Gặp lần đầu — ngày", field_firstMetPlace: "Gặp lần đầu — nơi",
     field_introducedBy: "Được giới thiệu bởi", field_helpGiven: "Tôi đã giúp gì",
     field_helpReceived: "Họ đã giúp tôi gì", field_promises: "Lời hứa / theo dõi",
-    field_notes: "Gì cũng được",
+    field_notes: "Một điều cần nhớ",
+    birthday_flexible_ph: "22/11, tháng 11, hoặc khoảng 1990", location_ph: "Chọn hoặc nhập thành phố",
+    quick_note_ph: "Bối cảnh gặp, sở thích, lời hứa hoặc điều đáng nhớ",
+    location_hint: "Chọn gợi ý hoặc nhập một nơi khác.", location_other: "Nhập nơi khác",
+    chip_add_ph: "Nhập rồi nhấn Enter", chip_remove: "Xoá {value}",
+    duplicate_maybe: "Có thể {name} đã có trong mạng lưới.", duplicate_open: "Mở hồ sơ",
+    discard_changes: "Bỏ các thay đổi chưa lưu?", name_required: "Nhập tên để tạo người này.",
     circles_optional: "Nhóm (tuỳ chọn)", circles_edit: "Nhóm",
-    all_fields_optional: "Mọi trường đều tuỳ chọn — hồ sơ lớn dần theo thời gian.",
+    all_fields_optional: "Chỉ tên là bắt buộc — hồ sơ sẽ lớn dần theo thời gian.",
     save_changes: "Lưu thay đổi",
     strength_close: "Thân thiết", strength_important: "Quan trọng", strength_normal: "Bình thường", strength_weak: "Xã giao",
     freq_monthly: "Hàng tháng", freq_2months: "2 tháng/lần", freq_quarterly: "Hàng quý",
@@ -4075,8 +4312,8 @@ const STR = {
     cap_add_info_desc: "この人についての新しい情報を話してください — AIが適切なセクションに整理します。",
     cap_add_person_desc: "4つの入力方法 — AIが構造化し、あなたは自然に。",
     cap_every_mode_note: "すべてのモードが元データと構造化データを並行保存します。",
-    mode_card: "名刺スキャン", mode_voice: "音声", mode_text: "テキスト", mode_manual: "手入力",
-    mode_card_sub: "名刺撮影", mode_voice_sub: "話すだけ", mode_text_sub: "数行入力", mode_manual_sub: "項目を入力",
+    mode_card: "名刺スキャン", mode_voice: "音声", mode_text: "テキスト", mode_manual: "クイック追加",
+    mode_card_sub: "名刺撮影", mode_voice_sub: "話すだけ", mode_text_sub: "数行入力", mode_manual_sub: "名前だけでOK",
     voice_title: "音声メモ", voice_step_record: "1 · 録音",
     voice_hint_add: "変わったことを話してください — 仕事、家族、関心、約束…",
     voice_hint_new: "友人に話すように — 誰が、何を、次に何を",
@@ -4107,12 +4344,14 @@ const STR = {
     let_ai: "AIに整理させる",
     prog_read: "メモを読み取り中", prog_resolve_short: "人物を特定中", prog_extract_short: "事実とフォローアップを抽出中",
     here_understood: "理解した内容", edit_text: "テキストを編集",
-    manual_entry: "手入力", manual_step: "手入力",
-    section_basic: "基本情報", section_work: "プロフィール情報",
-    section_personal: "個人情報", section_relationship: "関係情報", section_notes: "自由メモ",
+    manual_entry: "クイック追加", manual_step: "クイック",
+    quick_intro: "知っていることから始める", quick_intro_sub: "必須は名前だけです。今すぐ保存するか、役立つ情報を少し追加できます。",
+    advanced_add: "詳細を追加", advanced_hide: "詳細を隠す", advanced_count: "{n}件",
+    section_basic: "連絡先と基本情報", section_work: "仕事",
+    section_personal: "個人情報", section_relationship: "関係ケア", section_notes: "自由メモ", section_circles: "サークル",
     field_name: "氏名", field_kana: "カナ", field_nickname: "ニックネーム", field_gender: "性別",
     field_birthday: "誕生日", field_nationality: "国籍", field_languages: "言語",
-    field_currentCity: "現住都市", field_hometown: "出身地", field_country: "居住国",
+    field_currentCity: "現在地", field_hometown: "出身地", field_country: "居住国",
     field_email: "メール", field_phone: "電話",
     field_company: "会社", field_department: "部署", field_title: "役職", field_industry: "業界",
     field_profession: "職種", field_expertise: "専門分野", field_previousCompanies: "以前の会社",
@@ -4124,9 +4363,15 @@ const STR = {
     field_frequency: "連絡リズム", field_firstMetDate: "初めて会った日", field_firstMetPlace: "初めて会った場所",
     field_introducedBy: "紹介者", field_helpGiven: "私が助けたこと",
     field_helpReceived: "助けてもらったこと", field_promises: "約束 / フォローアップ",
-    field_notes: "その他",
+    field_notes: "覚えておきたいこと",
+    birthday_flexible_ph: "11/22、11月、または1990年頃", location_ph: "都市を選択または入力",
+    quick_note_ph: "出会った背景、関心、約束など覚えておきたいこと",
+    location_hint: "候補から選ぶか、別の場所を入力できます。", location_other: "別の場所を入力",
+    chip_add_ph: "入力してEnter", chip_remove: "{value}を削除",
+    duplicate_maybe: "{name}はすでに登録されている可能性があります。", duplicate_open: "プロフィールを開く",
+    discard_changes: "未保存の変更を破棄しますか？", name_required: "名前を入力してください。",
     circles_optional: "サークル（任意）", circles_edit: "サークル",
-    all_fields_optional: "すべて任意 — プロフィールは時間とともに育ちます。",
+    all_fields_optional: "必須は名前だけです — プロフィールは少しずつ育てられます。",
     save_changes: "変更を保存",
     strength_close: "親密", strength_important: "重要", strength_normal: "普通", strength_weak: "弱い",
     freq_monthly: "毎月", freq_2months: "2ヶ月ごと", freq_quarterly: "四半期ごと",
@@ -5092,7 +5337,9 @@ function renderLocationMap() {
 
   const markers = [];
   people.forEach((p) => {
-    const [lat, lng] = personGeo(p);
+    const geo = personGeo(p);
+    if (!geo) return;
+    const [lat, lng] = geo;
     const iconHtml = p.photo
       ? '<img src="' + esc(p.photo) + '" alt="" />'
       : '<span class="loc-initials">' + esc(p.initials || p.name.slice(0, 2)) + "</span>";
@@ -5761,20 +6008,375 @@ function renderSettings() {
 let cap = { mode: null, step: 0, timer: null, seconds: 0, open: false, personId: null, addInfo: false, edit: false };
 
 function openCapture(mode, opts = {}) {
-  cap = { mode: mode || null, step: 1, timer: null, seconds: 0, open: true, personId: opts.personId || null, addInfo: !!opts.addInfo, edit: !!opts.edit, text: "", photo: "", prefill: opts.prefill || {}, review: false };
+  cap = {
+    mode: mode || null, sourceMode: mode || null, step: 1, timer: null, seconds: 0, open: true,
+    personId: opts.personId || null, addInfo: !!opts.addInfo, edit: !!opts.edit, text: "", photo: "",
+    prefill: opts.prefill || {}, review: false, formDraft: null, initialFormDraft: "", formCircles: [],
+    advancedOpen: false, openSections: {}, dirty: false, nameFocused: false,
+  };
   $("#capture-modal").classList.add("open");
   renderCapture();
 }
 
-function closeCapture() {
+function closeCapture(force = false) {
+  if (force !== true && cap.mode === "manual" && cap.dirty && !confirm(t("discard_changes"))) return false;
   clearInterval(cap.timer);
   cap.open = false;
   $("#capture-modal").classList.remove("open");
+  return true;
 }
 
 function setCapTitle(txt, step) {
   $("#capture-title").textContent = txt;
   $("#capture-step").textContent = step || "";
+}
+
+function manualKey(field) {
+  return field.sec + "." + field.k;
+}
+
+function manualSnapshot() {
+  return JSON.stringify({ fields: cap.formDraft || {}, circles: cap.formCircles || [] });
+}
+
+function refreshManualDirty() {
+  cap.dirty = !!cap.initialFormDraft && manualSnapshot() !== cap.initialFormDraft;
+}
+
+function manualOptionLabel(field, value) {
+  if (!value) return "—";
+  if (field.k === "gender") return genderLabel(value);
+  if (field.k === "strength") return strengthLabel(value);
+  if (field.k === "frequency") return frequencyLabel(value);
+  if (field.k === "relationshipType") return relTypeLabel(value);
+  return value;
+}
+
+function manualFieldHTML(field) {
+  const key = manualKey(field);
+  const id = "f-" + field.sec + "-" + field.k;
+  const value = cap.formDraft[key];
+  const label = t("field_" + field.k) + (field.req ? ' <span class="req">*</span>' : "");
+  const placeholder = field.phKey ? t(field.phKey) : "";
+  const attrs =
+    (field.autocomplete ? ' autocomplete="' + esc(field.autocomplete) + '"' : "") +
+    (field.inputmode ? ' inputmode="' + esc(field.inputmode) + '"' : "") +
+    (field.req ? ' required aria-required="true"' : "");
+  let control = "";
+
+  if (field.control === "select") {
+    control = '<select class="field-input" id="' + id + '" data-manual-key="' + key + '">' +
+      field.options.map((option) => '<option value="' + esc(option) + '"' + (String(value || "") === option ? " selected" : "") + ">" + esc(manualOptionLabel(field, option)) + "</option>").join("") +
+      "</select>";
+  } else if (field.control === "textarea") {
+    control = '<textarea class="field-textarea" id="' + id + '" data-manual-key="' + key + '" placeholder="' + esc(placeholder) + '"' + attrs + ">" + esc(value || "") + "</textarea>";
+  } else if (field.control === "chips") {
+    const chips = Array.isArray(value) ? value : [];
+    control = '<div class="chip-input" data-chip-wrap="' + key + '">' +
+      '<div class="chip-list">' + chips.map((chip, index) =>
+        '<span class="input-chip"><span>' + esc(chip) + '</span><button type="button" data-chip-remove="' + key + '" data-chip-index="' + index + '" aria-label="' + esc(t("chip_remove", { value: chip })) + '"><span class="chip-remove-icon">' + icon("plus", 10) + "</span></button></span>"
+      ).join("") + "</div>" +
+      '<input class="chip-entry" id="' + id + '" data-chip-entry="' + key + '" placeholder="' + esc(t("chip_add_ph")) + '" autocomplete="off" />' +
+      "</div>";
+  } else if (field.control === "location") {
+    control = '<input class="field-input" id="' + id + '" data-manual-key="' + key + '" list="manual-location-list" placeholder="' + esc(placeholder) + '" value="' + esc(value || "") + '"' + attrs + " />" +
+      '<div class="field-help-row"><span>' + t("location_hint") + '</span><button type="button" class="field-inline-action" data-location-other="' + key + '">' + t("location_other") + "</button></div>";
+  } else {
+    const type = field.control === "email" || field.control === "tel" ? field.control : "text";
+    control = '<input class="field-input" id="' + id + '" type="' + type + '" data-manual-key="' + key + '" placeholder="' + esc(placeholder) + '" value="' + esc(value || "") + '"' + attrs + " />";
+  }
+
+  return '<div class="field' + (field.control === "textarea" ? " full" : "") + '"><label for="' + id + '">' + label + "</label>" + control + "</div>";
+}
+
+function manualVisibleFields() {
+  if (!cap.review) return MANUAL_QUICK_FIELDS.map((key) => MANUAL_FIELD_MAP[key]).filter(Boolean);
+  const detected = new Set(["basic.name"]);
+  MANUAL_FIELDS.forEach((field) => {
+    if (field.k !== "notes" && manualHasValue((cap.prefill || {})[field.k])) detected.add(manualKey(field));
+  });
+  const order = [...MANUAL_QUICK_FIELDS, ...MANUAL_FIELDS.map(manualKey)];
+  return [...new Set(order)].filter((key) => detected.has(key)).map((key) => MANUAL_FIELD_MAP[key]).filter(Boolean);
+}
+
+function manualSectionCount(sectionKey) {
+  return MANUAL_FIELDS.filter((field) => field.sec === sectionKey && manualHasValue(cap.formDraft[manualKey(field)])).length;
+}
+
+function manualAccordionHTML(visibleKeys) {
+  if (!cap.advancedOpen) return "";
+  const sections = MANUAL_SECTIONS.filter((section) => section.key !== "notes");
+  const sectionHTML = sections.map((section) => {
+    const fields = MANUAL_FIELDS.filter((field) => field.sec === section.key && field.k !== "notes" && !visibleKeys.has(manualKey(field)));
+    if (!fields.length) return "";
+    const open = !!cap.openSections[section.key];
+    const count = manualSectionCount(section.key);
+    const countText = count ? '<span class="accordion-count">' + t("advanced_count", { n: count }) + "</span>" : "";
+    return '<section class="manual-accordion">' +
+      '<button type="button" class="accordion-trigger" data-accordion="' + section.key + '" aria-expanded="' + String(open) + '" aria-controls="manual-section-' + section.key + '">' +
+      '<span><b>' + t("section_" + section.key) + "</b>" + countText + '</span><span class="accordion-chevron">' + icon("chev", 14) + "</span></button>" +
+      (open
+        ? '<div class="accordion-body form-grid" id="manual-section-' + section.key + '">' + fields.map(manualFieldHTML).join("") + "</div>"
+        : '<div id="manual-section-' + section.key + '" hidden></div>') +
+      "</section>";
+  }).join("");
+
+  const circlesOpen = !!cap.openSections.circles;
+  const circlesCount = (cap.formCircles || []).length;
+  const circles = '<section class="manual-accordion">' +
+    '<button type="button" class="accordion-trigger" data-accordion="circles" aria-expanded="' + String(circlesOpen) + '" aria-controls="manual-section-circles">' +
+    '<span><b>' + t("section_circles") + "</b>" + (circlesCount ? '<span class="accordion-count">' + t("advanced_count", { n: circlesCount }) + "</span>" : "") + '</span><span class="accordion-chevron">' + icon("chev", 14) + "</span></button>" +
+    (circlesOpen
+      ? '<div class="accordion-body" id="manual-section-circles"><div class="pick-row">' + CIRCLES.map((circle) =>
+        '<button type="button" class="pick circle-pick' + ((cap.formCircles || []).includes(circle.id) ? " on" : "") + '" data-c="' + circle.id + '">' + esc(circle.name) + "</button>"
+      ).join("") + "</div></div>"
+      : '<div id="manual-section-circles" hidden></div>') +
+    "</section>";
+  return '<div class="advanced-panel">' + sectionHTML + circles + "</div>";
+}
+
+function initManualDraft(editing) {
+  if (cap.formDraft) return;
+  cap.formDraft = createManualDraft(editing, cap.prefill || {}, cap.review);
+  cap.formCircles = (cap.prefill && Array.isArray(cap.prefill.circles))
+    ? [...cap.prefill.circles]
+    : editing && Array.isArray(editing.circles) ? [...editing.circles] : [];
+  cap.initialFormDraft = manualSnapshot();
+  cap.dirty = false;
+}
+
+function updateManualSaveState() {
+  const save = $("#mf-save");
+  if (!save) return;
+  const ready = !!String(cap.formDraft && cap.formDraft["basic.name"] || "").trim();
+  save.disabled = !ready;
+  save.setAttribute("aria-disabled", String(!ready));
+}
+
+function updateManualDuplicateHint(editingId) {
+  const hint = $("#manual-duplicate");
+  if (!hint) return;
+  const duplicate = findPotentialDuplicate(cap.formDraft && cap.formDraft["basic.name"], Store.people(), editingId);
+  hint.hidden = !duplicate;
+  hint.dataset.personId = duplicate ? duplicate.id : "";
+  if (duplicate) {
+    hint.innerHTML = icon("alert", 14) + '<span>' + esc(t("duplicate_maybe", { name: duplicate.name })) + '</span><button type="button" id="manual-duplicate-open">' + t("duplicate_open") + "</button>";
+    $("#manual-duplicate-open").addEventListener("click", () => {
+      const id = hint.dataset.personId;
+      closeCapture(true);
+      go("profile", { personId: id });
+    });
+  }
+}
+
+function addManualChips(key, raw, rerender) {
+  const values = String(raw || "").split(/[,，]/).map((item) => item.trim()).filter(Boolean);
+  if (!values.length) return;
+  const current = Array.isArray(cap.formDraft[key]) ? [...cap.formDraft[key]] : [];
+  values.forEach((value) => {
+    if (!current.some((item) => item.toLocaleLowerCase() === value.toLocaleLowerCase())) current.push(value);
+  });
+  cap.formDraft[key] = current;
+  refreshManualDirty();
+  if (rerender) {
+    renderManualCapture();
+    setTimeout(() => {
+      const field = MANUAL_FIELD_MAP[key];
+      const input = field && $("#f-" + field.sec + "-" + field.k);
+      if (input && input.focus) input.focus();
+    }, 0);
+  }
+}
+
+function commitPendingManualChips(body) {
+  $$(".chip-entry", body).forEach((input) => {
+    addManualChips(input.dataset.chipEntry, input.value, false);
+    input.value = "";
+  });
+}
+
+function captureSource() {
+  return cap.review ? (cap.sourceMode || "text") : "manual";
+}
+
+function saveManualCapture() {
+  const body = $("#capture-body");
+  const editing = cap.personId ? byId(cap.personId) : null;
+  commitPendingManualChips(body);
+  const name = String(cap.formDraft["basic.name"] || "").trim();
+  if (!name) {
+    toast(t("name_required"));
+    const input = $("#f-basic-name");
+    if (input && input.focus) input.focus();
+    return;
+  }
+
+  const fields = manualDraftToFields(cap.formDraft);
+  const note = String(cap.formDraft["notes.notes"] || "").trim();
+  const source = captureSource();
+  const sourceLabel = source === "voice" ? "Voice memo" : source === "card" ? "Card scan" : source === "text" ? "Text note" : "Manual entry";
+  const firstMetDate = String(cap.formDraft["relationship.firstMetDate"] || "").trim();
+  const firstMetPlace = String(cap.formDraft["relationship.firstMetPlace"] || "").trim();
+  const transMemory = cap.text ? { when: "Today", text: cap.text } : null;
+  const noteMemory = note ? { when: "Today", text: note } : null;
+  const followUpFromPrefill = cap.prefill.followUpWhat
+    ? { when: "—", what: cap.prefill.followUpWhat, kind: "action" }
+    : null;
+
+  fields.name = name;
+  fields.initials = name.split(" ").filter(Boolean).map((word) => word[0]).join("").slice(0, 2).toUpperCase();
+  fields.company = fields.company || (editing ? "" : "—");
+  fields.title = fields.title || (editing ? "" : "—");
+  fields.relationshipType = fields.relationshipType || (editing ? "" : "New");
+  fields.strength = fields.strength || (editing ? "" : "normal");
+  fields.circles = [...(cap.formCircles || [])];
+  fields.location = [fields.currentCity, fields.country].filter(Boolean).join(", ") || (editing ? "" : "—");
+  fields.firstMet = {
+    date: firstMetDate || (editing ? "" : "Today"),
+    place: firstMetPlace,
+    how: editing && editing.firstMet ? editing.firstMet.how || "" : "",
+  };
+  const aboutParts = [fields.title, fields.company].filter((value) => value && value !== "—");
+  fields.about = name + (aboutParts.length ? " — " + aboutParts.join(" at ") : "") +
+    (cap.review ? " Captured from " + source + " today." : ".");
+
+  if (editing) {
+    const patch = Object.assign({}, fields);
+    if (cap.review && transMemory) {
+      patch.raw = cap.text;
+      patch.memories = [...(editing.memories || []), transMemory];
+      patch.lastContactDays = 0;
+      patch.metCount = (editing.metCount || 0) + 1;
+      patch.last = Object.assign({}, editing.last || {}, { type: sourceLabel, when: "Today", summary: cap.text.slice(0, 120), tags: [] });
+    } else if (noteMemory) {
+      patch.memories = [...(editing.memories || []), noteMemory];
+      patch.last = Object.assign({}, editing.last || {}, { type: sourceLabel, when: "Today", summary: note.slice(0, 120), tags: [] });
+    }
+    if (followUpFromPrefill) patch.followUp = followUpFromPrefill;
+    Store.updatePerson(editing.id, patch);
+    closeCapture(true);
+    toast(cap.review ? t("toast_updated_person", { name: name.split(" ")[0] }) : t("toast_updated_profile", { name: name.split(" ")[0] }));
+    go("profile", { personId: editing.id });
+    return;
+  }
+
+  const summary = cap.text || note || "Created manually.";
+  const newPerson = Object.assign({}, fields, {
+    id: "p" + Date.now(),
+    role: "New · just created", since: "Today", color: "#8E5A9E",
+    interests: cap.prefill.interests || [], dates: [],
+    last: { type: sourceLabel, when: "Today", place: "", summary: summary.slice(0, 120), tags: [] },
+    followUp: followUpFromPrefill || { when: "—", what: "Say hi in a few days", kind: "reconnect" },
+    meetings: [], timelineExtra: [],
+    memories: cap.review && transMemory ? [transMemory] : noteMemory ? [noteMemory] : [],
+    raw: cap.text || "", connections: [], mutual: [], tags: [source], lastContactDays: 0,
+    metCount: cap.review ? 1 : 0, active: true, photo: "", photos: [], _custom: true,
+  });
+  Store.createPerson(newPerson);
+  closeCapture(true);
+  toast(t("toast_created", { name }));
+  go("profile", { personId: newPerson.id });
+}
+
+function bindManualCapture(editing) {
+  const body = $("#capture-body");
+  $$('[data-manual-key]', body).forEach((input) => {
+    const update = () => {
+      cap.formDraft[input.dataset.manualKey] = input.value;
+      refreshManualDirty();
+      updateManualSaveState();
+      if (input.dataset.manualKey === "basic.name") updateManualDuplicateHint(editing && editing.id);
+    };
+    input.addEventListener("input", update);
+    input.addEventListener("change", update);
+  });
+
+  $$(".chip-entry", body).forEach((input) => {
+    input.addEventListener("keydown", (event) => {
+      if (!event.isComposing && (event.key === "Enter" || event.key === "," || event.key === "，")) {
+        event.preventDefault();
+        addManualChips(input.dataset.chipEntry, input.value, true);
+      }
+    });
+    input.addEventListener("blur", () => {
+      addManualChips(input.dataset.chipEntry, input.value, false);
+      input.value = "";
+    });
+  });
+  $$('[data-chip-remove]', body).forEach((button) => button.addEventListener("click", () => {
+    const key = button.dataset.chipRemove;
+    const values = Array.isArray(cap.formDraft[key]) ? [...cap.formDraft[key]] : [];
+    values.splice(parseInt(button.dataset.chipIndex, 10), 1);
+    cap.formDraft[key] = values;
+    refreshManualDirty();
+    renderManualCapture();
+  }));
+  $$('[data-location-other]', body).forEach((button) => button.addEventListener("click", () => {
+    const key = button.dataset.locationOther;
+    cap.formDraft[key] = "";
+    refreshManualDirty();
+    const field = MANUAL_FIELD_MAP[key];
+    const input = field && $("#f-" + field.sec + "-" + field.k);
+    if (input) { input.value = ""; if (input.focus) input.focus(); }
+  }));
+  $$(".circle-pick", body).forEach((button) => button.addEventListener("click", () => {
+    const next = new Set(cap.formCircles || []);
+    next.has(button.dataset.c) ? next.delete(button.dataset.c) : next.add(button.dataset.c);
+    cap.formCircles = [...next];
+    button.classList.toggle("on", next.has(button.dataset.c));
+    refreshManualDirty();
+  }));
+
+  const advanced = $("#manual-advanced-toggle");
+  if (advanced) advanced.addEventListener("click", () => {
+    cap.advancedOpen = !cap.advancedOpen;
+    renderManualCapture();
+  });
+  $$('[data-accordion]', body).forEach((button) => button.addEventListener("click", () => {
+    const key = button.dataset.accordion;
+    cap.openSections[key] = !cap.openSections[key];
+    renderManualCapture();
+  }));
+  $("#mf-cancel").addEventListener("click", () => closeCapture());
+  $("#mf-save").addEventListener("click", saveManualCapture);
+  updateManualSaveState();
+  updateManualDuplicateHint(editing && editing.id);
+}
+
+function renderManualCapture() {
+  const body = $("#capture-body");
+  const editing = cap.personId ? byId(cap.personId) : null;
+  initManualDraft(editing);
+  setCapTitle(
+    cap.review ? t("review_title") : editing ? t("btn_edit") + " — " + editing.name.split(" ")[0] : t("manual_entry"),
+    t("manual_step"),
+  );
+
+  const visibleFields = manualVisibleFields();
+  const visibleKeys = new Set(visibleFields.map(manualKey));
+  const suggestions = locationSuggestions(Store.people());
+  const reviewNote = cap.review
+    ? '<p class="manual-review-note">' + icon("spark", 13) + " " + t("review_note") + "</p>"
+    : '<div class="manual-intro"><b>' + t("quick_intro") + "</b><span>" + t("quick_intro_sub") + "</span></div>";
+  const advancedLabel = cap.advancedOpen ? t("advanced_hide") : t("advanced_add");
+
+  body.innerHTML = reviewNote +
+    '<div class="quick-form form-grid">' + visibleFields.map(manualFieldHTML).join("") + "</div>" +
+    '<div class="duplicate-hint" id="manual-duplicate" hidden></div>' +
+    '<datalist id="manual-location-list">' + suggestions.map((value) => '<option value="' + esc(value) + '"></option>').join("") + "</datalist>" +
+    '<button type="button" class="advanced-toggle" id="manual-advanced-toggle" aria-expanded="' + String(cap.advancedOpen) + '" aria-controls="manual-advanced-panel"><span>' + icon("plus", 14) + " " + advancedLabel + '</span><span class="accordion-chevron">' + icon("chev", 14) + "</span></button>" +
+    '<div id="manual-advanced-panel">' + manualAccordionHTML(visibleKeys) + "</div>" +
+    '<p class="manual-optional-note">' + t("all_fields_optional") + "</p>" +
+    '<div class="manual-sticky-foot"><button class="btn ghost" id="mf-cancel">' + t("btn_cancel") + '</button><button class="btn primary" id="mf-save">' + icon("check", 14) + " " + (cap.review ? t("btn_save") : editing ? t("save_changes") : t("create_person")) + "</button></div>";
+
+  bindManualCapture(editing);
+  if (!cap.nameFocused) {
+    cap.nameFocused = true;
+    setTimeout(() => {
+      const input = $("#f-basic-name");
+      if (input && input.focus) input.focus();
+    }, 0);
+  }
 }
 
 function renderCapture() {
@@ -5807,7 +6409,12 @@ function renderCapture() {
       ).join("") +
       "</div>" +
       '<p style="font-size:11px;color:var(--ink-3);margin-top:13px">' + t("cap_every_mode_note") + "</p>";
-    $$(".mode-cell", body).forEach((b) => b.addEventListener("click", () => { cap.mode = b.dataset.mode; cap.step = 2; renderCapture(); }));
+    $$(".mode-cell", body).forEach((b) => b.addEventListener("click", () => {
+      cap.mode = b.dataset.mode;
+      cap.sourceMode = b.dataset.mode;
+      cap.step = 2;
+      renderCapture();
+    }));
     return;
   }
 
@@ -5823,7 +6430,7 @@ function renderCapture() {
         '<button class="btn ghost" id="rec-type">' + t("btn_type_instead") + "</button>" +
         '<button class="btn accent" id="rec-stop">' + icon("check", 14) + " " + t("rec_stop") + "</button></div>";
       $("#rec-cancel").addEventListener("click", closeCapture);
-      $("#rec-type").addEventListener("click", () => { stopRec(); cap.mode = "text"; cap.step = 2; renderCapture(); });
+      $("#rec-type").addEventListener("click", () => { stopRec(); cap.mode = "text"; cap.sourceMode = "text"; cap.step = 2; renderCapture(); });
       $("#rec-stop").addEventListener("click", () => stopRec(true));
       cap.timer = setInterval(() => {
         cap.seconds++;
@@ -5929,148 +6536,8 @@ function renderCapture() {
   }
 
   if (m === "manual") {
-    const editing = cap.personId ? byId(cap.personId) : null;
-    const prefill = cap.prefill || {};
-    setCapTitle(
-      cap.review ? t("review_title") : editing ? t("btn_edit") + " — " + editing.name.split(" ")[0] : t("manual_entry"),
-      t("manual_step"),
-    );
-    const val = (k) => {
-      if (prefill[k] != null && String(prefill[k]) !== "") return Array.isArray(prefill[k]) ? prefill[k].join(", ") : prefill[k];
-      if (editing && editing[k] != null) return Array.isArray(editing[k]) ? editing[k].join(", ") : editing[k];
-      return "";
-    };
-    body.innerHTML =
-      (cap.review
-        ? '<p style="font-size:12.5px;color:var(--ok);background:var(--ok-soft);padding:9px 12px;border-radius:10px;margin-bottom:12px">' +
-          icon("spark", 13) + " " + t("review_note") + "</p>"
-        : "") +
-      MANUAL_SECTIONS.map((sec) =>
-        '<div class="form-section"><div class="fs-title">' + t("section_" + sec.key) + "</div><div class='form-grid'>" +
-        sec.fields.map((f) => {
-          const id = "f-" + sec.key + "-" + f.k;
-          const label = t("field_" + f.k) + (f.req ? ' <span class="req">*</span>' : "");
-          const input =
-            f.type === "select"
-              ? '<select class="field-input" id="' + id + '">' + f.options.map((o) => {
-                  let optLabel = o;
-                  if (sec.key === "basic" && f.k === "gender") optLabel = genderLabel(o);
-                  else if (f.k === "strength") optLabel = strengthLabel(o);
-                  else if (f.k === "frequency") optLabel = frequencyLabel(o);
-                  else if (f.k === "relationshipType") optLabel = relTypeLabel(o);
-                  return '<option value="' + o + '"' + (String(val(f.k)) === o ? " selected" : "") + ">" + esc(o ? optLabel : "—") + "</option>";
-                }).join("") + "</select>"
-              : f.type === "textarea"
-                ? '<textarea class="field-textarea" id="' + id + '" placeholder="' + esc(f.ph || "") + '">' + esc(val(f.k)) + "</textarea>"
-                : '<input class="field-input" id="' + id + '" placeholder="' + esc(f.ph || "") + '" value="' + esc(val(f.k)) + '" />';
-          return '<div class="field' + (f.type === "textarea" ? " full" : "") + '"><label>' + label + "</label>" + input + "</div>";
-        }).join("") +
-        "</div></div>"
-      ).join("") +
-      '<div class="form-section"><div class="fs-title">' + (editing ? t("circles_edit") : t("circles_optional")) + "</div>" +
-      '<div class="pick-row">' + CIRCLES.map((c) => {
-        const on = (editing && (editing.circles || []).includes(c.id)) || (prefill.circles || []).includes(c.id);
-        return '<button class="pick circle-pick' + (on ? " on" : "") + '" data-c="' + c.id + '">' + esc(c.name) + "</button>";
-      }).join("") + "</div></div>" +
-      '<p style="font-size:11.5px;color:var(--ink-3)">' + t("all_fields_optional") + "</p>" +
-      '<div class="modal-foot"><button class="btn ghost" id="mf-cancel">' + t("btn_cancel") + "</button>" +
-      '<button class="btn primary" id="mf-save">' + icon("check", 14) + " " + (cap.review ? t("btn_save") : editing ? t("save_changes") : t("create_person")) + "</button></div>";
-
-    $$(".circle-pick", body).forEach((b) => b.addEventListener("click", () => b.classList.toggle("on")));
-    $("#mf-cancel").addEventListener("click", closeCapture);
-    $("#mf-save").addEventListener("click", () => {
-      const get = (k) => {
-        const el = document.getElementById("f-" + k);
-        if (!el) return "";
-        return el.value.trim();
-      };
-      const circles = $$(".circle-pick.on", body).map((b) => b.dataset.c);
-      const SPLIT_FIELDS = ["languages", "expertise", "skills", "hobbies", "sports", "businessTopics", "previousCompanies", "careerHistory", "travelInterests", "interests", "helpGiven", "helpReceived", "promises"];
-      const readField = (f) => {
-        const v = get(f.sec + "-" + f.k);
-        if (!v) return null;
-        if (f.k === "kana") return ["nameJa", v];
-        if (SPLIT_FIELDS.includes(f.k)) return [f.k, v.split(",").map((s) => s.trim()).filter(Boolean)];
-        return [f.k, v];
-      };
-
-      // Ký ức + raw từ voice/text (nếu có)
-      const transMemory = cap.text ? { when: "Today", text: cap.text } : null;
-      const followUpFromPrefill = cap.prefill.followUpWhat
-        ? { when: "—", what: cap.prefill.followUpWhat, kind: "action" }
-        : null;
-
-      if (editing) {
-        const patch = {};
-        MANUAL_SECTIONS.forEach((sec) => sec.fields.forEach((f) => {
-          const r = readField(Object.assign({ sec: sec.key }, f));
-          if (r) patch[r[0]] = r[1];
-        }));
-        if (patch.firstMetDate || patch.firstMetPlace) {
-          patch.firstMet = {
-            date: patch.firstMetDate || editing.firstMet.date || "Today",
-            place: patch.firstMetPlace || "",
-            how: editing.firstMet.how || "",
-          };
-          delete patch.firstMetDate;
-          delete patch.firstMetPlace;
-        }
-        if (circles.length) patch.circles = circles;
-        const nm = patch.name;
-        if (nm) patch.initials = nm.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-        if (cap.review && cap.text) {
-          patch.raw = cap.text;
-          patch.memories = [...(editing.memories || []), transMemory];
-          patch.lastContactDays = 0;
-          patch.metCount = (editing.metCount || 0) + 1;
-          patch.last = Object.assign({}, editing.last || {}, { type: "Voice/Text note", when: "Today", summary: cap.text.slice(0, 120), tags: [] });
-        }
-        if (followUpFromPrefill) patch.followUp = followUpFromPrefill;
-        Store.updatePerson(editing.id, patch);
-        closeCapture();
-        toast(cap.review ? t("toast_updated_person", { name: (nm || editing.name).split(" ")[0] }) : t("toast_updated_profile", { name: (nm || editing.name).split(" ")[0] }));
-        go("profile", { personId: editing.id });
-        return;
-      }
-      const name = get("basic-name") || "New contact";
-      const newPerson = {
-        id: "p" + Date.now(), name, nameJa: get("basic-kana"), initials: name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
-        gender: get("basic-gender"), birthday: get("basic-birthday"), nationality: get("basic-nationality"),
-        languages: get("basic-languages") ? get("basic-languages").split(",").map((s) => s.trim()) : [],
-        currentCity: get("basic-currentCity"), hometown: get("basic-hometown"), country: get("basic-country"),
-        email: get("basic-email"), phone: get("basic-phone"),
-        company: get("work-company") || "—", department: get("work-department"), title: get("work-title") || "—",
-        industry: get("work-industry"), profession: get("work-profession"),
-        expertise: get("work-expertise") ? get("work-expertise").split(",").map((s) => s.trim()) : [],
-        skills: get("work-skills") ? get("work-skills").split(",").map((s) => s.trim()) : [],
-        spouse: get("personal-spouse"), children: get("personal-children"), familyNotes: get("personal-familyNotes"),
-        hobbies: get("personal-hobbies") ? get("personal-hobbies").split(",").map((s) => s.trim()) : [],
-        favoriteFood: get("personal-favoriteFood"), favoriteDrink: get("personal-favoriteDrink"), schools: get("personal-schools"),
-        relationshipType: get("relationship-relationshipType") || "New", strength: get("relationship-strength") || "normal",
-        frequency: get("relationship-frequency"),
-        firstMet: { date: get("relationship-firstMetDate") || "Today", place: get("relationship-firstMetPlace"), how: "" },
-        introducedBy: get("relationship-introducedBy"),
-        helpGiven: get("relationship-helpGiven") ? [get("relationship-helpGiven")] : [],
-        helpReceived: get("relationship-helpReceived") ? [get("relationship-helpReceived")] : [],
-        promises: get("relationship-promises") ? [get("relationship-promises")] : [],
-        role: "New · just created", since: "Today", location: (get("basic-currentCity") || "—") + (get("basic-country") ? ", " + get("basic-country") : ""),
-        color: "#8E5A9E",
-        interests: cap.prefill.interests || [], dates: [], last: { type: cap.review ? (cap.mode === "voice" ? "Voice memo" : cap.mode === "card" ? "Card scan" : "Text note") : "Manual entry", when: "Today", place: "", summary: (cap.text || get("notes-notes") || "Created manually.").slice(0, 120), tags: [] },
-        followUp: followUpFromPrefill || { when: "—", what: "Say hi in a few days", kind: "reconnect" },
-        meetings: [], timelineExtra: [],
-        memories: cap.review && cap.text
-          ? [transMemory]
-          : get("notes-notes") ? [{ when: "Today", text: get("notes-notes") }] : [],
-        raw: cap.text || "",
-        connections: [], mutual: [], circles, tags: [cap.review ? (cap.mode === "voice" ? "voice" : cap.mode === "card" ? "card" : "text") : "manual"], lastContactDays: 0, metCount: cap.review ? 1 : 0,
-        active: true, photo: "", photos: [], _custom: true,
-        about: name + " — " + (get("work-title") || "—") + " at " + (get("work-company") || "—") + (cap.review ? " Captured from " + (cap.mode === "voice" ? "voice" : cap.mode === "card" ? "card" : "text") + " today." : ". Created manually today.")
-      };
-      Store.createPerson(newPerson);
-      closeCapture();
-      toast(t("toast_created", { name }));
-      go("profile", { personId: newPerson.id });
-    });
+    renderManualCapture();
+    return;
   }
 }
 
@@ -6332,11 +6799,13 @@ async function handleCardPhoto(e) {
 function enterReviewFromText() {
   const parsed = parseCaptureText(cap.text || "");
   const matched = cap.personId ? byId(cap.personId) : resolvePersonFromText(cap.text || "");
+  cap.sourceMode = cap.sourceMode === "voice" ? "voice" : "text";
   cap.mode = "manual";
   cap.review = true;
   cap.prefill = parsedToPrefill(parsed);
   cap.personId = matched ? matched.id : null;
   cap.edit = !!matched;
+  cap.formDraft = null;
   cap.step = 1;
   renderCapture();
 }
@@ -6345,12 +6814,14 @@ function enterReviewFromText() {
 function enterReviewFromCard() {
   const pre = parseCardOcrText(cap.ocrText || "") || cardDemoFields();
   const matched = resolvePersonFromText(pre.name || "");
+  cap.sourceMode = "card";
   cap.mode = "manual";
   cap.review = true;
   cap.text = cap.ocrText || "";
   cap.prefill = pre;
   cap.personId = matched ? matched.id : null;
   cap.edit = !!matched;
+  cap.formDraft = null;
   cap.step = 1;
   renderCapture();
 }
@@ -6466,6 +6937,8 @@ function onFbUser(user) {
     renderAll();
     if (currentScreen === "login") go("home");
   } else {
+    // Firebase mode: cloud is authoritative, so never leave another account's data locally.
+    Store.replaceFromRemote([]);
     go("login");
   }
 }

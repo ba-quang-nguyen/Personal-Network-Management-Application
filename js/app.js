@@ -808,7 +808,9 @@ function renderLocationMap() {
 
   const markers = [];
   people.forEach((p) => {
-    const [lat, lng] = personGeo(p);
+    const geo = personGeo(p);
+    if (!geo) return;
+    const [lat, lng] = geo;
     const iconHtml = p.photo
       ? '<img src="' + esc(p.photo) + '" alt="" />'
       : '<span class="loc-initials">' + esc(p.initials || p.name.slice(0, 2)) + "</span>";
@@ -1477,20 +1479,375 @@ function renderSettings() {
 let cap = { mode: null, step: 0, timer: null, seconds: 0, open: false, personId: null, addInfo: false, edit: false };
 
 function openCapture(mode, opts = {}) {
-  cap = { mode: mode || null, step: 1, timer: null, seconds: 0, open: true, personId: opts.personId || null, addInfo: !!opts.addInfo, edit: !!opts.edit, text: "", photo: "", prefill: opts.prefill || {}, review: false };
+  cap = {
+    mode: mode || null, sourceMode: mode || null, step: 1, timer: null, seconds: 0, open: true,
+    personId: opts.personId || null, addInfo: !!opts.addInfo, edit: !!opts.edit, text: "", photo: "",
+    prefill: opts.prefill || {}, review: false, formDraft: null, initialFormDraft: "", formCircles: [],
+    advancedOpen: false, openSections: {}, dirty: false, nameFocused: false,
+  };
   $("#capture-modal").classList.add("open");
   renderCapture();
 }
 
-function closeCapture() {
+function closeCapture(force = false) {
+  if (force !== true && cap.mode === "manual" && cap.dirty && !confirm(t("discard_changes"))) return false;
   clearInterval(cap.timer);
   cap.open = false;
   $("#capture-modal").classList.remove("open");
+  return true;
 }
 
 function setCapTitle(txt, step) {
   $("#capture-title").textContent = txt;
   $("#capture-step").textContent = step || "";
+}
+
+function manualKey(field) {
+  return field.sec + "." + field.k;
+}
+
+function manualSnapshot() {
+  return JSON.stringify({ fields: cap.formDraft || {}, circles: cap.formCircles || [] });
+}
+
+function refreshManualDirty() {
+  cap.dirty = !!cap.initialFormDraft && manualSnapshot() !== cap.initialFormDraft;
+}
+
+function manualOptionLabel(field, value) {
+  if (!value) return "—";
+  if (field.k === "gender") return genderLabel(value);
+  if (field.k === "strength") return strengthLabel(value);
+  if (field.k === "frequency") return frequencyLabel(value);
+  if (field.k === "relationshipType") return relTypeLabel(value);
+  return value;
+}
+
+function manualFieldHTML(field) {
+  const key = manualKey(field);
+  const id = "f-" + field.sec + "-" + field.k;
+  const value = cap.formDraft[key];
+  const label = t("field_" + field.k) + (field.req ? ' <span class="req">*</span>' : "");
+  const placeholder = field.phKey ? t(field.phKey) : "";
+  const attrs =
+    (field.autocomplete ? ' autocomplete="' + esc(field.autocomplete) + '"' : "") +
+    (field.inputmode ? ' inputmode="' + esc(field.inputmode) + '"' : "") +
+    (field.req ? ' required aria-required="true"' : "");
+  let control = "";
+
+  if (field.control === "select") {
+    control = '<select class="field-input" id="' + id + '" data-manual-key="' + key + '">' +
+      field.options.map((option) => '<option value="' + esc(option) + '"' + (String(value || "") === option ? " selected" : "") + ">" + esc(manualOptionLabel(field, option)) + "</option>").join("") +
+      "</select>";
+  } else if (field.control === "textarea") {
+    control = '<textarea class="field-textarea" id="' + id + '" data-manual-key="' + key + '" placeholder="' + esc(placeholder) + '"' + attrs + ">" + esc(value || "") + "</textarea>";
+  } else if (field.control === "chips") {
+    const chips = Array.isArray(value) ? value : [];
+    control = '<div class="chip-input" data-chip-wrap="' + key + '">' +
+      '<div class="chip-list">' + chips.map((chip, index) =>
+        '<span class="input-chip"><span>' + esc(chip) + '</span><button type="button" data-chip-remove="' + key + '" data-chip-index="' + index + '" aria-label="' + esc(t("chip_remove", { value: chip })) + '"><span class="chip-remove-icon">' + icon("plus", 10) + "</span></button></span>"
+      ).join("") + "</div>" +
+      '<input class="chip-entry" id="' + id + '" data-chip-entry="' + key + '" placeholder="' + esc(t("chip_add_ph")) + '" autocomplete="off" />' +
+      "</div>";
+  } else if (field.control === "location") {
+    control = '<input class="field-input" id="' + id + '" data-manual-key="' + key + '" list="manual-location-list" placeholder="' + esc(placeholder) + '" value="' + esc(value || "") + '"' + attrs + " />" +
+      '<div class="field-help-row"><span>' + t("location_hint") + '</span><button type="button" class="field-inline-action" data-location-other="' + key + '">' + t("location_other") + "</button></div>";
+  } else {
+    const type = field.control === "email" || field.control === "tel" ? field.control : "text";
+    control = '<input class="field-input" id="' + id + '" type="' + type + '" data-manual-key="' + key + '" placeholder="' + esc(placeholder) + '" value="' + esc(value || "") + '"' + attrs + " />";
+  }
+
+  return '<div class="field' + (field.control === "textarea" ? " full" : "") + '"><label for="' + id + '">' + label + "</label>" + control + "</div>";
+}
+
+function manualVisibleFields() {
+  if (!cap.review) return MANUAL_QUICK_FIELDS.map((key) => MANUAL_FIELD_MAP[key]).filter(Boolean);
+  const detected = new Set(["basic.name"]);
+  MANUAL_FIELDS.forEach((field) => {
+    if (field.k !== "notes" && manualHasValue((cap.prefill || {})[field.k])) detected.add(manualKey(field));
+  });
+  const order = [...MANUAL_QUICK_FIELDS, ...MANUAL_FIELDS.map(manualKey)];
+  return [...new Set(order)].filter((key) => detected.has(key)).map((key) => MANUAL_FIELD_MAP[key]).filter(Boolean);
+}
+
+function manualSectionCount(sectionKey) {
+  return MANUAL_FIELDS.filter((field) => field.sec === sectionKey && manualHasValue(cap.formDraft[manualKey(field)])).length;
+}
+
+function manualAccordionHTML(visibleKeys) {
+  if (!cap.advancedOpen) return "";
+  const sections = MANUAL_SECTIONS.filter((section) => section.key !== "notes");
+  const sectionHTML = sections.map((section) => {
+    const fields = MANUAL_FIELDS.filter((field) => field.sec === section.key && field.k !== "notes" && !visibleKeys.has(manualKey(field)));
+    if (!fields.length) return "";
+    const open = !!cap.openSections[section.key];
+    const count = manualSectionCount(section.key);
+    const countText = count ? '<span class="accordion-count">' + t("advanced_count", { n: count }) + "</span>" : "";
+    return '<section class="manual-accordion">' +
+      '<button type="button" class="accordion-trigger" data-accordion="' + section.key + '" aria-expanded="' + String(open) + '" aria-controls="manual-section-' + section.key + '">' +
+      '<span><b>' + t("section_" + section.key) + "</b>" + countText + '</span><span class="accordion-chevron">' + icon("chev", 14) + "</span></button>" +
+      (open
+        ? '<div class="accordion-body form-grid" id="manual-section-' + section.key + '">' + fields.map(manualFieldHTML).join("") + "</div>"
+        : '<div id="manual-section-' + section.key + '" hidden></div>') +
+      "</section>";
+  }).join("");
+
+  const circlesOpen = !!cap.openSections.circles;
+  const circlesCount = (cap.formCircles || []).length;
+  const circles = '<section class="manual-accordion">' +
+    '<button type="button" class="accordion-trigger" data-accordion="circles" aria-expanded="' + String(circlesOpen) + '" aria-controls="manual-section-circles">' +
+    '<span><b>' + t("section_circles") + "</b>" + (circlesCount ? '<span class="accordion-count">' + t("advanced_count", { n: circlesCount }) + "</span>" : "") + '</span><span class="accordion-chevron">' + icon("chev", 14) + "</span></button>" +
+    (circlesOpen
+      ? '<div class="accordion-body" id="manual-section-circles"><div class="pick-row">' + CIRCLES.map((circle) =>
+        '<button type="button" class="pick circle-pick' + ((cap.formCircles || []).includes(circle.id) ? " on" : "") + '" data-c="' + circle.id + '">' + esc(circle.name) + "</button>"
+      ).join("") + "</div></div>"
+      : '<div id="manual-section-circles" hidden></div>') +
+    "</section>";
+  return '<div class="advanced-panel">' + sectionHTML + circles + "</div>";
+}
+
+function initManualDraft(editing) {
+  if (cap.formDraft) return;
+  cap.formDraft = createManualDraft(editing, cap.prefill || {}, cap.review);
+  cap.formCircles = (cap.prefill && Array.isArray(cap.prefill.circles))
+    ? [...cap.prefill.circles]
+    : editing && Array.isArray(editing.circles) ? [...editing.circles] : [];
+  cap.initialFormDraft = manualSnapshot();
+  cap.dirty = false;
+}
+
+function updateManualSaveState() {
+  const save = $("#mf-save");
+  if (!save) return;
+  const ready = !!String(cap.formDraft && cap.formDraft["basic.name"] || "").trim();
+  save.disabled = !ready;
+  save.setAttribute("aria-disabled", String(!ready));
+}
+
+function updateManualDuplicateHint(editingId) {
+  const hint = $("#manual-duplicate");
+  if (!hint) return;
+  const duplicate = findPotentialDuplicate(cap.formDraft && cap.formDraft["basic.name"], Store.people(), editingId);
+  hint.hidden = !duplicate;
+  hint.dataset.personId = duplicate ? duplicate.id : "";
+  if (duplicate) {
+    hint.innerHTML = icon("alert", 14) + '<span>' + esc(t("duplicate_maybe", { name: duplicate.name })) + '</span><button type="button" id="manual-duplicate-open">' + t("duplicate_open") + "</button>";
+    $("#manual-duplicate-open").addEventListener("click", () => {
+      const id = hint.dataset.personId;
+      closeCapture(true);
+      go("profile", { personId: id });
+    });
+  }
+}
+
+function addManualChips(key, raw, rerender) {
+  const values = String(raw || "").split(/[,，]/).map((item) => item.trim()).filter(Boolean);
+  if (!values.length) return;
+  const current = Array.isArray(cap.formDraft[key]) ? [...cap.formDraft[key]] : [];
+  values.forEach((value) => {
+    if (!current.some((item) => item.toLocaleLowerCase() === value.toLocaleLowerCase())) current.push(value);
+  });
+  cap.formDraft[key] = current;
+  refreshManualDirty();
+  if (rerender) {
+    renderManualCapture();
+    setTimeout(() => {
+      const field = MANUAL_FIELD_MAP[key];
+      const input = field && $("#f-" + field.sec + "-" + field.k);
+      if (input && input.focus) input.focus();
+    }, 0);
+  }
+}
+
+function commitPendingManualChips(body) {
+  $$(".chip-entry", body).forEach((input) => {
+    addManualChips(input.dataset.chipEntry, input.value, false);
+    input.value = "";
+  });
+}
+
+function captureSource() {
+  return cap.review ? (cap.sourceMode || "text") : "manual";
+}
+
+function saveManualCapture() {
+  const body = $("#capture-body");
+  const editing = cap.personId ? byId(cap.personId) : null;
+  commitPendingManualChips(body);
+  const name = String(cap.formDraft["basic.name"] || "").trim();
+  if (!name) {
+    toast(t("name_required"));
+    const input = $("#f-basic-name");
+    if (input && input.focus) input.focus();
+    return;
+  }
+
+  const fields = manualDraftToFields(cap.formDraft);
+  const note = String(cap.formDraft["notes.notes"] || "").trim();
+  const source = captureSource();
+  const sourceLabel = source === "voice" ? "Voice memo" : source === "card" ? "Card scan" : source === "text" ? "Text note" : "Manual entry";
+  const firstMetDate = String(cap.formDraft["relationship.firstMetDate"] || "").trim();
+  const firstMetPlace = String(cap.formDraft["relationship.firstMetPlace"] || "").trim();
+  const transMemory = cap.text ? { when: "Today", text: cap.text } : null;
+  const noteMemory = note ? { when: "Today", text: note } : null;
+  const followUpFromPrefill = cap.prefill.followUpWhat
+    ? { when: "—", what: cap.prefill.followUpWhat, kind: "action" }
+    : null;
+
+  fields.name = name;
+  fields.initials = name.split(" ").filter(Boolean).map((word) => word[0]).join("").slice(0, 2).toUpperCase();
+  fields.company = fields.company || (editing ? "" : "—");
+  fields.title = fields.title || (editing ? "" : "—");
+  fields.relationshipType = fields.relationshipType || (editing ? "" : "New");
+  fields.strength = fields.strength || (editing ? "" : "normal");
+  fields.circles = [...(cap.formCircles || [])];
+  fields.location = [fields.currentCity, fields.country].filter(Boolean).join(", ") || (editing ? "" : "—");
+  fields.firstMet = {
+    date: firstMetDate || (editing ? "" : "Today"),
+    place: firstMetPlace,
+    how: editing && editing.firstMet ? editing.firstMet.how || "" : "",
+  };
+  const aboutParts = [fields.title, fields.company].filter((value) => value && value !== "—");
+  fields.about = name + (aboutParts.length ? " — " + aboutParts.join(" at ") : "") +
+    (cap.review ? " Captured from " + source + " today." : ".");
+
+  if (editing) {
+    const patch = Object.assign({}, fields);
+    if (cap.review && transMemory) {
+      patch.raw = cap.text;
+      patch.memories = [...(editing.memories || []), transMemory];
+      patch.lastContactDays = 0;
+      patch.metCount = (editing.metCount || 0) + 1;
+      patch.last = Object.assign({}, editing.last || {}, { type: sourceLabel, when: "Today", summary: cap.text.slice(0, 120), tags: [] });
+    } else if (noteMemory) {
+      patch.memories = [...(editing.memories || []), noteMemory];
+      patch.last = Object.assign({}, editing.last || {}, { type: sourceLabel, when: "Today", summary: note.slice(0, 120), tags: [] });
+    }
+    if (followUpFromPrefill) patch.followUp = followUpFromPrefill;
+    Store.updatePerson(editing.id, patch);
+    closeCapture(true);
+    toast(cap.review ? t("toast_updated_person", { name: name.split(" ")[0] }) : t("toast_updated_profile", { name: name.split(" ")[0] }));
+    go("profile", { personId: editing.id });
+    return;
+  }
+
+  const summary = cap.text || note || "Created manually.";
+  const newPerson = Object.assign({}, fields, {
+    id: "p" + Date.now(),
+    role: "New · just created", since: "Today", color: "#8E5A9E",
+    interests: cap.prefill.interests || [], dates: [],
+    last: { type: sourceLabel, when: "Today", place: "", summary: summary.slice(0, 120), tags: [] },
+    followUp: followUpFromPrefill || { when: "—", what: "Say hi in a few days", kind: "reconnect" },
+    meetings: [], timelineExtra: [],
+    memories: cap.review && transMemory ? [transMemory] : noteMemory ? [noteMemory] : [],
+    raw: cap.text || "", connections: [], mutual: [], tags: [source], lastContactDays: 0,
+    metCount: cap.review ? 1 : 0, active: true, photo: "", photos: [], _custom: true,
+  });
+  Store.createPerson(newPerson);
+  closeCapture(true);
+  toast(t("toast_created", { name }));
+  go("profile", { personId: newPerson.id });
+}
+
+function bindManualCapture(editing) {
+  const body = $("#capture-body");
+  $$('[data-manual-key]', body).forEach((input) => {
+    const update = () => {
+      cap.formDraft[input.dataset.manualKey] = input.value;
+      refreshManualDirty();
+      updateManualSaveState();
+      if (input.dataset.manualKey === "basic.name") updateManualDuplicateHint(editing && editing.id);
+    };
+    input.addEventListener("input", update);
+    input.addEventListener("change", update);
+  });
+
+  $$(".chip-entry", body).forEach((input) => {
+    input.addEventListener("keydown", (event) => {
+      if (!event.isComposing && (event.key === "Enter" || event.key === "," || event.key === "，")) {
+        event.preventDefault();
+        addManualChips(input.dataset.chipEntry, input.value, true);
+      }
+    });
+    input.addEventListener("blur", () => {
+      addManualChips(input.dataset.chipEntry, input.value, false);
+      input.value = "";
+    });
+  });
+  $$('[data-chip-remove]', body).forEach((button) => button.addEventListener("click", () => {
+    const key = button.dataset.chipRemove;
+    const values = Array.isArray(cap.formDraft[key]) ? [...cap.formDraft[key]] : [];
+    values.splice(parseInt(button.dataset.chipIndex, 10), 1);
+    cap.formDraft[key] = values;
+    refreshManualDirty();
+    renderManualCapture();
+  }));
+  $$('[data-location-other]', body).forEach((button) => button.addEventListener("click", () => {
+    const key = button.dataset.locationOther;
+    cap.formDraft[key] = "";
+    refreshManualDirty();
+    const field = MANUAL_FIELD_MAP[key];
+    const input = field && $("#f-" + field.sec + "-" + field.k);
+    if (input) { input.value = ""; if (input.focus) input.focus(); }
+  }));
+  $$(".circle-pick", body).forEach((button) => button.addEventListener("click", () => {
+    const next = new Set(cap.formCircles || []);
+    next.has(button.dataset.c) ? next.delete(button.dataset.c) : next.add(button.dataset.c);
+    cap.formCircles = [...next];
+    button.classList.toggle("on", next.has(button.dataset.c));
+    refreshManualDirty();
+  }));
+
+  const advanced = $("#manual-advanced-toggle");
+  if (advanced) advanced.addEventListener("click", () => {
+    cap.advancedOpen = !cap.advancedOpen;
+    renderManualCapture();
+  });
+  $$('[data-accordion]', body).forEach((button) => button.addEventListener("click", () => {
+    const key = button.dataset.accordion;
+    cap.openSections[key] = !cap.openSections[key];
+    renderManualCapture();
+  }));
+  $("#mf-cancel").addEventListener("click", () => closeCapture());
+  $("#mf-save").addEventListener("click", saveManualCapture);
+  updateManualSaveState();
+  updateManualDuplicateHint(editing && editing.id);
+}
+
+function renderManualCapture() {
+  const body = $("#capture-body");
+  const editing = cap.personId ? byId(cap.personId) : null;
+  initManualDraft(editing);
+  setCapTitle(
+    cap.review ? t("review_title") : editing ? t("btn_edit") + " — " + editing.name.split(" ")[0] : t("manual_entry"),
+    t("manual_step"),
+  );
+
+  const visibleFields = manualVisibleFields();
+  const visibleKeys = new Set(visibleFields.map(manualKey));
+  const suggestions = locationSuggestions(Store.people());
+  const reviewNote = cap.review
+    ? '<p class="manual-review-note">' + icon("spark", 13) + " " + t("review_note") + "</p>"
+    : '<div class="manual-intro"><b>' + t("quick_intro") + "</b><span>" + t("quick_intro_sub") + "</span></div>";
+  const advancedLabel = cap.advancedOpen ? t("advanced_hide") : t("advanced_add");
+
+  body.innerHTML = reviewNote +
+    '<div class="quick-form form-grid">' + visibleFields.map(manualFieldHTML).join("") + "</div>" +
+    '<div class="duplicate-hint" id="manual-duplicate" hidden></div>' +
+    '<datalist id="manual-location-list">' + suggestions.map((value) => '<option value="' + esc(value) + '"></option>').join("") + "</datalist>" +
+    '<button type="button" class="advanced-toggle" id="manual-advanced-toggle" aria-expanded="' + String(cap.advancedOpen) + '" aria-controls="manual-advanced-panel"><span>' + icon("plus", 14) + " " + advancedLabel + '</span><span class="accordion-chevron">' + icon("chev", 14) + "</span></button>" +
+    '<div id="manual-advanced-panel">' + manualAccordionHTML(visibleKeys) + "</div>" +
+    '<p class="manual-optional-note">' + t("all_fields_optional") + "</p>" +
+    '<div class="manual-sticky-foot"><button class="btn ghost" id="mf-cancel">' + t("btn_cancel") + '</button><button class="btn primary" id="mf-save">' + icon("check", 14) + " " + (cap.review ? t("btn_save") : editing ? t("save_changes") : t("create_person")) + "</button></div>";
+
+  bindManualCapture(editing);
+  if (!cap.nameFocused) {
+    cap.nameFocused = true;
+    setTimeout(() => {
+      const input = $("#f-basic-name");
+      if (input && input.focus) input.focus();
+    }, 0);
+  }
 }
 
 function renderCapture() {
@@ -1523,7 +1880,12 @@ function renderCapture() {
       ).join("") +
       "</div>" +
       '<p style="font-size:11px;color:var(--ink-3);margin-top:13px">' + t("cap_every_mode_note") + "</p>";
-    $$(".mode-cell", body).forEach((b) => b.addEventListener("click", () => { cap.mode = b.dataset.mode; cap.step = 2; renderCapture(); }));
+    $$(".mode-cell", body).forEach((b) => b.addEventListener("click", () => {
+      cap.mode = b.dataset.mode;
+      cap.sourceMode = b.dataset.mode;
+      cap.step = 2;
+      renderCapture();
+    }));
     return;
   }
 
@@ -1539,7 +1901,7 @@ function renderCapture() {
         '<button class="btn ghost" id="rec-type">' + t("btn_type_instead") + "</button>" +
         '<button class="btn accent" id="rec-stop">' + icon("check", 14) + " " + t("rec_stop") + "</button></div>";
       $("#rec-cancel").addEventListener("click", closeCapture);
-      $("#rec-type").addEventListener("click", () => { stopRec(); cap.mode = "text"; cap.step = 2; renderCapture(); });
+      $("#rec-type").addEventListener("click", () => { stopRec(); cap.mode = "text"; cap.sourceMode = "text"; cap.step = 2; renderCapture(); });
       $("#rec-stop").addEventListener("click", () => stopRec(true));
       cap.timer = setInterval(() => {
         cap.seconds++;
@@ -1645,148 +2007,8 @@ function renderCapture() {
   }
 
   if (m === "manual") {
-    const editing = cap.personId ? byId(cap.personId) : null;
-    const prefill = cap.prefill || {};
-    setCapTitle(
-      cap.review ? t("review_title") : editing ? t("btn_edit") + " — " + editing.name.split(" ")[0] : t("manual_entry"),
-      t("manual_step"),
-    );
-    const val = (k) => {
-      if (prefill[k] != null && String(prefill[k]) !== "") return Array.isArray(prefill[k]) ? prefill[k].join(", ") : prefill[k];
-      if (editing && editing[k] != null) return Array.isArray(editing[k]) ? editing[k].join(", ") : editing[k];
-      return "";
-    };
-    body.innerHTML =
-      (cap.review
-        ? '<p style="font-size:12.5px;color:var(--ok);background:var(--ok-soft);padding:9px 12px;border-radius:10px;margin-bottom:12px">' +
-          icon("spark", 13) + " " + t("review_note") + "</p>"
-        : "") +
-      MANUAL_SECTIONS.map((sec) =>
-        '<div class="form-section"><div class="fs-title">' + t("section_" + sec.key) + "</div><div class='form-grid'>" +
-        sec.fields.map((f) => {
-          const id = "f-" + sec.key + "-" + f.k;
-          const label = t("field_" + f.k) + (f.req ? ' <span class="req">*</span>' : "");
-          const input =
-            f.type === "select"
-              ? '<select class="field-input" id="' + id + '">' + f.options.map((o) => {
-                  let optLabel = o;
-                  if (sec.key === "basic" && f.k === "gender") optLabel = genderLabel(o);
-                  else if (f.k === "strength") optLabel = strengthLabel(o);
-                  else if (f.k === "frequency") optLabel = frequencyLabel(o);
-                  else if (f.k === "relationshipType") optLabel = relTypeLabel(o);
-                  return '<option value="' + o + '"' + (String(val(f.k)) === o ? " selected" : "") + ">" + esc(o ? optLabel : "—") + "</option>";
-                }).join("") + "</select>"
-              : f.type === "textarea"
-                ? '<textarea class="field-textarea" id="' + id + '" placeholder="' + esc(f.ph || "") + '">' + esc(val(f.k)) + "</textarea>"
-                : '<input class="field-input" id="' + id + '" placeholder="' + esc(f.ph || "") + '" value="' + esc(val(f.k)) + '" />';
-          return '<div class="field' + (f.type === "textarea" ? " full" : "") + '"><label>' + label + "</label>" + input + "</div>";
-        }).join("") +
-        "</div></div>"
-      ).join("") +
-      '<div class="form-section"><div class="fs-title">' + (editing ? t("circles_edit") : t("circles_optional")) + "</div>" +
-      '<div class="pick-row">' + CIRCLES.map((c) => {
-        const on = (editing && (editing.circles || []).includes(c.id)) || (prefill.circles || []).includes(c.id);
-        return '<button class="pick circle-pick' + (on ? " on" : "") + '" data-c="' + c.id + '">' + esc(c.name) + "</button>";
-      }).join("") + "</div></div>" +
-      '<p style="font-size:11.5px;color:var(--ink-3)">' + t("all_fields_optional") + "</p>" +
-      '<div class="modal-foot"><button class="btn ghost" id="mf-cancel">' + t("btn_cancel") + "</button>" +
-      '<button class="btn primary" id="mf-save">' + icon("check", 14) + " " + (cap.review ? t("btn_save") : editing ? t("save_changes") : t("create_person")) + "</button></div>";
-
-    $$(".circle-pick", body).forEach((b) => b.addEventListener("click", () => b.classList.toggle("on")));
-    $("#mf-cancel").addEventListener("click", closeCapture);
-    $("#mf-save").addEventListener("click", () => {
-      const get = (k) => {
-        const el = document.getElementById("f-" + k);
-        if (!el) return "";
-        return el.value.trim();
-      };
-      const circles = $$(".circle-pick.on", body).map((b) => b.dataset.c);
-      const SPLIT_FIELDS = ["languages", "expertise", "skills", "hobbies", "sports", "businessTopics", "previousCompanies", "careerHistory", "travelInterests", "interests", "helpGiven", "helpReceived", "promises"];
-      const readField = (f) => {
-        const v = get(f.sec + "-" + f.k);
-        if (!v) return null;
-        if (f.k === "kana") return ["nameJa", v];
-        if (SPLIT_FIELDS.includes(f.k)) return [f.k, v.split(",").map((s) => s.trim()).filter(Boolean)];
-        return [f.k, v];
-      };
-
-      // Ký ức + raw từ voice/text (nếu có)
-      const transMemory = cap.text ? { when: "Today", text: cap.text } : null;
-      const followUpFromPrefill = cap.prefill.followUpWhat
-        ? { when: "—", what: cap.prefill.followUpWhat, kind: "action" }
-        : null;
-
-      if (editing) {
-        const patch = {};
-        MANUAL_SECTIONS.forEach((sec) => sec.fields.forEach((f) => {
-          const r = readField(Object.assign({ sec: sec.key }, f));
-          if (r) patch[r[0]] = r[1];
-        }));
-        if (patch.firstMetDate || patch.firstMetPlace) {
-          patch.firstMet = {
-            date: patch.firstMetDate || editing.firstMet.date || "Today",
-            place: patch.firstMetPlace || "",
-            how: editing.firstMet.how || "",
-          };
-          delete patch.firstMetDate;
-          delete patch.firstMetPlace;
-        }
-        if (circles.length) patch.circles = circles;
-        const nm = patch.name;
-        if (nm) patch.initials = nm.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-        if (cap.review && cap.text) {
-          patch.raw = cap.text;
-          patch.memories = [...(editing.memories || []), transMemory];
-          patch.lastContactDays = 0;
-          patch.metCount = (editing.metCount || 0) + 1;
-          patch.last = Object.assign({}, editing.last || {}, { type: "Voice/Text note", when: "Today", summary: cap.text.slice(0, 120), tags: [] });
-        }
-        if (followUpFromPrefill) patch.followUp = followUpFromPrefill;
-        Store.updatePerson(editing.id, patch);
-        closeCapture();
-        toast(cap.review ? t("toast_updated_person", { name: (nm || editing.name).split(" ")[0] }) : t("toast_updated_profile", { name: (nm || editing.name).split(" ")[0] }));
-        go("profile", { personId: editing.id });
-        return;
-      }
-      const name = get("basic-name") || "New contact";
-      const newPerson = {
-        id: "p" + Date.now(), name, nameJa: get("basic-kana"), initials: name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
-        gender: get("basic-gender"), birthday: get("basic-birthday"), nationality: get("basic-nationality"),
-        languages: get("basic-languages") ? get("basic-languages").split(",").map((s) => s.trim()) : [],
-        currentCity: get("basic-currentCity"), hometown: get("basic-hometown"), country: get("basic-country"),
-        email: get("basic-email"), phone: get("basic-phone"),
-        company: get("work-company") || "—", department: get("work-department"), title: get("work-title") || "—",
-        industry: get("work-industry"), profession: get("work-profession"),
-        expertise: get("work-expertise") ? get("work-expertise").split(",").map((s) => s.trim()) : [],
-        skills: get("work-skills") ? get("work-skills").split(",").map((s) => s.trim()) : [],
-        spouse: get("personal-spouse"), children: get("personal-children"), familyNotes: get("personal-familyNotes"),
-        hobbies: get("personal-hobbies") ? get("personal-hobbies").split(",").map((s) => s.trim()) : [],
-        favoriteFood: get("personal-favoriteFood"), favoriteDrink: get("personal-favoriteDrink"), schools: get("personal-schools"),
-        relationshipType: get("relationship-relationshipType") || "New", strength: get("relationship-strength") || "normal",
-        frequency: get("relationship-frequency"),
-        firstMet: { date: get("relationship-firstMetDate") || "Today", place: get("relationship-firstMetPlace"), how: "" },
-        introducedBy: get("relationship-introducedBy"),
-        helpGiven: get("relationship-helpGiven") ? [get("relationship-helpGiven")] : [],
-        helpReceived: get("relationship-helpReceived") ? [get("relationship-helpReceived")] : [],
-        promises: get("relationship-promises") ? [get("relationship-promises")] : [],
-        role: "New · just created", since: "Today", location: (get("basic-currentCity") || "—") + (get("basic-country") ? ", " + get("basic-country") : ""),
-        color: "#8E5A9E",
-        interests: cap.prefill.interests || [], dates: [], last: { type: cap.review ? (cap.mode === "voice" ? "Voice memo" : cap.mode === "card" ? "Card scan" : "Text note") : "Manual entry", when: "Today", place: "", summary: (cap.text || get("notes-notes") || "Created manually.").slice(0, 120), tags: [] },
-        followUp: followUpFromPrefill || { when: "—", what: "Say hi in a few days", kind: "reconnect" },
-        meetings: [], timelineExtra: [],
-        memories: cap.review && cap.text
-          ? [transMemory]
-          : get("notes-notes") ? [{ when: "Today", text: get("notes-notes") }] : [],
-        raw: cap.text || "",
-        connections: [], mutual: [], circles, tags: [cap.review ? (cap.mode === "voice" ? "voice" : cap.mode === "card" ? "card" : "text") : "manual"], lastContactDays: 0, metCount: cap.review ? 1 : 0,
-        active: true, photo: "", photos: [], _custom: true,
-        about: name + " — " + (get("work-title") || "—") + " at " + (get("work-company") || "—") + (cap.review ? " Captured from " + (cap.mode === "voice" ? "voice" : cap.mode === "card" ? "card" : "text") + " today." : ". Created manually today.")
-      };
-      Store.createPerson(newPerson);
-      closeCapture();
-      toast(t("toast_created", { name }));
-      go("profile", { personId: newPerson.id });
-    });
+    renderManualCapture();
+    return;
   }
 }
 
@@ -2048,11 +2270,13 @@ async function handleCardPhoto(e) {
 function enterReviewFromText() {
   const parsed = parseCaptureText(cap.text || "");
   const matched = cap.personId ? byId(cap.personId) : resolvePersonFromText(cap.text || "");
+  cap.sourceMode = cap.sourceMode === "voice" ? "voice" : "text";
   cap.mode = "manual";
   cap.review = true;
   cap.prefill = parsedToPrefill(parsed);
   cap.personId = matched ? matched.id : null;
   cap.edit = !!matched;
+  cap.formDraft = null;
   cap.step = 1;
   renderCapture();
 }
@@ -2061,12 +2285,14 @@ function enterReviewFromText() {
 function enterReviewFromCard() {
   const pre = parseCardOcrText(cap.ocrText || "") || cardDemoFields();
   const matched = resolvePersonFromText(pre.name || "");
+  cap.sourceMode = "card";
   cap.mode = "manual";
   cap.review = true;
   cap.text = cap.ocrText || "";
   cap.prefill = pre;
   cap.personId = matched ? matched.id : null;
   cap.edit = !!matched;
+  cap.formDraft = null;
   cap.step = 1;
   renderCapture();
 }
@@ -2182,6 +2408,8 @@ function onFbUser(user) {
     renderAll();
     if (currentScreen === "login") go("home");
   } else {
+    // Firebase mode: cloud is authoritative, so never leave another account's data locally.
+    Store.replaceFromRemote([]);
     go("login");
   }
 }

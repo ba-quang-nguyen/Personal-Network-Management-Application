@@ -439,14 +439,38 @@ const circleOf = (id) => CIRCLES.find((c) => c.id === id);
    HOME / CARE — tính động từ PEOPLE (data thật của người dùng)
    ============================================================ */
 const MONTHS_MAP = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+function validMonthDay(month, day) {
+  if (!(month >= 1 && month <= 12 && day >= 1 && day <= 31)) return null;
+  const check = new Date(2000, month - 1, day);
+  return check.getMonth() === month - 1 && check.getDate() === day ? { month, day } : null;
+}
 function parseMonthDay(value) {
-  const m = /([A-Za-z]{3})\s*(\d{1,2})/.exec(String(value || ""));
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+
+  // ISO full date: year is optional knowledge for birthday reminders.
+  let m = /(?:^|\D)(\d{4})-(\d{1,2})-(\d{1,2})(?:\D|$)/.exec(raw);
+  if (m) return validMonthDay(parseInt(m[2], 10), parseInt(m[3], 10));
+
+  // Japanese: 11月22日.
+  m = /(\d{1,2})\s*月\s*(\d{1,2})\s*日/.exec(raw);
+  if (m) return validMonthDay(parseInt(m[1], 10), parseInt(m[2], 10));
+
+  // Vietnamese natural forms: 22 tháng 11 / tháng 11 ngày 22.
+  m = /(?:ngày\s*)?(\d{1,2})\s*(?:tháng|thg)\s*(\d{1,2})/i.exec(raw);
+  if (m) return validMonthDay(parseInt(m[2], 10), parseInt(m[1], 10));
+  m = /(?:tháng|thg)\s*(\d{1,2})\D+(?:ngày\s*)?(\d{1,2})/i.exec(raw);
+  if (m) return validMonthDay(parseInt(m[1], 10), parseInt(m[2], 10));
+
+  // Numeric input follows the app's Vietnamese-first day/month convention.
+  m = /(?:^|\D)(\d{1,2})\s*[\/.]\s*(\d{1,2})(?:\s*[\/.]\s*\d{2,4})?(?:\D|$)/.exec(raw);
+  if (m) return validMonthDay(parseInt(m[2], 10), parseInt(m[1], 10));
+
+  // Existing sample/import format: Nov 22.
+  m = /([A-Za-z]{3})\s*(\d{1,2})/.exec(raw);
   if (!m) return null;
   const month = MONTHS_MAP[(m[1][0] || "").toUpperCase() + (m[1] || "").slice(1).toLowerCase()];
-  if (!month) return null;
-  const day = parseInt(m[2], 10);
-  if (!(day >= 1 && day <= 31)) return null;
-  return { month, day };
+  return month ? validMonthDay(month, parseInt(m[2], 10)) : null;
 }
 function daysUntilBirthday(value, today) {
   const parsed = parseMonthDay(value);
@@ -752,59 +776,166 @@ const ADDINFO_DEMO = {
 const TEXT_DEMO =
   "I met Tanaka-san from ABC today. He is responsible for logistics DX. He is interested in warehouse robots and is considering a PoC next year. We agreed to meet again in October.";
 
-/* ---------- manual entry form definition (§7.5, §9) ---------- */
+/* ---------- quick/manual entry form definition (§7.5, §9) ---------- */
 const MANUAL_SECTIONS = [
   { key: "basic", title: "Basic information", fields: [
-    { k: "name", label: "Full name", type: "text", req: true },
-    { k: "kana", label: "Kana", type: "text" },
-    { k: "nickname", label: "Nickname", type: "text" },
-    { k: "gender", label: "Gender", type: "select", options: ["", "Male", "Female", "Other"] },
-    { k: "birthday", label: "Birthday", type: "text", ph: "e.g. Nov 22" },
-    { k: "nationality", label: "Nationality", type: "text" },
-    { k: "languages", label: "Languages", type: "text", ph: "comma separated" },
-    { k: "currentCity", label: "Current city", type: "text" },
-    { k: "hometown", label: "Hometown", type: "text" },
-    { k: "country", label: "Country of residence", type: "text" },
-    { k: "email", label: "Email", type: "text" },
-    { k: "phone", label: "Phone", type: "text" }
+    { k: "name", label: "Full name", control: "text", tier: "quick", req: true, autocomplete: "name" },
+    { k: "kana", label: "Kana", control: "text", autocomplete: "off" },
+    { k: "nickname", label: "Nickname", control: "text", autocomplete: "nickname" },
+    { k: "gender", label: "Gender", control: "select", options: ["", "Male", "Female", "Other"] },
+    { k: "birthday", label: "Birthday", control: "text", tier: "quick", phKey: "birthday_flexible_ph", autocomplete: "bday" },
+    { k: "nationality", label: "Nationality", control: "text", autocomplete: "country-name" },
+    { k: "languages", label: "Languages", control: "chips" },
+    { k: "currentCity", label: "Current city", control: "location", tier: "quick", phKey: "location_ph", autocomplete: "address-level2" },
+    { k: "hometown", label: "Hometown", control: "text", autocomplete: "off" },
+    { k: "country", label: "Country of residence", control: "text", autocomplete: "country-name" },
+    { k: "email", label: "Email", control: "email", autocomplete: "email", inputmode: "email" },
+    { k: "phone", label: "Phone", control: "tel", autocomplete: "tel", inputmode: "tel" }
   ]},
   { key: "work", title: "Professional information", fields: [
-    { k: "company", label: "Company", type: "text" },
-    { k: "department", label: "Department", type: "text" },
-    { k: "title", label: "Position", type: "text" },
-    { k: "industry", label: "Industry", type: "text" },
-    { k: "profession", label: "Profession", type: "text" },
-    { k: "expertise", label: "Expertise", type: "text", ph: "comma separated" },
-    { k: "previousCompanies", label: "Previous companies", type: "text" },
-    { k: "skills", label: "Skills", type: "text" },
-    { k: "businessTopics", label: "Business topics", type: "text" }
+    { k: "company", label: "Company", control: "text", tier: "quick", autocomplete: "organization" },
+    { k: "department", label: "Department", control: "text", autocomplete: "organization-title" },
+    { k: "title", label: "Position", control: "text", autocomplete: "organization-title" },
+    { k: "industry", label: "Industry", control: "text" },
+    { k: "profession", label: "Profession", control: "text" },
+    { k: "expertise", label: "Expertise", control: "chips" },
+    { k: "previousCompanies", label: "Previous companies", control: "chips" },
+    { k: "skills", label: "Skills", control: "chips" },
+    { k: "businessTopics", label: "Business topics", control: "chips" }
   ]},
   { key: "personal", title: "Personal information", fields: [
-    { k: "spouse", label: "Spouse / partner", type: "text" },
-    { k: "children", label: "Children", type: "text" },
-    { k: "familyNotes", label: "Family notes", type: "text" },
-    { k: "hobbies", label: "Hobbies", type: "text" },
-    { k: "sports", label: "Sports", type: "text" },
-    { k: "favoriteFood", label: "Favorite food", type: "text" },
-    { k: "favoriteDrink", label: "Favorite drink", type: "text" },
-    { k: "schools", label: "Schools / university", type: "text" },
-    { k: "pets", label: "Pets", type: "text" }
+    { k: "spouse", label: "Spouse / partner", control: "text" },
+    { k: "children", label: "Children", control: "text" },
+    { k: "familyNotes", label: "Family notes", control: "text" },
+    { k: "hobbies", label: "Hobbies", control: "chips" },
+    { k: "sports", label: "Sports", control: "chips" },
+    { k: "favoriteFood", label: "Favorite food", control: "text" },
+    { k: "favoriteDrink", label: "Favorite drink", control: "text" },
+    { k: "schools", label: "Schools / university", control: "text" },
+    { k: "pets", label: "Pets", control: "text" }
   ]},
   { key: "relationship", title: "Relationship information", fields: [
-    { k: "relationshipType", label: "Relationship type", type: "select", options: ["", "Key contact", "Client", "Partner", "Investor", "Mentor", "Friend", "Collaborator", "Acquaintance"] },
-    { k: "strength", label: "Relationship strength", type: "select", options: ["", "close", "important", "normal", "weak"] },
-    { k: "frequency", label: "Contact rhythm", type: "select", options: ["", "monthly", "2months", "quarterly", "biannual", "yearly", "custom"] },
-    { k: "firstMetDate", label: "First met — date", type: "text" },
-    { k: "firstMetPlace", label: "First met — place", type: "text" },
-    { k: "introducedBy", label: "Introduced by", type: "text" },
-    { k: "helpGiven", label: "What I've helped with", type: "text" },
-    { k: "helpReceived", label: "What they've helped me with", type: "text" },
-    { k: "promises", label: "Promises / follow-ups", type: "text" }
+    { k: "relationshipType", label: "Relationship type", control: "select", tier: "quick", options: ["", "Key contact", "Client", "Partner", "Investor", "Mentor", "Friend", "Collaborator", "Acquaintance"] },
+    { k: "strength", label: "Relationship strength", control: "select", options: ["", "close", "important", "normal", "weak"] },
+    { k: "frequency", label: "Contact rhythm", control: "select", options: ["", "monthly", "2months", "quarterly", "biannual", "yearly", "custom"] },
+    { k: "firstMetDate", label: "First met — date", control: "text" },
+    { k: "firstMetPlace", label: "First met — place", control: "text" },
+    { k: "introducedBy", label: "Introduced by", control: "text" },
+    { k: "helpGiven", label: "What I've helped with", control: "chips" },
+    { k: "helpReceived", label: "What they've helped me with", control: "chips" },
+    { k: "promises", label: "Promises / follow-ups", control: "chips" }
   ]},
   { key: "notes", title: "Free notes", fields: [
-    { k: "notes", label: "Anything else", type: "textarea", ph: "Unstructured info — AI will file it in the right place later." }
+    { k: "notes", label: "Anything else", control: "textarea", tier: "quick", phKey: "quick_note_ph" }
   ]}
 ];
+
+const MANUAL_FIELDS = MANUAL_SECTIONS.flatMap((sec) =>
+  sec.fields.map((field) => Object.assign({ sec: sec.key, tier: "advanced", control: "text" }, field)),
+);
+const MANUAL_FIELD_MAP = Object.fromEntries(MANUAL_FIELDS.map((field) => [field.sec + "." + field.k, field]));
+const MANUAL_QUICK_FIELDS = [
+  "basic.name",
+  "relationship.relationshipType",
+  "work.company",
+  "basic.currentCity",
+  "basic.birthday",
+  "notes.notes",
+];
+const MANUAL_ARRAY_FIELDS = new Set([
+  "languages", "expertise", "skills", "hobbies", "sports", "businessTopics", "previousCompanies",
+  "careerHistory", "travelInterests", "interests", "helpGiven", "helpReceived", "promises",
+]);
+
+function manualHasValue(value) {
+  if (Array.isArray(value)) return value.length > 0;
+  const clean = String(value == null ? "" : value).trim();
+  return !!clean && clean !== "—";
+}
+
+function manualArrayValue(value) {
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  return String(value || "").split(/[,，]/).map((item) => item.trim()).filter(Boolean);
+}
+
+function createManualDraft(person, prefill, review) {
+  const source = prefill || {};
+  const draft = {};
+  MANUAL_FIELDS.forEach((field) => {
+    const key = field.sec + "." + field.k;
+    let value = "";
+    if (field.k === "notes" && review) {
+      value = ""; // raw voice/text/card memory is stored separately
+    } else if (Object.prototype.hasOwnProperty.call(source, field.k) && manualHasValue(source[field.k])) {
+      value = source[field.k];
+    } else if (person) {
+      if (field.k === "kana") value = person.nameJa || "";
+      else if (field.k === "firstMetDate") value = person.firstMet && person.firstMet.date !== "—" ? person.firstMet.date || "" : "";
+      else if (field.k === "firstMetPlace") value = person.firstMet ? person.firstMet.place || "" : "";
+      else if (field.k !== "notes") value = person[field.k] == null ? "" : person[field.k];
+    }
+    if ((field.k === "company" || field.k === "title") && value === "—") value = "";
+    draft[key] = field.control === "chips" || MANUAL_ARRAY_FIELDS.has(field.k)
+      ? manualArrayValue(value)
+      : String(value == null ? "" : value);
+  });
+  return draft;
+}
+
+function manualDraftToFields(draft) {
+  const fields = {};
+  MANUAL_FIELDS.forEach((field) => {
+    const value = draft[field.sec + "." + field.k];
+    if (field.k === "notes" || field.k === "firstMetDate" || field.k === "firstMetPlace") return;
+    const target = field.k === "kana" ? "nameJa" : field.k;
+    fields[target] = field.control === "chips" || MANUAL_ARRAY_FIELDS.has(field.k)
+      ? manualArrayValue(value)
+      : String(value == null ? "" : value).trim();
+  });
+  return fields;
+}
+
+function locationSuggestions(people) {
+  const seen = new Set();
+  const out = [];
+  const add = (value) => {
+    const clean = String(value || "").trim();
+    const key = clean.toLocaleLowerCase();
+    if (!clean || clean === "—" || seen.has(key)) return;
+    seen.add(key);
+    out.push(clean);
+  };
+  (people || []).forEach((p) => add(p.currentCity));
+  Object.keys(CITY_GEO).forEach(add);
+  return out.slice(0, 30);
+}
+
+function normalizePersonName(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function findPotentialDuplicate(name, people, excludeId) {
+  const target = normalizePersonName(name);
+  if (target.length < 2) return null;
+  const targetParts = target.split(" ");
+  return (people || []).find((p) => {
+    if (!p || p.id === excludeId) return false;
+    const candidate = normalizePersonName(p.name);
+    if (!candidate) return false;
+    if (candidate === target) return true;
+    const parts = candidate.split(" ");
+    if (targetParts.length > 1 && parts.length > 1) {
+      return targetParts[0] === parts[0] && targetParts[targetParts.length - 1] === parts[parts.length - 1];
+    }
+    return target.length >= 5 && candidate.length >= 5 && (candidate.includes(target) || target.includes(candidate));
+  }) || null;
+}
 
 /* ============================================================
    Normalization — giờ do js/store.js (normalize) lo; mục này bỏ.
@@ -818,6 +949,11 @@ const CITY_GEO = {
   "Tokyo": [35.6762, 139.6503],
   "Yokohama": [35.4437, 139.638],
   "Osaka": [34.6937, 135.5023],
+  "Kyoto": [35.0116, 135.7681],
+  "Nagoya": [35.1815, 136.9066],
+  "Fukuoka": [33.5902, 130.4017],
+  "Hanoi": [21.0278, 105.8342],
+  "Da Nang": [16.0544, 108.2022],
   "Ho Chi Minh City": [10.8231, 106.6297],
   "Singapore": [1.3521, 103.8198]
 };
@@ -826,7 +962,8 @@ const CITY_GEO = {
 function personGeo(p) {
   let h = 0;
   for (const ch of String(p.id)) h = (h * 31 + ch.charCodeAt(0)) % 997;
-  const base = CITY_GEO[p.currentCity] || CITY_GEO["Tokyo"];
+  const base = CITY_GEO[p.currentCity];
+  if (!base) return null;
   const j = (h % 200) / 10000 - 0.01; // ±0.01° (~±1.1 km)
   return [base[0] + j, base[1] + j];
 }
