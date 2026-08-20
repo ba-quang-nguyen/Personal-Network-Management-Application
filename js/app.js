@@ -44,7 +44,12 @@ function icon(name, size = 16) {
     userplus: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.4"/><path d="M2.8 20c.7-3.4 3.2-5 6.2-5s5.5 1.6 6.2 5"/><path d="M19 8v6M16 11h6"/></svg>',
     image: '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="m21 15-5-5L5 21"/></svg>',
     camera: '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="3.5"/></svg>',
-    lock: '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'
+    lock: '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+    user: '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1.1-3.8 4-5.5 7.5-5.5s6.4 1.7 7.5 5.5"/></svg>',
+    sun: '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M18.7 18.7l-1.4-1.4M18.7 5.3l-1.4 1.4M5.3 18.7l1.4-1.4"/></svg>',
+    phone: '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>',
+    download: '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><path d="m7 9 5 5 5-5"/><path d="M4 20h16"/></svg>',
+    upload: '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14V3"/><path d="m7 8 5-5 5 5"/><path d="M4 20h16"/></svg>'
   };
   return I[name] || "";
 }
@@ -1333,39 +1338,9 @@ function renderRefresh(personId) {
 }
 
 /* ============================================================
-   SETTINGS (web companion)
+   SETTINGS — Account (profile + login/logout) · Appearance ·
+   Notifications · Language · Data (chỉ bản web)
    ============================================================ */
-function findDuplicates() {
-  const map = new Map();
-  PEOPLE.forEach((p) => {
-    const key = p.name.toLowerCase().replace(/\s+/g, " ").trim();
-    const arr = map.get(key) || [];
-    arr.push(p);
-    map.set(key, arr);
-  });
-  return [...map.values()].filter((g) => g.length > 1);
-}
-
-/** Merge 2 người trùng tên: giữ người thứ nhất, gộp dữ liệu, xoá người thứ hai. */
-function mergePeople(keep, dup) {
-  if (!keep || !dup) return;
-  const merged = {
-    meetings: [...(keep.meetings || []), ...(dup.meetings || [])],
-    memories: [...(keep.memories || []), ...(dup.memories || [])],
-    photos: [...(keep.photos || []), ...(dup.photos || [])],
-    photo: keep.photo || dup.photo || "",
-    tags: [...new Set([...(keep.tags || []), ...(dup.tags || [])])],
-    connections: [...new Set([...(keep.connections || []), ...(dup.connections || [])])],
-    metCount: (keep.metCount || 0) + (dup.metCount || 0),
-    email: keep.email || dup.email || "",
-    phone: keep.phone || dup.phone || "",
-    company: keep.company && keep.company !== "—" ? keep.company : dup.company || keep.company,
-    title: keep.title && keep.title !== "—" ? keep.title : dup.title || keep.title,
-  };
-  Store.updatePerson(keep.id, merged);
-  Store.deletePerson(dup.id);
-}
-
 function renderSettings() {
   const S = Store.getSettings();
   const prof = S.profile || {};
@@ -1373,89 +1348,88 @@ function renderSettings() {
   const pInitials = (pname.split(/\s+/).map((w) => w[0]).join("") || "Yo").slice(0, 2).toUpperCase();
   const avatarObj = { name: pname || t("you"), photo: prof.photo || "", color: prof.color || "#201D1A", initials: pInitials };
   const swatches = ["#E0452C", "#B45F06", "#3E7BB6", "#2E7D5B", "#8D867C", "#201D1A"];
-  const email = fbEnabled() && fbUser && fbUser.email ? esc(fbUser.email) : "";
-  const dups = findDuplicates();
   const seg = (opts, cur, attr) => opts.map((o) =>
     '<button type="button" class="opt' + (o.v === cur ? " active" : "") + '" data-' + attr + '="' + o.v + '">' + o.label + "</button>"
   ).join("");
+
+  // Data (export/import) — chỉ bản web/desktop
+  const dataCard = view === "web"
+    ? '<div class="set-section">' + t("settings_data") + "</div>" +
+      '<div class="card set-card">' +
+      '<div class="setting-row"><span class="set-ico">' + icon("download", 16) + "</span><div><b>" + t("settings_export") + "</b><span>" + t("settings_export_desc") + "</span></div>" +
+      '<button class="btn small s-act" id="export-btn">' + t("btn_export") + "</button></div>" +
+      '<div class="setting-row"><span class="set-ico">' + icon("upload", 16) + "</span><div><b>" + t("settings_import") + "</b><span>" + t("settings_import_desc") + "</span></div>" +
+      '<button class="btn small s-act" id="import-btn">' + t("btn_import") + "</button></div>" +
+      '<input type="file" id="import-file" accept="application/json,.json" hidden /></div>'
+    : "";
 
   $("#screen-settings").innerHTML =
     '<div class="screen-head"><div class="kicker">' + t("settings_kicker") + "</div>" +
     '<h1 class="screen-title">' + t("settings_title") + "</h1>" +
     '<p class="screen-sub">' + t("settings_sub") + "</p></div>" +
 
-    // ---------- Profile ----------
-    '<div class="card"><div class="card-title">' + icon("userplus", 13) + " " + t("settings_profile") + "</div>" +
-    '<div class="setting-row" style="align-items:flex-start">' + avatarHTML(avatarObj, 52) +
+    // ---------- Account ----------
+    '<div class="set-section">' + t("auth_account") + "</div>" +
+    '<div class="card set-card">' +
+    '<div class="setting-row" style="align-items:flex-start;padding-top:14px">' + avatarHTML(avatarObj, 52) +
     '<div style="flex:1;min-width:0"><label class="set-label" for="profile-name">' + t("settings_profile_name") + "</label>" +
     '<input class="set-input" id="profile-name" type="text" value="' + esc(pname) + '" placeholder="' + t("you") + '" maxlength="40" /></div></div>' +
-    '<div class="setting-row"><div><b>' + t("settings_profile_color") + "</b></div>" +
+    '<div class="setting-row"><span class="set-ico">' + icon("user", 16) + "</span><div><b>" + t("settings_profile_color") + "</b></div>" +
     '<div class="color-swatches">' + swatches.map((c) =>
       '<button type="button" class="swatch' + (prof.color === c ? " on" : "") + '" data-color="' + c + '" style="background:' + c + '" aria-label="' + c + '"></button>'
     ).join("") + "</div></div>" +
-    '<div class="setting-row"><div><b>' + t("settings_profile_photo") + "</b><span>JPG/PNG · small</span></div>" +
+    '<div class="setting-row"><span class="set-ico">' + icon("camera", 16) + "</span><div><b>" + t("settings_profile_photo") + "</b><span>JPG/PNG · small</span></div>" +
     '<button class="btn small ghost s-act" id="profile-photo-btn">' + t(prof.photo ? "btn_change_photo" : "btn_add_photo") + "</button>" +
     (prof.photo ? '<button class="btn small ghost s-act" id="profile-photo-remove">' + t("btn_remove_photo") + "</button>" : "") +
     '<input type="file" id="profile-photo-file" accept="image/*" hidden /></div>' +
-    '<div class="setting-row"><div><b>' + t("settings_profile_email") + "</b><span>" + (email || t("settings_profile_email_none")) + "</span></div></div></div>" +
+    '<div class="setting-row"><span class="set-ico">' + icon("mail", 16) + "</span><div><b>" + t("settings_profile_email") + "</b><span>" +
+    (fbUser && fbUser.email ? esc(fbUser.email) : (fbEnabled() ? t("auth_not_signed_in") : t("settings_profile_email_none"))) +
+    "</span></div></div>" +
+    (fbEnabled()
+      ? (fbUser
+          ? '<div class="setting-row"><span class="set-ico">' + icon("user", 16) + "</span><div><b>" + t("auth_sign_out") + "</b><span>" + t("auth_sync_note") + "</span></div>" +
+            '<button class="btn small ghost s-act" id="logout-btn">' + t("auth_sign_out") + "</button></div>"
+          : '<div class="setting-row"><span class="set-ico">' + icon("user", 16) + "</span><div><b>" + t("auth_sign_in") + "</b><span>" + t("auth_sync_note") + "</span></div>" +
+            '<button class="btn small primary s-act" id="login-btn">' + t("auth_sign_in") + "</button></div>")
+      : "") +
+    "</div>" +
 
     // ---------- Appearance ----------
-    '<div class="card"><div class="card-title">' + icon("monitor", 13) + " " + t("settings_appearance") + "</div>" +
-    '<div class="setting-row wrap"><div><b>' + t("settings_theme") + "</b></div>" +
+    '<div class="set-section">' + t("settings_appearance") + "</div>" +
+    '<div class="card set-card">' +
+    '<div class="setting-row wrap"><span class="set-ico">' + icon("sun", 16) + "</span><div><b>" + t("settings_theme") + "</b></div>" +
     '<div class="seg" id="theme-seg">' + seg([
       { v: "light", label: t("theme_light") }, { v: "dark", label: t("theme_dark") }, { v: "system", label: t("theme_system") }
     ], S.theme, "theme") + "</div></div>" +
-    '<div class="setting-row wrap"><div><b>' + t("settings_view") + "</b><span>" + t("view_mobile") + " / " + t("view_web") + "</span></div>" +
-    '<div class="seg" id="view-seg">' + seg([
-      { v: "mobile", label: t("view_mobile") }, { v: "web", label: t("view_web") }
-    ], view, "view") + "</div></div>" +
-    '<div class="setting-row wrap"><div><b>' + t("settings_voice_lang") + "</b><span>" + t("settings_voice_lang_desc") + "</span></div>" +
+    (!isCompactViewport()
+      ? '<div class="setting-row wrap"><span class="set-ico">' + icon("phone", 16) + "</span><div><b>" + t("settings_view") + "</b><span>" + t("view_mobile") + " / " + t("view_web") + "</span></div>" +
+        '<div class="seg" id="view-seg">' + seg([
+          { v: "mobile", label: t("view_mobile") }, { v: "web", label: t("view_web") }
+        ], view, "view") + "</div></div>"
+      : "") +
+    '<div class="setting-row wrap"><span class="set-ico">' + icon("mic", 16) + "</span><div><b>" + t("settings_voice_lang") + "</b><span>" + t("settings_voice_lang_desc") + "</span></div>" +
     '<select class="set-select" id="voice-lang-sel">' + VOICE_LANGS.map((l) =>
       '<option value="' + l + '"' + (S.voiceLang === l ? " selected" : "") + ">" + t("voice_lang_" + l.replace("-", "_")) + "</option>"
     ).join("") + "</select></div></div>" +
 
     // ---------- Notifications ----------
-    '<div class="card"><div class="card-title">' + icon("bell", 13) + " " + t("settings_notifications") + "</div>" +
-    '<div class="setting-row"><div><b>' + t("notif_care") + "</b><span>" + t("notif_care_desc") + "</span></div>" +
+    '<div class="set-section">' + t("settings_notifications") + "</div>" +
+    '<div class="card set-card">' +
+    '<div class="setting-row"><span class="set-ico">' + icon("bell", 16) + "</span><div><b>" + t("notif_care") + "</b><span>" + t("notif_care_desc") + "</span></div>" +
     '<button type="button" class="net-switch' + (S.notif.care ? " on" : "") + '" id="notif-care" aria-pressed="' + S.notif.care + '"><i></i></button></div>' +
-    '<div class="setting-row"><div><b>' + t("notif_toast") + "</b><span>" + t("notif_toast_desc") + "</span></div>" +
+    '<div class="setting-row"><span class="set-ico">' + icon("check", 16) + "</span><div><b>" + t("notif_toast") + "</b><span>" + t("notif_toast_desc") + "</span></div>" +
     '<button type="button" class="net-switch' + (S.notif.toast ? " on" : "") + '" id="notif-toast" aria-pressed="' + S.notif.toast + '"><i></i></button></div></div>' +
 
-    // ---------- Language ----------
-    '<div class="card"><div class="card-title">' + icon("globe", 13) + " " + t("settings_language") + "</div>" +
-    '<div class="setting-row"><div><b>' + t("settings_language") + "</b><span>" + t("lang_en_only") + "</span></div>" +
+    // ---------- General ----------
+    '<div class="set-section">' + t("settings_general") + "</div>" +
+    '<div class="card set-card">' +
+    '<div class="setting-row"><span class="set-ico">' + icon("globe", 16) + "</span><div><b>" + t("settings_language") + "</b><span>" + t("lang_en_only") + "</span></div>" +
     '<span class="chip">EN</span></div></div>' +
 
-    // ---------- Data & privacy ----------
-    '<div class="card"><div class="card-title">' + icon("merge", 13) + " " + t("settings_duplicates") + "</div>" +
-    (dups.length
-      ? dups.map((g) =>
-          '<div class="setting-row"><div><b>' + esc(g[0].name) + " × " + esc(g[1].name) + "</b><span>" + t("settings_dup_sub") + "</span></div>" +
-          '<button class="btn small primary s-act merge-btn" data-keep="' + g[0].id + '" data-dup="' + g[1].id + '">' + icon("merge", 12) + " " + t("btn_merge") + "</button></div>"
-        ).join("")
-      : '<div class="setting-row"><div><span>' + t("settings_no_duplicates") + "</span></div></div>") +
-    "</div>" +
-    '<div class="card"><div class="card-title">' + icon("gear", 13) + " " + t("settings_bulk") + "</div>" +
-    '<div class="setting-row"><div><b>' + t("settings_export") + "</b><span>" + t("settings_export_desc") + "</span></div>" +
-    '<button class="btn small s-act" id="export-btn">' + t("btn_export") + "</button></div>" +
-    '<div class="setting-row"><div><b>' + t("settings_import") + "</b><span>" + t("settings_import_desc") + "</span></div>" +
-    '<button class="btn small s-act" id="import-btn">' + t("btn_import") + "</button></div>" +
-    '<input type="file" id="import-file" accept="application/json,.json" hidden />' +
-    '<div class="setting-row"><div><b>' + t("settings_sample_row") + "</b><span>" + t("settings_sample_desc") + "</span></div>" +
-    '<button class="btn small s-act" id="sample-btn">' + t("btn_load_sample") + "</button></div></div>" +
-    (fbEnabled()
-      ? '<div class="card"><div class="card-title">' + icon("users", 13) + " " + t("auth_account") + "</div>" +
-        '<div class="setting-row"><div><b>' + esc(fbUser && fbUser.email ? fbUser.email : t("you")) + "</b><span>" + t("auth_sync_note") + "</span></div>" +
-        '<button class="btn small ghost s-act" id="logout-btn">' + t("auth_sign_out") + "</button></div></div>"
-      : "") +
-    '<div class="card"><div class="card-title">' + icon("lock", 13) + " " + t("settings_privacy") + "</div>" +
-    '<div class="setting-row"><div><b>' + t("settings_private") + "</b><span>" + t("settings_private_desc") + "</span></div><span class='chip ok'>On</span></div>" +
-    '<div class="setting-row"><div><b>' + t("settings_delete") + "</b><span>" + t("settings_delete_desc") + "</span></div>" +
-    '<button class="btn small ghost s-act" id="delete-btn">' + icon("trash", 12) + " " + t("btn_delete") + "</button></div></div>" +
+    dataCard +
 
-    // ---------- About ----------
-    '<div class="card"><div class="card-title">' + icon("spark", 13) + " " + t("settings_about") + "</div>" +
-    '<div class="setting-row"><div><b>Network Management</b><span>' + t("settings_about_desc") + "</span></div></div></div>";
+    // ---------- About footer ----------
+    '<div class="set-about">' + esc(APP_NAME) + " · " + t("settings_about_line") + "</div>";
 
   // theme
   $$("#theme-seg .opt").forEach((b) => b.addEventListener("click", () => {
@@ -1486,19 +1460,15 @@ function renderSettings() {
   const pr = $("#profile-photo-remove");
   if (pr) pr.addEventListener("click", () => Store.setSettings({ profile: { photo: "" } }));
 
-  // data & privacy (giữ nguyên logic cũ)
-  $$(".merge-btn", $("#screen-settings")).forEach((b) => b.addEventListener("click", () => {
-    mergePeople(byId(b.dataset.keep), byId(b.dataset.dup));
-    renderSettings();
-    toast(t("toast_merged"), "merge");
-  }));
-  $("#sample-btn").addEventListener("click", () => {
-    if (!confirm(t("settings_sample_confirm"))) return;
-    Store.loadSample();
-    renderAll();
-    toast(t("toast_sample_loaded"));
-  });
-  $("#export-btn").addEventListener("click", () => {
+  // account — login / logout
+  const lb = $("#logout-btn");
+  if (lb) lb.addEventListener("click", () => { Firebase.signOut().catch(() => { /* ignore */ }); });
+  const li = $("#login-btn");
+  if (li) li.addEventListener("click", () => go("login"));
+
+  // data (chỉ bản web) — export / import
+  const eb = $("#export-btn");
+  if (eb) eb.addEventListener("click", () => {
     const blob = new Blob([Store.exportJson()], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -1508,8 +1478,10 @@ function renderSettings() {
     URL.revokeObjectURL(url);
     toast(t("toast_exported"));
   });
-  $("#import-btn").addEventListener("click", () => $("#import-file").click());
-  $("#import-file").addEventListener("change", (e) => {
+  const ib = $("#import-btn");
+  if (ib) ib.addEventListener("click", () => $("#import-file").click());
+  const imp = $("#import-file");
+  if (imp) imp.addEventListener("change", (e) => {
     const f = e.target.files && e.target.files[0];
     e.target.value = "";
     if (!f) return;
@@ -1526,15 +1498,6 @@ function renderSettings() {
     };
     r.readAsText(f);
   });
-  $("#delete-btn").addEventListener("click", () => {
-    if (!confirm(t("settings_delete_confirm"))) return;
-    Store.deleteAll();
-    renderAll();
-    go("home");
-    toast(t("toast_deleted_all"));
-  });
-  const lb = $("#logout-btn");
-  if (lb) lb.addEventListener("click", () => { Firebase.signOut().catch(() => { /* ignore */ }); });
 }
 
 /* ============================================================
