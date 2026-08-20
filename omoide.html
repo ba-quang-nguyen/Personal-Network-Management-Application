@@ -129,37 +129,9 @@ body.view-mobile .screen-title { font-size: 26px; }
 
 /* ---------- web view: sidebar layout ---------- */
 body.view-web .stage { display: block; padding: 0; }
-body.view-web .demo-panel, body.view-web .phone-status, body.view-web .tabbar, body.view-web .fab { display: none; }
+body.view-web .phone-status, body.view-web .tabbar, body.view-web .fab { display: none; }
 body.view-web .app { display: flex; min-height: 100vh; }
 body.view-web .main { flex: 1; min-width: 0; padding: 34px 40px 80px; max-width: 1060px; margin: 0 auto; }
-
-/* demo navigator panel (desktop, mobile view) */
-.demo-panel {
-  width: 258px; flex-shrink: 0; align-self: flex-start;
-  position: sticky; top: 26px;
-  background: var(--surface); border: 1px solid var(--line);
-  border-radius: 18px; box-shadow: var(--shadow);
-  padding: 16px; max-height: calc(100vh - 52px); overflow-y: auto;
-}
-.demo-panel .dp-brand { display: flex; align-items: center; gap: 9px; margin-bottom: 4px; }
-.demo-panel .dp-brand b { font-family: var(--serif); font-size: 16px; }
-.demo-panel .dp-brand span { font-size: 10.5px; color: var(--ink-3); display: block; }
-.demo-panel .dp-title { font-size: 10.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ink-3); margin: 13px 0 6px; }
-.demo-panel .dp-row { display: flex; gap: 7px; margin-bottom: 10px; }
-.demo-panel .dp-btn {
-  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-  border: 1px solid var(--line-strong); border-radius: 10px;
-  padding: 8px; font-size: 12px; font-weight: 600; background: var(--surface-2);
-}
-.demo-panel .dp-btn.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-[data-theme="dark"] .demo-panel .dp-btn.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-.demo-panel .dp-link {
-  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
-  padding: 6px 9px; border-radius: 8px; font-size: 12.5px; color: var(--ink-2);
-}
-.demo-panel .dp-link:hover { background: var(--surface-2); color: var(--ink); }
-.demo-panel .dp-link .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.demo-panel .dp-note { font-size: 10.5px; color: var(--ink-3); margin-top: 10px; line-height: 1.5; }
 
 /* ============================================================
    SIDEBAR (web view)
@@ -307,11 +279,6 @@ body.view-web .main { flex: 1; min-width: 0; padding: 34px 40px 80px; max-width:
 }
 .ask-bar:hover { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .ask-bar .placeholder { color: var(--ink-3); font-size: 13px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ai-pill {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: var(--accent-soft); color: var(--accent);
-  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; flex-shrink: 0;
-}
 
 .section-label { display: flex; align-items: center; gap: 8px; margin: 22px 0 10px; }
 .section-label h3 { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ink-3); }
@@ -348,7 +315,7 @@ body.view-web .main { flex: 1; min-width: 0; padding: 34px 40px 80px; max-width:
 .memory-row .mr-when { font-size: 10.5px; color: var(--ink-3); font-weight: 700; flex-shrink: 0; width: 74px; padding-top: 2px; }
 .memory-row p { color: var(--ink-2); }
 
-/* ---------- people / circles ---------- */
+/* ---------- people ---------- */
 .toolbar { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
 .search-input {
   flex: 1; min-width: 180px; display: flex; align-items: center; gap: 9px;
@@ -363,20 +330,6 @@ body.view-web .main { flex: 1; min-width: 0; padding: 34px 40px 80px; max-width:
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238d867c' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 12px center;
 }
-.circle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.circle-card {
-  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
-  padding: 14px 16px; box-shadow: var(--shadow); cursor: pointer; text-align: left;
-  transition: transform 0.12s, border-color 0.15s;
-}
-.circle-card:hover { transform: translateY(-2px); border-color: var(--line-strong); }
-.circle-card .cc-head { display: flex; align-items: center; gap: 9px; }
-.circle-card .cc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.circle-card b { font-size: 13.5px; }
-.circle-card .cc-count { margin-left: auto; font-size: 11px; color: var(--ink-3); font-weight: 600; }
-.circle-card .cc-avs { display: flex; margin-top: 10px; }
-.circle-card .cc-avs .avatar { width: 24px; height: 24px; font-size: 9px; border: 2px solid var(--surface); margin-left: -6px; }
-.circle-card .cc-avs .avatar:first-child { margin-left: 0; }
 
 /* ---------- profile ---------- */
 .profile-head { display: flex; gap: 16px; align-items: flex-start; }
@@ -493,11 +446,6 @@ body.view-web .main { flex: 1; min-width: 0; padding: 34px 40px 80px; max-width:
   border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; margin-top: 16px;
 }
 .answer-head { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
-.ai-orb {
-  width: 26px; height: 26px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), #ff8a5c);
-  display: grid; place-items: center; color: #fff; flex-shrink: 0;
-}
 .answer-head b { font-size: 13px; }
 .answer-head span { font-size: 11px; color: var(--ink-3); }
 .answer-text { font-size: 14px; line-height: 1.65; }
@@ -518,14 +466,6 @@ body.view-web .main { flex: 1; min-width: 0; padding: 34px 40px 80px; max-width:
 }
 .src-chip.profile { background: var(--ok-soft); color: var(--ok); }
 .src-chip.interaction { background: var(--accent-soft); color: var(--accent); }
-.src-chip.circle { background: #eef1f8; color: #3e5fbf; }
-[data-theme="dark"] .src-chip.circle { background: #252d42; color: #9db4f0; }
-
-.typing-dots { display: inline-flex; gap: 4px; align-items: center; padding: 2px 0; }
-.typing-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: bounce 1s infinite; }
-.typing-dots i:nth-child(2) { animation-delay: 0.15s; }
-.typing-dots i:nth-child(3) { animation-delay: 0.3s; }
-@keyframes bounce { 0%, 100% { transform: translateY(0); opacity: 0.5; } 50% { transform: translateY(-4px); opacity: 1; } }
 
 .empty-state { text-align: center; padding: 42px 20px; color: var(--ink-3); }
 .empty-state .big { font-size: 32px; margin-bottom: 8px; }
@@ -847,7 +787,7 @@ textarea.story { min-height: 110px; resize: vertical; }
 .manual-sticky-foot .btn { min-height: 44px; }
 .manual-sticky-foot .btn.primary { min-width: 132px; }
 .advanced-toggle:focus-visible, .accordion-trigger:focus-visible, .field-inline-action:focus-visible,
-.input-chip button:focus-visible, .circle-pick:focus-visible, .manual-sticky-foot .btn:focus-visible {
+.input-chip button:focus-visible, .manual-sticky-foot .btn:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 2px; box-shadow: 0 0 0 4px var(--accent-soft);
 }
 .btn:disabled { cursor: not-allowed; opacity: 0.45; transform: none; }
@@ -955,12 +895,10 @@ textarea.story { min-height: 110px; resize: vertical; }
   body.view-web .tabbar { display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; }
   body.view-web .fab { display: grid; position: fixed; right: 18px; bottom: 84px; }
   body.view-web .main { padding: 24px 18px 110px; max-width: 100%; }
-  .demo-panel { display: none; }
 }
 @media (max-width: 900px) {
   .profile-grid { grid-template-columns: 1fr; }
   .fact-grid { grid-template-columns: 1fr; }
-  .circle-grid { grid-template-columns: 1fr; }
   .profile-head { flex-wrap: wrap; }
   .profile-actions { margin-left: 0; width: 100%; }
   .profile-actions .btn { flex: 1; }
@@ -975,7 +913,6 @@ body.view-mobile .profile-grid,
 body.view-mobile .fact-grid,
 body.view-mobile .extract-grid,
 body.view-mobile .form-grid { grid-template-columns: 1fr; }
-body.view-mobile .circle-grid { grid-template-columns: 1fr 1fr; }
 body.view-mobile .profile-actions { margin-left: 0; width: 100%; }
 body.view-mobile .profile-actions .btn { flex: 1; }
 body.view-mobile .screen-head-row { flex-direction: column; align-items: flex-start; gap: 10px; }
@@ -1120,9 +1057,6 @@ body.view-mobile .location-map { height: 340px; }
 
 <div class="stage">
 
-  <!-- ============ DEMO NAVIGATOR (desktop, mobile view) ============ -->
-  <aside class="demo-panel" id="demo-panel"></aside>
-
   <!-- ============ APP ============ -->
   <div class="app" id="app">
 
@@ -1178,7 +1112,6 @@ body.view-mobile .location-map { height: 340px; }
         <div class="ask-bar" id="ask-bar-home">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
           <span class="placeholder" data-i18n="home_ask_ph">Ask your network…</span>
-          <span class="ai-pill">AI</span>
         </div>
 
         <div id="home-care"></div>
@@ -1197,7 +1130,6 @@ body.view-mobile .location-map { height: 340px; }
         </div>
         <div class="segmented" id="people-segmented" style="margin-bottom:14px">
           <button data-tab="people" class="on"><span data-i18n="people_tab_people">People</span></button>
-          <button data-tab="circles"><span data-i18n="people_tab_circles">Circles</span></button>
         </div>
         <div id="people-view"></div>
       </section>
@@ -1393,7 +1325,7 @@ const SAMPLE_PEOPLE = [
     ],
     raw: 'Voice memo · Aug 22, 2026 — "Met Tanaka-san at the Yamato warehouse today. He is responsible for logistics DX at ABC. Very interested in warehouse robots — considering a PoC next year. We walked the floor, looked at AGV routes and the WMS. Agreed to meet again in October to talk about next steps."',
     connections: ["Ito Kenji", "Nguyen Minh"], mutual: ["Ito Kenji", "Yamamoto Ryo"],
-    circles: ["close", "robotics", "vietnam", "golf"], tags: ["logistics-dx", "po-c-2027", "warehouse"],
+    tags: ["logistics-dx", "po-c-2027", "warehouse"],
     lastContactDays: 47, metCount: 4,
     about: "Tanaka Hiroshi — ABC Logistics, Logistics DX Director. Met 4 times since 2025. Lives in Yokohama, plays golf, has two children. Interested in robotics, Vietnam and warehouse automation. Last met: Yamato warehouse visit — Aug 2026. Discussed: AGV integration and warehouse management system."
   },
@@ -1431,7 +1363,7 @@ const SAMPLE_PEOPLE = [
       { when: "Sep 2026", text: "Newly managing the AI platform team." }
     ],
     raw: 'Voice memo · Sep 30, 2026 — "I just met Suzuki-san again. Her daughter entered university this year. She is now managing the new AI team. She asked me to introduce someone familiar with Vietnam."',
-    connections: [], mutual: [], circles: ["ai", "vietnam"], tags: ["ai-agents", "vietnam-intro"],
+    connections: [], mutual: [], tags: ["ai-agents", "vietnam-intro"],
     lastContactDays: 8, metCount: 2,
     about: "Suzuki Keiko — Nihon AI Systems, AI Platform Team Lead. Met 2 times since 2025. Newly managing the AI team; daughter entered university this year. Asked for an introduction to someone familiar with Vietnam."
   },
@@ -1468,7 +1400,7 @@ const SAMPLE_PEOPLE = [
       { when: "Jan 2024", text: "Met through the founder community." }
     ],
     raw: "", connections: ["Kobayashi Miki"], mutual: ["Kobayashi Miki", "Watanabe Aiko"],
-    circles: ["mentors", "startups"], tags: ["headhunter", "founder-community"],
+    tags: ["headhunter", "founder-community"],
     lastContactDays: 120, metCount: 6,
     about: "Sato Yuki — TalentBridge, Founder & Headhunter. Known since 2024. A mentor for building in Japan. Last met: Marunouchi coffee — Jun 2026. Discussed founder hiring in tech."
   },
@@ -1505,7 +1437,7 @@ const SAMPLE_PEOPLE = [
       { when: "Sep 2026", text: "Can support a PoC at ABC — wants Tanaka to commit soon." }
     ],
     raw: "", connections: ["Tanaka Hiroshi"], mutual: ["Tanaka Hiroshi"],
-    circles: ["partners", "robotics"], tags: ["agv", "logis-tech"],
+    tags: ["agv", "logis-tech"],
     lastContactDays: 24, metCount: 2,
     about: "Ito Kenji — MotionWorks Robotics, Sales Director. Met 2 times since 2025. AGV & warehouse robotics. Connected to Tanaka Hiroshi. Next: Logis-Tech Expo — Oct 18."
   },
@@ -1542,7 +1474,7 @@ const SAMPLE_PEOPLE = [
       { when: "Apr 2025", text: "Very well connected in Vietnam retail." }
     ],
     raw: "", connections: ["Tanaka Hiroshi", "Mori Takashi"], mutual: [],
-    circles: ["partners", "vietnam"], tags: ["vietnam-retail", "cross-border"],
+    tags: ["vietnam-retail", "cross-border"],
     lastContactDays: 39, metCount: 2,
     about: "Nguyen Minh — Saigon Retail Group, CEO. Met 2 times since 2025. Deep network in Vietnam retail & e-commerce. Open action: introduce to Tanaka for Vietnam expansion."
   },
@@ -1579,7 +1511,7 @@ const SAMPLE_PEOPLE = [
       { when: "2019", text: "Old friend — no small talk needed." }
     ],
     raw: "", connections: ["Tanaka Hiroshi", "Kobayashi Miki"], mutual: ["Tanaka Hiroshi"],
-    circles: ["university", "startups"], tags: ["edtech", "sea"],
+    tags: ["edtech", "sea"],
     lastContactDays: 70, metCount: 12,
     about: "Yamamoto Ryo — EduTech Lab, Founder. Friend since 2019. Met 12 times. Last: Shibuya drinks — Jul 2026. Considering SEA expansion."
   },
@@ -1616,7 +1548,7 @@ const SAMPLE_PEOPLE = [
       { when: "Feb 2025", text: "Introduced by Sato Yuki." }
     ],
     raw: "", connections: ["Sato Yuki"], mutual: ["Sato Yuki"],
-    circles: ["close", "clients", "golf", "realestate"], tags: ["azabudai", "birthday-oct"],
+    tags: ["azabudai", "birthday-oct"],
     lastContactDays: 64, metCount: 3,
     about: "Watanabe Aiko — Hills Realty, Real Estate Agent. Met 3 times since 2025. Deep network in Azabudai / Roppongi. Birthday: Oct 11 — in 3 days."
   },
@@ -1650,7 +1582,7 @@ const SAMPLE_PEOPLE = [
     timelineExtra: [],
     memories: [{ when: "Oct 2026", text: "Independent consultant; retail & AI strategy." }],
     raw: "", connections: ["Sato Yuki", "Yamamoto Ryo"], mutual: ["Sato Yuki"],
-    circles: ["clients", "ai"], tags: ["strategy", "vietnam-study"],
+    tags: ["strategy", "vietnam-study"],
     lastContactDays: 7, metCount: 2,
     about: "Kobayashi Miki — Strategy & Co., Consultant. Met 2 times since 2025 (EDIX). Retail & AI strategy. Next: Nov 1 video call — share Vietnam retail notes."
   },
@@ -1677,7 +1609,7 @@ const SAMPLE_PEOPLE = [
     last: { type: "Business card", when: "Today", place: "Networking event", summary: "Captured from business card.", tags: [] },
     followUp: { when: "—", what: "Say hi in a few days with a note from today", kind: "reconnect" },
     meetings: [], timelineExtra: [], memories: [], raw: "",
-    connections: [], mutual: [], circles: ["robotics"], tags: ["card-scan", "new"],
+    connections: [], mutual: [], tags: ["card-scan", "new"],
     lastContactDays: 0, metCount: 0,
     about: "Nakamura Tetsuya — Kansai Robotics, Business Development Manager. Captured today from a business card. Interested in warehouse automation."
   },
@@ -1714,7 +1646,7 @@ const SAMPLE_PEOPLE = [
       { when: "Aug 2026", text: "Wants AI + retail crossover deals." }
     ],
     raw: "", connections: ["Nguyen Minh"], mutual: [],
-    circles: ["investors", "vietnam", "startups"], tags: ["investor", "ivs", "singapore"],
+    tags: ["investor", "ivs", "singapore"],
     lastContactDays: 55, metCount: 2,
     about: "Mori Takashi — XYZ Capital, Partner / Investor. Met 2 times since 2025 (IVS). Based in Singapore. Interested in Vietnam startups and AI. Open promise: intro to Vietnam startup dealflow."
   }
@@ -1725,25 +1657,6 @@ let PEOPLE = [];
 
 const byId = (id) => PEOPLE.find((p) => p.id === id);
 const personByName = (first) => PEOPLE.find((p) => p.name.split(" ")[0].toLowerCase() === first.toLowerCase());
-
-/* ============================================================
-   CIRCLES / TAGS (§14)
-   ============================================================ */
-const CIRCLES = [
-  { id: "close", name: "Close Business", color: "#E0452C", members: ["tanaka", "watanabe", "ito"] },
-  { id: "investors", name: "Investors", color: "#0E9F8A", members: ["mori"] },
-  { id: "clients", name: "Clients", color: "#3E7BB6", members: ["watanabe", "kobayashi"] },
-  { id: "partners", name: "Partners", color: "#7A5AF8", members: ["ito", "nguyen"] },
-  { id: "mentors", name: "Mentors", color: "#B45F06", members: ["sato"] },
-  { id: "university", name: "University Friends", color: "#5B8C5A", members: ["yamamoto"] },
-  { id: "vietnam", name: "Vietnam", color: "#C43A8B", members: ["tanaka", "nguyen", "mori", "suzuki"] },
-  { id: "robotics", name: "Robotics", color: "#8E5A9E", members: ["tanaka", "ito", "nakamura"] },
-  { id: "golf", name: "Golf", color: "#E08B00", members: ["tanaka", "watanabe"] },
-  { id: "startups", name: "Startup Founders", color: "#3E7BB6", members: ["yamamoto", "sato", "mori"] },
-  { id: "ai", name: "AI & Tech", color: "#7A5AF8", members: ["suzuki", "kobayashi"] },
-  { id: "realestate", name: "Real Estate", color: "#B45F06", members: ["watanabe"] }
-];
-const circleOf = (id) => CIRCLES.find((c) => c.id === id);
 
 /* ============================================================
    HOME / CARE — tính động từ PEOPLE (data thật của người dùng)
@@ -1882,13 +1795,13 @@ function homeMemories() {
    SEARCH (§15)
    ============================================================ */
 const QUICK_QUESTIONS = [
-  "Who is interested in robotics?",
-  "Who lives in Yokohama?",
+  "Who works in AI?",
+  "Who lives in Ho Chi Minh?",
   "Which investors do I know?",
-  "Who introduced me to Tanaka-san?",
-  "What do I know about Suzuki-san?",
+  "Who works at ABC Logistics?",
+  "What do I know about them?",
   "Who in my network has children?",
-  "Who did I meet at EDIX?"
+  "Who did I meet recently?"
 ];
 
 /* ============================================================
@@ -1905,17 +1818,7 @@ const PERSON_POS = {
   nakamura: [220, 480], mori: [120, 190]
 };
 
-// person ↔ person relationships (People lens, §16.1) — dùng cho sample data
-const PERSON_LINKS = [
-  { a: "tanaka", b: "yamamoto", why: "Introduced by Yamamoto" },
-  { a: "tanaka", b: "ito", why: "Introduced at Logis-Tech" },
-  { a: "tanaka", b: "nguyen", why: "Pending intro · Vietnam" },
-  { a: "sato", b: "watanabe", why: "Introduced by Sato" },
-  { a: "sato", b: "kobayashi", why: "Same community" },
-  { a: "nguyen", b: "mori", why: "Shared interest · Vietnam" },
-  { a: "yamamoto", b: "kobayashi", why: "Same event · EDIX" },
-  { a: "suzuki", b: "kobayashi", why: "Same circle · AI & Tech" }
-];
+// person ↔ person relationships (People lens, §16.1) — sinh động từ field connections/mutual (personLinks bên dưới)
 
 /** Vị trí node cho người BẤT KỲ (người mới thêm → vị trí tất định theo id). */
 function personPos(p) {
@@ -1952,139 +1855,12 @@ function personLinks() {
 
 const LENSES = {
   people: { label: "People", desc: "People and how they relate" },
-  location: {
-    label: "Location", desc: "Where people live",
-    groups: [
-      { id: "loc-tokyo", label: "Tokyo", query: "Tokyo, Japan", members: ["suzuki", "sato", "yamamoto", "watanabe", "kobayashi"] },
-      { id: "loc-yokohama", label: "Yokohama", query: "Yokohama, Japan", members: ["tanaka"] },
-      { id: "loc-osaka", label: "Osaka", query: "Osaka, Japan", members: ["ito", "nakamura"] },
-      { id: "loc-hcmc", label: "Ho Chi Minh", query: "Ho Chi Minh City, Vietnam", members: ["nguyen"] },
-      { id: "loc-sg", label: "Singapore", query: "Singapore", members: ["mori"] }
-    ]
-  },
-  industry: {
-    label: "Industry", desc: "Professional industry",
-    groups: [
-      { id: "ind-logistics", label: "Logistics", members: ["tanaka", "ito"] },
-      { id: "ind-robotics", label: "Robotics", members: ["ito", "nakamura"] },
-      { id: "ind-tech", label: "Technology / AI", members: ["suzuki", "kobayashi"] },
-      { id: "ind-retail", label: "Retail", members: ["nguyen"] },
-      { id: "ind-re", label: "Real Estate", members: ["watanabe"] },
-      { id: "ind-edu", label: "Education", members: ["yamamoto"] },
-      { id: "ind-fin", label: "Finance", members: ["mori"] },
-      { id: "ind-hr", label: "HR", members: ["sato"] }
-    ]
-  },
-  company: {
-    label: "Company", desc: "Current organization",
-    groups: [
-      { id: "co-abc", label: "ABC Logistics", members: ["tanaka"] },
-      { id: "co-nihon", label: "Nihon AI Systems", members: ["suzuki"] },
-      { id: "co-talent", label: "TalentBridge", members: ["sato"] },
-      { id: "co-motion", label: "MotionWorks", members: ["ito"] },
-      { id: "co-saigon", label: "Saigon Retail", members: ["nguyen"] },
-      { id: "co-edu", label: "EduTech Lab", members: ["yamamoto"] },
-      { id: "co-hills", label: "Hills Realty", members: ["watanabe"] },
-      { id: "co-strategy", label: "Strategy & Co.", members: ["kobayashi"] },
-      { id: "co-kansai", label: "Kansai Robotics", members: ["nakamura"] },
-      { id: "co-xyz", label: "XYZ Capital", members: ["mori"] }
-    ]
-  },
-  interest: {
-    label: "Interest", desc: "Shared topics & hobbies",
-    groups: [
-      { id: "in-robotics", label: "Robotics", members: ["tanaka", "ito", "nakamura"] },
-      { id: "in-vietnam", label: "Vietnam", members: ["tanaka", "nguyen", "mori", "suzuki"] },
-      { id: "in-golf", label: "Golf", members: ["tanaka", "watanabe"] },
-      { id: "in-ai", label: "AI", members: ["suzuki", "kobayashi", "mori"] },
-      { id: "in-startups", label: "Startups", members: ["yamamoto", "sato", "mori"] },
-      { id: "in-retail", label: "Retail", members: ["nguyen", "kobayashi"] },
-      { id: "in-re", label: "Real estate", members: ["watanabe"] }
-    ]
-  },
-  relationship: {
-    label: "Relationship", desc: "How you know them",
-    groups: [
-      { id: "rel-key", label: "Key contact", members: ["tanaka"] },
-      { id: "rel-collab", label: "Collaborator", members: ["suzuki"] },
-      { id: "rel-mentor", label: "Mentor", members: ["sato"] },
-      { id: "rel-partner", label: "Partner", members: ["ito", "nguyen"] },
-      { id: "rel-friend", label: "Friend", members: ["yamamoto"] },
-      { id: "rel-client", label: "Client", members: ["watanabe", "kobayashi"] },
-      { id: "rel-investor", label: "Investor", members: ["mori"] },
-      { id: "rel-new", label: "New", members: ["nakamura"] }
-    ]
-  },
-  community: {
-    label: "Community / Event", desc: "Where you know them from",
-    groups: [
-      { id: "ev-edix", label: "EDIX", members: ["tanaka", "yamamoto", "kobayashi"] },
-      { id: "ev-ivs", label: "IVS", members: ["mori", "nguyen"] },
-      { id: "ev-logis", label: "Logis-Tech", members: ["tanaka", "ito"] },
-      { id: "ev-meetup", label: "AI Meetup", members: ["suzuki"] },
-      { id: "ev-univ", label: "University", members: ["yamamoto"] },
-      { id: "ev-net", label: "Networking dinners", members: ["sato", "watanabe"] }
-    ]
-  }
+  location: { label: "Location", desc: "Where people live" }
 };
 
 /* ============================================================
    QUICK REFRESH (§21) — generated from memory via buildRefresh()
    ============================================================ */
-
-/* ============================================================
-   CAPTURE DEMOS (§7, §10, §11)
-   ============================================================ */
-const CARD_DEMO = {
-  kanji: "中村 哲也",
-  romaji: "NAKAMURA TETSUYA",
-  company: "Kansai Robotics Co., Ltd.",
-  title: "Business Development Manager",
-  dept: "Sales & BD Division",
-  email: "t.nakamura@kansai-robotics.jp",
-  phone: "+81 6-XXXX-XXXX",
-  address: "Osaka, Japan",
-  website: "www.kansai-robotics.jp",
-  extracted: [
-    { label: "Name", value: "Nakamura Tetsuya", conf: 98 },
-    { label: "Company", value: "Kansai Robotics Co., Ltd.", conf: 97 },
-    { label: "Department", value: "Sales & BD Division", conf: 94 },
-    { label: "Title", value: "Business Development Manager", conf: 96 },
-    { label: "Email", value: "t.nakamura@kansai-robotics.jp", conf: 99 },
-    { label: "Phone", value: "+81 6-XXXX-XXXX", conf: 91 },
-    { label: "Address", value: "Osaka, Japan", conf: 88 },
-    { label: "Website", value: "www.kansai-robotics.jp", conf: 90 }
-  ]
-};
-
-// §7.3 voice creation example (resolves to existing Tanaka — no duplicate)
-const VOICE_DEMO = {
-  transcript: "I met Tanaka Hiroshi from ABC Logistics today at an industry event. He manages warehouse automation. He likes golf and lives in Yokohama.",
-  resolved: {
-    personId: "tanaka",
-    note: "Matched existing person — no duplicate created.",
-    facts: [
-      { cat: "Profile update", text: "Lives in Yokohama", kind: "profile" },
-      { cat: "Profile update", text: "Likes golf", kind: "profile" },
-      { cat: "Work", text: "Manages warehouse automation at ABC Logistics", kind: "profile" },
-      { cat: "Interaction memory", text: "Met today at an industry event", kind: "interaction" }
-    ]
-  }
-};
-
-// §10 add-information example
-const ADDINFO_DEMO = {
-  transcript: "Met her again today. She recently moved to Setagaya. Her husband works in finance. She has a five-year-old son and recently started playing tennis.",
-  facts: [
-    { cat: "Profile update", text: "Location → Setagaya, Tokyo", kind: "both", note: "Also saved as interaction" },
-    { cat: "Profile update", text: "Family: husband in finance, five-year-old son", kind: "profile" },
-    { cat: "Profile update", text: "Hobby: recently started tennis", kind: "profile" },
-    { cat: "Interaction memory", text: "Met again today — recorded to timeline", kind: "interaction" }
-  ]
-};
-
-const TEXT_DEMO =
-  "I met Tanaka-san from ABC today. He is responsible for logistics DX. He is interested in warehouse robots and is considering a PoC next year. We agreed to meet again in October.";
 
 /* ---------- quick/manual entry form definition (§7.5, §9) ---------- */
 const MANUAL_SECTIONS = [
@@ -2438,24 +2214,6 @@ function parseCaptureText(text) {
   merge(parseEn(text));
   merge(parseJa(text));
   if (out.interests.length) out.hobbies = [out.interests[0]];
-  return out;
-}
-
-/** Map CARD_DEMO.extracted → field của form manual (chỉ field CÓ dữ liệu). */
-function cardDemoFields() {
-  const map = {
-    "Name": "name",
-    "Company": "company",
-    "Department": "department",
-    "Title": "title",
-    "Email": "email",
-    "Phone": "phone",
-    "Address": "currentCity",
-  };
-  const out = { name: "", company: "", department: "", title: "", email: "", phone: "", currentCity: "" };
-  (CARD_DEMO.extracted || []).forEach((f) => {
-    if (map[f.label] && f.value) out[map[f.label]] = f.value;
-  });
   return out;
 }
 
@@ -2966,7 +2724,6 @@ const STR = {
   en: {
     app_name: "Network Management",
     tagline: "Your relationships, remembered and managed.",
-    ai_name: "Network AI",
     you: "You",
     you_sub: "Private memory · offline-first",
 
@@ -2992,10 +2749,8 @@ const STR = {
 
     people_kicker: "People memory", people_title: "People",
     people_sub: "Everyone you've met — remembered, enriched over time.",
-    people_tab_people: "People", people_tab_circles: "Circles",
-    circles_hint: "Circles are yours to define — AI can also suggest tags from captured info (e.g. #new after a card scan).",
+    people_tab_people: "People",
     people_search_ph: "Search people, companies…",
-    people_filter_all: "All circles",
     people_empty: "No one matches — try another search.",
     people_status_active: "Active", people_status_inactive: "Inactive", people_status_all: "All",
     badge_inactive: "Inactive", badge_new: "New",
@@ -3010,15 +2765,13 @@ const STR = {
     ask_kicker: "Search / Ask my network", ask_title: "Ask your network anything.",
     ask_sub: "No exact names needed — search structured data and memories together.",
     ask_ph: "Who lives in Yokohama?",
-    ai_example: "example · combine structured data + memories",
-    ai_searching: "searching structured data + memories",
-    ai_answered: "answered · from {n} source{s}",
-    ai_typing: "thinking…",
+    search_name: "Search",
+    search_example: "matches structured data + memories",
+    search_answered: "{n} results",
 
     map_kicker: "Exploration", map_title: "Network map",
-    map_sub: "Lenses to explore your network — and focus mode for when it grows.",
-    lens_people: "People", lens_location: "Location", lens_industry: "Industry", lens_company: "Company",
-    lens_interest: "Interest", lens_relationship: "Relationship", lens_community: "Community / Event",
+    map_sub: "Explore your network — and focus mode for when it grows.",
+    lens_people: "People", lens_location: "Location",
     map_focus_label: "Focus", map_focus_ph: "Highlight topic… (e.g. robotics)",
     map_pick: "Pick person…", map_clear: "(clear)",
     map_legend_you: "You", map_legend_people: "People", map_legend_rel: "Relationship", map_legend_focus: "Focus: ",
@@ -3031,8 +2784,8 @@ const STR = {
     map_connections_count: "{n} connections", map_explore: "Explore {name}",
     map_group_of: " group", map_people_upper: "PEOPLE",
 
-    profile_about: "About — AI summary", profile_rel_settings: "Relationship settings",
-    profile_important_dates: "Important dates", profile_circles_tags: "Circles & tags",
+    profile_about: "About", profile_rel_settings: "Relationship settings",
+    profile_important_dates: "Important dates", profile_tags: "Tags",
     profile_next_followup: "Next follow-up", profile_last_interaction: "Last interaction",
     profile_mutual: "Mutual connections", profile_raw: "Raw memory (source)",
     profile_photos: "Profile photo", profile_photos_gallery: "Photos",
@@ -3054,14 +2807,13 @@ const STR = {
     profile_edit_photo: "Change photo", profile_remove_photo: "Remove photo",
     profile_met: "Met {n}×",
     profile_last_contact_label: "Last contact {d}",
-    profile_care_note: "Care reminders use your rhythm. AI can suggest later — your judgment stays primary.",
+    profile_care_note: "Care reminders use your rhythm — your judgment stays primary.",
     profile_raw_note: "Raw + structured stored in parallel — you can always check the source.",
     nothing_here: "Nothing here yet — tell me and I'll remember.",
     no_dates_yet: "No dates yet — say \"birthday is Nov 22\" and I'll remember.",
     none_yet: "None yet.",
-    raw_empty: "No raw memory yet — future voice memos are stored here alongside AI-structured facts.",
-    circles_none: "None yet — add circles as your network grows.",
-    followup_done: "Marked done — I'll suggest the next touchpoint",
+    raw_empty: "No raw memory yet — future voice memos are stored here alongside structured facts.",
+    followup_done: "Marked done — next touchpoint noted",
     followup_snoozed: "Snoozed 7 days",
 
     refresh_kicker: "Quick refresh · generated from your memory",
@@ -3073,11 +2825,8 @@ const STR = {
     settings_kicker: "Web companion", settings_title: "Settings & data",
     settings_sub: "The web view is the companion for cleanup and bulk work. Mobile remains the primary surface.",
     settings_duplicates: "Data cleanup — possible duplicates",
-    settings_bulk: "Bulk edit", settings_bulk_row: "Bulk add tags / circles",
-    settings_bulk_desc: "select people → apply circle or tag",
+    settings_bulk: "Bulk edit",
     settings_export: "Export my memory", settings_export_desc: "JSON + raw transcripts — yours forever",
-    settings_integrations: "Integrations — later phases",
-    settings_integrations_note: "Phase 4 — Relationship OS: the system builds memory automatically, Person stays central.",
     settings_privacy: "Privacy",
     settings_private: "Private by default", settings_private_desc: "this is your external memory — never public",
     settings_delete: "Delete all data", settings_delete_desc: "destructive — no confirmation flow in mock",
@@ -3107,7 +2856,7 @@ const STR = {
     record_again: "Record again",
     card_scan: "Scan name card", card_step_scan: "1 · scan", ai_reading: "AI is reading the card…",
     card_pick_photo: "Take or choose a card photo", card_pick_hint: "OCR runs locally in this browser. No paid AI API is used; you review before saving.",
-    card_choose: "Choose photo", card_use_demo: "Use demo card", card_ocr_local: "Ready for local OCR", card_ocr_loading: "Loading OCR…",
+    card_choose: "Choose photo", card_ocr_local: "Ready for local OCR", card_ocr_loading: "Loading OCR…",
     card_ocr_reading: "Reading card…", card_ocr_failed: "Could not read this card. Try a sharper photo or type it manually.",
     card_ocr_empty: "No text found. Try a sharper photo.", card_ocr_unavailable: "OCR library is unavailable. Check connection and try again.",
     card_raw_ph: "OCR text appears here", card_review_hint: "OCR can be wrong — edit the text before filling the profile form.",
@@ -3124,7 +2873,7 @@ const STR = {
     quick_intro: "Start with what you know", quick_intro_sub: "Only a name is required. Save now or add a few useful details.",
     advanced_add: "Add details", advanced_hide: "Hide details", advanced_count: "{n} saved",
     section_basic: "Contact & identity", section_work: "Work",
-    section_personal: "Personal", section_relationship: "Relationship care", section_notes: "Free notes", section_circles: "Circles",
+    section_personal: "Personal", section_relationship: "Relationship care", section_notes: "Free notes",
     field_name: "Full name", field_kana: "Kana", field_nickname: "Nickname", field_gender: "Gender",
     field_birthday: "Birthday", field_nationality: "Nationality", field_languages: "Languages",
     field_currentCity: "Current location", field_hometown: "Hometown", field_country: "Country of residence",
@@ -3146,7 +2895,6 @@ const STR = {
     chip_add_ph: "Type and press Enter", chip_remove: "Remove {value}",
     duplicate_maybe: "{name} may already be in your network.", duplicate_open: "Open profile",
     discard_changes: "Discard your unsaved changes?", name_required: "Add a name to create this person.",
-    circles_optional: "Circles (optional)", circles_edit: "Circles",
     all_fields_optional: "Only the name is required — profiles grow over time.",
     save_changes: "Save changes",
     strength_close: "Close", strength_important: "Important", strength_normal: "Normal", strength_weak: "Weak",
@@ -3184,7 +2932,7 @@ const STR = {
     toast_followup_added: "Follow-up added — Oct 26 · “Reconnect”",
     toast_good_luck: "Good luck. You're 30 seconds ahead of the room.",
     toast_nakamura: "Nakamura Tetsuya created — Kansai Robotics",
-    toast_voice_only: "Voice demo only — would open text input", toast_ai_fallback: "AI proxy unavailable — local extraction used.",
+    toast_ai_fallback: "AI proxy unavailable — local extraction used.",
     toast_no_match: "No one matches — try another search.",
 
     home_welcome: "Welcome to your private network memory",
@@ -3225,7 +2973,7 @@ const STR = {
     ask_no_people: "Add people first — then ask me anything about them.",
     ask_asked_about: "asked about this person",
     ask_where: "location", ask_company: "company", ask_industry: "work",
-    ask_interest: "interest / tag", ask_circle: "circle", ask_memory: "memory",
+    ask_interest: "interest / tag", ask_memory: "memory",
     ask_found: "{n} people match",
     ask_none: "No one matches that.",
     ask_try: "Try a name, city, company, or topic.",
@@ -3400,7 +3148,6 @@ function setView(v) {
   document.body.classList.toggle("view-mobile", view === "mobile");
   document.body.classList.toggle("view-web", view === "web");
   try { if (!isCompactViewport() || requested === "mobile") localStorage.setItem("nm-view", requested); } catch (e) {}
-  renderDemoPanel();
 }
 
 /* ============================================================
@@ -3454,7 +3201,7 @@ function go(screen, opts = {}, isBack = false) {
   if (screen === "home") hash = "#/";
   else if (screen === "profile") hash = "#/people/" + profileId;
   else if (screen === "refresh") hash = "#/refresh/" + (opts.personId || "");
-  else if (screen === "people") hash = peopleTab === "circles" ? "#/circles" : "#/people";
+  else if (screen === "people") hash = "#/people";
   else hash = "#/" + screen;
   if (location.hash !== hash) history.replaceState(null, "", hash);
 
@@ -3474,7 +3221,6 @@ function routeFromHash() {
   if (s === "people" && v1 && PEOPLE.some((p) => p.id === v1)) return go("profile", { personId: v1 });
   if (s === "refresh" && v1) return go("refresh", { personId: v1 });
   if (s === "brief" && v1) return go("refresh", { personId: v1 }); // v0.1 alias
-  if (s === "circles") return go("people", { tab: "circles" });
   if (s === "capture") { go("home"); setTimeout(() => openCapture(null), 80); return; }
   if (s === "map") {
     if (v1 === "lens" && LENSES[v2]) { mapState.lens = v2; mapState.focusId = null; mapState.city = null; }
@@ -3485,81 +3231,6 @@ function routeFromHash() {
   if (s === "addinfo" && v1 && byId(v1)) { go("profile", { personId: v1 }); setTimeout(() => openCapture(null, { personId: v1, addInfo: true }), 80); return; }
   if (["home", "people", "care", "ask", "map", "settings"].includes(s)) return go(s);
   go("home");
-}
-
-/* ============================================================
-   DEMO PANEL (desktop, mobile view)
-   ============================================================ */
-function demoLinks() {
-  return [
-    { group: "Screens", items: [
-      { go: "home", label: t("nav_today") + " (home)", dot: "#E0452C" },
-      { go: "people", label: t("nav_people"), dot: "#3E7BB6" },
-      { go: "circles", label: t("people_tab_circles"), dot: "#7A5AF8" },
-      { go: "care", label: t("nav_care"), dot: "#B45F06" },
-      { go: "ask", label: t("nav_ask") + " " + t("nav_people"), dot: "#0E9F8A" }
-    ]},
-    { group: t("nav_map"), items: [
-      { go: "map", label: t("lens_people") + " (" + t("nav_map") + ")", dot: "#E0452C" },
-      { go: "map:lens:interest", label: t("lens_interest"), dot: "#8E5A9E" },
-      { go: "map:lens:location", label: t("lens_location") + " · Google Maps", dot: "#3E7BB6" },
-      { go: "map:focus:tanaka", label: "Focus — Tanaka (2°)", dot: "#B45F06" },
-      { go: "map:topic:robotics", label: "Topic — robotics", dot: "#E08B00" }
-    ]},
-    { group: "Person & flows", items: [
-      { go: "profile:tanaka", label: t("btn_profile") + " — Tanaka", dot: "#E0452C" },
-      { go: "profile:suzuki", label: t("btn_profile") + " — Suzuki", dot: "#7A5AF8" },
-      { go: "profile:mori", label: t("btn_profile") + " — Mori (investor)", dot: "#3E7BB6" },
-      { go: "refresh:tanaka", label: t("btn_refresh") + " — Tanaka", dot: "#5B8C5A" },
-      { go: "capture", label: t("btn_add_person") + " (4 modes)", dot: "#0E9F8A" },
-      { go: "addinfo:tanaka", label: t("btn_add_info") + " — Tanaka", dot: "#C43A8B" },
-      { go: "settings", label: t("nav_settings") + " (web companion)", dot: "#8D867C" }
-    ]}
-  ];
-}
-
-function renderDemoPanel() {
-  const p = $("#demo-panel");
-  if (!p) return;
-  let html =
-    '<div class="dp-brand"><div class="brand-mark" style="width:30px;height:30px;font-size:13px">NM</div>' +
-    "<div><b>" + esc(t("app_name")) + "</b><span>mock · 2 views</span></div></div>" +
-    '<div class="dp-title">View</div>' +
-    '<div class="dp-row">' +
-    '<button class="dp-btn' + (view === "mobile" ? " on" : "") + '" data-view="mobile">' + icon("phone", 13) + " Mobile</button>" +
-    '<button class="dp-btn' + (view === "web" ? " on" : "") + '" data-view="web">' + icon("monitor", 13) + " Web</button>" +
-    "</div>";
-  demoLinks().forEach((g) => {
-    html += '<div class="dp-title">' + esc(g.group) + "</div>";
-    html += g.items.map((it) => '<button class="dp-link" data-go="' + it.go + '"><span class="dot" style="background:' + it.dot + '"></span>' + esc(it.label) + "</button>").join("");
-  });
-  html +=
-    '<div class="dp-title">Theme</div>' +
-    '<div class="dp-row"><button class="dp-btn" id="dp-theme">' + (document.documentElement.getAttribute("data-theme") === "dark" ? "☀ Light" : "🌙 Dark") + "</button></div>" +
-    '<div class="dp-note">Mobile is the primary surface. The web view is the companion for big-map exploration, bulk edits and settings.</div>';
-  p.innerHTML = html;
-
-  $$("#demo-panel .dp-btn[data-view]").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
-  $$("#demo-panel .dp-link").forEach((b) =>
-    b.addEventListener("click", () => demoGo(b.dataset.go))
-  );
-  $("#dp-theme").addEventListener("click", () => { toggleTheme(); renderDemoPanel(); });
-}
-
-function demoGo(goKey) {
-  const [kind, a, b] = goKey.split(":");
-  if (kind === "map") {
-    if (a === "lens") { mapState.lens = b; mapState.focusId = null; mapState.topic = ""; mapState.city = null; go("map"); }
-    else if (a === "focus") { mapState.lens = "people"; mapState.focusId = b; mapState.topic = ""; go("map"); }
-    else if (a === "topic") { mapState.lens = "people"; mapState.topic = b; mapState.focusId = null; go("map"); }
-    else { mapState.lens = "people"; mapState.focusId = null; mapState.topic = ""; mapState.city = null; go("map"); }
-    return;
-  }
-  if (kind === "profile") return go("profile", { personId: a });
-  if (kind === "refresh") return go("refresh", { personId: a });
-  if (kind === "addinfo") return go("profile", { personId: a }), setTimeout(() => openCapture(null, { personId: a, addInfo: true }), 60);
-  if (kind === "capture") return go("home"), setTimeout(() => openCapture(null), 60);
-  go(kind);
 }
 
 /* ============================================================
@@ -3695,50 +3366,13 @@ function bindHome() {
 }
 
 /* ============================================================
-   PEOPLE + CIRCLES
+   PEOPLE
    ============================================================ */
-let peopleSearch = "", peopleCircle = "", peopleStatus = "active";
+let peopleSearch = "", peopleStatus = "active";
 
 function renderPeople() {
-  const seg = $("#people-segmented");
-  $$("button", seg).forEach((b) => b.classList.toggle("on", b.dataset.tab === peopleTab));
-
   const viewEl = $("#people-view");
-  if (peopleTab === "circles") {
-    viewEl.innerHTML =
-      '<div class="card" style="background:var(--accent-soft);border-color:transparent;padding:13px 16px;font-size:12.5px;color:var(--ink)">' +
-      icon("spark", 13) + " " + t("circles_hint") + "</div>" +
-      '<div style="margin-top:14px"></div>' +
-      '<div class="circle-grid">' +
-      CIRCLES.map((c) => {
-        const activeMembers = c.members.filter((id) => { const m = byId(id); return m && m.active !== false; });
-        const avs = activeMembers.map((id) => byId(id));
-        return (
-          '<button class="circle-card" data-circle="' + c.id + '">' +
-          '<div class="cc-head"><span class="cc-dot" style="background:' + c.color + '"></span><b>' + esc(c.name) + "</b>" +
-          '<span class="cc-count">' + activeMembers.length + "</span></div>" +
-          '<div class="cc-avs">' + avs.map((m) => avatarHTML(m, 24)).join("") + "</div>" +
-          "</button>"
-        );
-      }).join("") +
-      "</div>";
-    $$(".circle-card", viewEl).forEach((b) =>
-      b.addEventListener("click", () => {
-        const c = circleOf(b.dataset.circle);
-        peopleCircle = c.id;
-        peopleSearch = "";
-        peopleStatus = "active";
-        peopleTab = "people";
-        const si = $("#people-search");
-        if (si) si.value = "";
-        renderPeople();
-        toast(t("toast_filtered", { name: c.name }));
-      })
-    );
-    return;
-  }
 
-  const filterOptions = CIRCLES.map((c) => '<option value="' + c.id + '">' + esc(c.name) + "</option>").join("");
   viewEl.innerHTML =
     '<div class="toolbar">' +
     '<div class="search-input">' + icon("search", 14) + '<input id="people-search" data-i18n-ph="people_search_ph" placeholder="' + t("people_search_ph") + '" /></div>' +
@@ -3747,7 +3381,6 @@ function renderPeople() {
     '<option value="inactive">' + t("people_status_inactive") + "</option>" +
     '<option value="all">' + t("people_status_all") + "</option>" +
     "</select>" +
-    '<select class="filter-select" id="people-filter"><option value="">' + t("people_filter_all") + "</option>" + filterOptions + "</select>" +
     "</div>" +
     '<div id="people-list"></div>';
 
@@ -3756,9 +3389,8 @@ function renderPeople() {
     const mq = !q || p.name.toLowerCase().includes(q) || p.company.toLowerCase().includes(q) ||
       p.title.toLowerCase().includes(q) || p.interests.some((i) => i.toLowerCase().includes(q)) ||
       (p.nameJa || "").includes(q) || p.currentCity.toLowerCase().includes(q);
-    const mc = !peopleCircle || (p.circles || []).includes(peopleCircle);
     const ms = peopleStatus === "all" ? true : peopleStatus === "inactive" ? p.active === false : p.active !== false;
-    return mq && mc && ms;
+    return mq && ms;
   });
 
   $("#people-list").innerHTML = list.length
@@ -3798,8 +3430,6 @@ function renderPeople() {
   si.addEventListener("input", () => { peopleSearch = si.value; renderPeople(); });
   $("#people-status").value = peopleStatus;
   $("#people-status").addEventListener("change", () => { peopleStatus = $("#people-status").value; renderPeople(); });
-  $("#people-filter").value = peopleCircle;
-  $("#people-filter").addEventListener("change", () => { peopleCircle = $("#people-filter").value; renderPeople(); });
 }
 
 /* ============================================================
@@ -3904,7 +3534,7 @@ function renderAsk() {
 
   $("#ask-results").innerHTML =
     '<div class="answer-box" style="opacity:.85">' +
-    '<div class="answer-head"><div class="ai-orb">' + icon("spark", 13) + '</div><b>' + t("ai_name") + "</b><span>" + t("ai_example") + "</span></div>" +
+    '<div class="answer-head"><b>' + t("search_name") + "</b><span>" + t("search_example") + "</span></div>" +
     '<div class="answer-text">' + t("ask_hint") + "</div></div>";
 }
 
@@ -3966,7 +3596,6 @@ function analyze(q) {
     else if (hasTerm((p.company || "").toLowerCase())) add(p, t("ask_company"));
     else if (hasTerm((p.industry || "").toLowerCase() + " " + (p.title || "").toLowerCase())) add(p, t("ask_industry"));
     else if (hasTerm(((p.interests || []).join(" ") + " " + (p.hobbies || []).join(" ") + " " + (p.tags || []).join(" ")).toLowerCase())) add(p, t("ask_interest"));
-    else if (hasTerm((p.circles || []).map((c) => ((circleOf(c) || {}).name || "")).join(" ").toLowerCase())) add(p, t("ask_circle"));
     else if (hasTerm(((p.raw || "") + " " + (p.memories || []).map((m) => m.text).join(" ")).toLowerCase())) add(p, t("ask_memory"));
   });
 
@@ -3984,17 +3613,12 @@ function analyze(q) {
 
 function runAsk(q) {
   const box = $("#ask-results");
+  const r = analyze(q);
   box.innerHTML =
-    '<div class="answer-box"><div class="answer-head"><div class="ai-orb">' + icon("spark", 13) + '</div><b>' + t("ai_name") + "</b><span>" + t("ai_searching") + "</span></div>" +
-    '<div class="answer-text"><span class="typing-dots"><i></i><i></i><i></i></span></div></div>';
-  setTimeout(() => {
-    const r = analyze(q);
-    box.innerHTML =
-      '<div class="answer-box"><div class="answer-head"><div class="ai-orb">' + icon("spark", 13) + '</div><b>' + t("ai_name") + "</b><span>" + t("ai_answered", { n: r.sources.length, s: r.sources.length > 1 ? "s" : "" }) + "</span></div>" +
-      '<div class="answer-text">' + r.answer + "</div>" +
-      '<div class="answer-sources">' + r.sources.map((id) => sourceRow(id, r.why[id] || "")).join("") + "</div></div>";
-    $$(".source-row", box).forEach((el) => el.addEventListener("click", () => go("profile", { personId: el.dataset.id })));
-  }, 1000);
+    '<div class="answer-box"><div class="answer-head"><b>' + t("search_name") + "</b><span>" + t("search_answered", { n: r.sources.length }) + "</span></div>" +
+    '<div class="answer-text">' + r.answer + "</div>" +
+    '<div class="answer-sources">' + r.sources.map((id) => sourceRow(id, r.why[id] || "")).join("") + "</div></div>";
+  $$(".source-row", box).forEach((el) => el.addEventListener("click", () => go("profile", { personId: el.dataset.id })));
 }
 
 /* ============================================================
@@ -4210,8 +3834,19 @@ function renderMap() {
   buildMapSvg();
 }
 
+/** Nhóm người thật theo currentCity cho location lens (legend + fallback list). */
+function locationGroupsFromPeople() {
+  const byCity = {};
+  activePeople().forEach((p) => {
+    const city = String(p.currentCity || "").trim();
+    if (!city) return;
+    (byCity[city] = byCity[city] || []).push(p.id);
+  });
+  return Object.keys(byCity).map((city) => ({ label: city, members: byCity[city] }));
+}
+
 function renderLocationMap() {
-  const groups = LENSES.location.groups;
+  const groups = locationGroupsFromPeople();
   const people = activePeople();
 
   clearLocationMapInstance();
@@ -4244,8 +3879,7 @@ function personMatchTopic(p, topic) {
   const t2 = topic.toLowerCase();
   if (!t2) return false;
   const hay = [p.name, p.company, p.title, p.industry, p.currentCity, p.relationshipType, p.about,
-    ...(p.interests || []), ...(p.hobbies || []), ...(p.tags || []),
-    ...(p.circles || []).map((c) => (circleOf(c) || {}).name || "")].join(" ").toLowerCase();
+    ...(p.interests || []), ...(p.hobbies || []), ...(p.tags || [])].join(" ").toLowerCase();
   return hay.includes(t2);
 }
 
@@ -4253,35 +3887,17 @@ function buildMapSvg() {
   const W = 920, H = 640;
   mapNodes = []; mapEdges = [];
   const people = activePeople();
-  const lens = LENSES[mapState.lens];
 
-  if (mapState.lens === "people") {
-    mapNodes.push({ id: "you", label: t("map_legend_you"), type: "you", x: PERSON_POS.you[0], y: PERSON_POS.you[1], color: "#201D1A" });
-    people.forEach((p) => {
-      const pos = personPos(p);
-      mapNodes.push({ id: p.id, label: shortName(p), type: "person", x: pos[0], y: pos[1], color: p.color });
-    });
-    people.forEach((p) => mapEdges.push({ a: "you", b: p.id, why: t("nav_people") }));
-    personLinks().forEach((l) => {
-      const pa = byId(l.a), pb = byId(l.b);
-      if (pa && pb && pa.active !== false && pb.active !== false) mapEdges.push({ a: l.a, b: l.b, why: l.why });
-    });
-  } else {
-    const groups = lens.groups;
-    const cx = 460, cy = 320, R = 265;
-    groups.forEach((g, i) => {
-      const ang = (i / groups.length) * Math.PI * 2 - Math.PI / 2;
-      mapNodes.push({ id: g.id, label: g.label, type: "group", x: Math.round(cx + R * Math.cos(ang)), y: Math.round(cy + R * Math.sin(ang)), color: "#7A5AF8" });
-    });
-    people.forEach((p) => {
-      const pos = personPos(p);
-      mapNodes.push({ id: p.id, label: shortName(p), type: "person", x: pos[0], y: pos[1], color: p.color });
-    });
-    groups.forEach((g) => g.members.forEach((mid) => {
-      const mp = byId(mid);
-      if (mp && mp.active !== false) mapEdges.push({ a: g.id, b: mid, why: g.label });
-    }));
-  }
+  mapNodes.push({ id: "you", label: t("map_legend_you"), type: "you", x: PERSON_POS.you[0], y: PERSON_POS.you[1], color: "#201D1A" });
+  people.forEach((p) => {
+    const pos = personPos(p);
+    mapNodes.push({ id: p.id, label: shortName(p), type: "person", x: pos[0], y: pos[1], color: p.color });
+  });
+  people.forEach((p) => mapEdges.push({ a: "you", b: p.id, why: t("nav_people") }));
+  personLinks().forEach((l) => {
+    const pa = byId(l.a), pb = byId(l.b);
+    if (pa && pb && pa.active !== false && pb.active !== false) mapEdges.push({ a: l.a, b: l.b, why: l.why });
+  });
 
   // focus set
   let focusSet = null;
@@ -4308,10 +3924,9 @@ function buildMapSvg() {
   };
 
   // legend
-  $("#map-legend").innerHTML = mapState.lens === "people"
-    ? '<span><i style="background:#201D1A"></i>' + t("map_legend_you") + "</span><span><i style='background:var(--accent)'></i>" + t("map_legend_people") + "</span><span><i style='background:#8D867C'></i>" + t("map_legend_rel") + "</span>" +
-      (mapState.focusId ? '<span><i style="background:var(--ok)"></i>' + t("map_legend_focus") + esc(byId(mapState.focusId).name) + "</span>" : "")
-    : '<span><i style="background:#7A5AF8"></i>' + t("lens_" + mapState.lens) + "</span><span><i style='background:var(--accent)'></i>" + t("map_legend_people") + "</span>";
+  $("#map-legend").innerHTML =
+    '<span><i style="background:#201D1A"></i>' + t("map_legend_you") + "</span><span><i style='background:var(--accent)'></i>" + t("map_legend_people") + "</span><span><i style='background:#8D867C'></i>" + t("map_legend_rel") + "</span>" +
+    (mapState.focusId ? '<span><i style="background:var(--ok)"></i>' + t("map_legend_focus") + esc(byId(mapState.focusId).name) + "</span>" : "");
 
   let svg = '<svg viewBox="0 0 ' + W + " " + H + '" xmlns="http://www.w3.org/2000/svg">';
 
@@ -4324,18 +3939,14 @@ function buildMapSvg() {
   });
 
   mapNodes.forEach((n) => {
-    const r = n.type === "you" ? 26 : n.type === "person" ? 19 : 17;
+    const r = n.type === "you" ? 26 : 19;
     const dim = dimNode(n.id);
     const focusRing = mapState.focusId && n.id === mapState.focusId;
-    const isGroup = n.type === "group";
     svg +=
       '<g class="map-node" data-id="' + n.id + '" transform="translate(' + n.x + "," + n.y + ')">' +
-      (isGroup
-        ? '<rect class="' + (dim ? "dim" : "") + '" x="' + (-r - 6) + '" y="' + (-r - 4) + '" width="' + (r * 2 + 12) + '" height="' + (r * 2 + 8) + '" rx="12" fill="' + n.color + '" opacity="0.14" stroke="' + n.color + '" stroke-width="1.6"/>' +
-          '<text class="' + (dim ? "dim" : "") + '" y="4" text-anchor="middle" font-size="' + Math.round(r * 0.62) + '" font-weight="700" fill="' + n.color + '">' + esc(n.label.split(" ")[0].slice(0, 2).toUpperCase()) + "</text>"
-        : '<circle class="' + (dim ? "dim" : "") + '" r="' + r + '" fill="' + n.color + '" stroke="' + (focusRing ? "var(--ok)" : "var(--surface)") + '" stroke-width="' + (focusRing ? 4 : 2.5) + '"/>' +
-          (n.type !== "you" ? '<text class="' + (dim ? "dim" : "") + '" y="1" text-anchor="middle" font-size="' + Math.round(r * 0.62) + '" font-weight="700" fill="#fff">' + esc(n.type === "you" ? "You" : initialsOf(n.label)) + "</text>" : "")) +
-      '<text class="' + (dim ? "dim" : "") + '" y="' + (isGroup ? r + 22 : r + 16) + '" text-anchor="middle" font-size="' + (n.type === "you" ? 12 : 10.5) + '" font-weight="' + (n.type === "you" ? "700" : "600") + '" fill="var(--ink)">' + esc(n.label) + "</text>" +
+      '<circle class="' + (dim ? "dim" : "") + '" r="' + r + '" fill="' + n.color + '" stroke="' + (focusRing ? "var(--ok)" : "var(--surface)") + '" stroke-width="' + (focusRing ? 4 : 2.5) + '"/>' +
+      (n.type !== "you" ? '<text class="' + (dim ? "dim" : "") + '" y="1" text-anchor="middle" font-size="' + Math.round(r * 0.62) + '" font-weight="700" fill="#fff">' + esc(initialsOf(n.label)) + "</text>" : "") +
+      '<text class="' + (dim ? "dim" : "") + '" y="' + (r + 16) + '" text-anchor="middle" font-size="' + (n.type === "you" ? 12 : 10.5) + '" font-weight="' + (n.type === "you" ? "700" : "600") + '" fill="var(--ink)">' + esc(n.label) + "</text>" +
       "</g>";
   });
   svg += "</svg>";
@@ -4490,7 +4101,7 @@ function renderProfile(id) {
     '<div class="profile-grid">' +
     '<div class="stack">' +
     '<div class="card"><div class="card-title">' + icon("spark", 13) + " " + t("profile_about") + "</div>" +
-    '<div class="summary-quote">' + esc(p.about).replace("Interested in robotics, Vietnam and warehouse automation", "<span class='hl'>Interested in robotics, Vietnam and warehouse automation</span>") + "</div></div>" +
+    '<div class="summary-quote">' + esc(p.about) + "</div></div>" +
     '<div class="card"><div class="card-title">' + icon("users", 13) + " " + t("profile_rel_settings") + "</div>" +
     '<div class="fact-grid"><div class="fact"><div class="k">' + t("fact_relationship") + '</div><div class="v">' + esc(relTypeLabel(p.relationshipType)) + "</div></div>" +
     '<div class="fact"><div class="k">' + t("fact_first_met") + '</div><div class="v">' + esc(p.firstMet.date) + (p.firstMet.place ? " · " + esc(p.firstMet.place) : "") + "</div></div>" +
@@ -4508,9 +4119,8 @@ function renderProfile(id) {
     '<p style="font-size:11px;color:var(--ink-3);margin-top:9px">' + t("profile_care_note") + "</p></div>" +
     '<div class="card"><div class="card-title">' + icon("cake", 13) + " " + t("profile_important_dates") + "</div>" +
     (p.dates.length ? kvList(p.dates.map((d) => ({ k: d.label, v: d.when }))) : '<span class="chip ghost">' + t("no_dates_yet") + "</span>") + "</div>" +
-    '<div class="card"><div class="card-title">' + icon("tag", 13) + " " + t("profile_circles_tags") + "</div>" +
-    '<div class="chip-row">' + (p.circles || []).map((c) => { const cc = circleOf(c); return cc ? '<span class="chip dot" style="color:' + cc.color + '">' + esc(cc.name) + "</span>" : ""; }).join("") +
-    (p.tags || []).map((tg) => '<span class="chip">#' + esc(tg) + "</span>").join("") + "</div></div>" +
+    '<div class="card"><div class="card-title">' + icon("tag", 13) + " " + t("profile_tags") + "</div>" +
+    '<div class="chip-row">' + (p.tags || []).map((tg) => '<span class="chip">#' + esc(tg) + "</span>").join("") + "</div></div>" +
     "</div>" +
     '<div class="stack">' +
     '<div class="card followup-card" style="background:linear-gradient(135deg,var(--accent-soft),transparent 70%);border-color:var(--accent)">' +
@@ -4778,7 +4388,6 @@ function mergePeople(keep, dup) {
     photos: [...(keep.photos || []), ...(dup.photos || [])],
     photo: keep.photo || dup.photo || "",
     tags: [...new Set([...(keep.tags || []), ...(dup.tags || [])])],
-    circles: [...new Set([...(keep.circles || []), ...(dup.circles || [])])],
     connections: [...new Set([...(keep.connections || []), ...(dup.connections || [])])],
     metCount: (keep.metCount || 0) + (dup.metCount || 0),
     email: keep.email || dup.email || "",
@@ -4821,9 +4430,6 @@ function renderSettings() {
     '<input type="file" id="import-file" accept="application/json,.json" hidden />' +
     '<div class="setting-row"><div><b>' + t("settings_sample_row") + "</b><span>" + t("settings_sample_desc") + "</span></div>" +
     '<button class="btn small s-act" id="sample-btn">' + t("btn_load_sample") + "</button></div></div>" +
-    '<div class="card"><div class="card-title">' + icon("link", 13) + " " + t("settings_integrations") + "</div>" +
-    '<div class="chip-row"><span class="chip ghost">Calendar</span><span class="chip ghost">Email</span><span class="chip ghost">LINE</span><span class="chip ghost">LinkedIn</span><span class="chip ghost">Contacts</span></div>' +
-    '<p style="font-size:11.5px;color:var(--ink-3);margin-top:10px">' + t("settings_integrations_note") + "</p></div>" +
     (fbEnabled()
       ? '<div class="card"><div class="card-title">' + icon("users", 13) + " " + t("auth_account") + "</div>" +
         '<div class="setting-row"><div><b>' + esc(fbUser && fbUser.email ? fbUser.email : t("you")) + "</b><span>" + t("auth_sync_note") + "</span></div>" +
@@ -4902,7 +4508,7 @@ function openCapture(mode, opts = {}) {
   cap = {
     mode: mode || null, sourceMode: mode || null, step: 1, timer: null, seconds: 0, open: true,
     personId: opts.personId || null, addInfo: !!opts.addInfo, edit: !!opts.edit, text: "", photo: "",
-    prefill: opts.prefill || {}, review: false, formDraft: null, initialFormDraft: "", formCircles: [],
+    prefill: opts.prefill || {}, review: false, formDraft: null, initialFormDraft: "",
     advancedOpen: false, openSections: {}, dirty: false, nameFocused: false, aiAbort: null,
   };
   $("#capture-modal").classList.add("open");
@@ -4935,7 +4541,7 @@ function manualKey(field) {
 }
 
 function manualSnapshot() {
-  return JSON.stringify({ fields: cap.formDraft || {}, circles: cap.formCircles || [] });
+  return JSON.stringify({ fields: cap.formDraft || {} });
 }
 
 function refreshManualDirty() {
@@ -5138,26 +4744,12 @@ function manualAccordionHTML(visibleKeys) {
       "</section>";
   }).join("");
 
-  const circlesOpen = !!cap.openSections.circles;
-  const circlesCount = (cap.formCircles || []).length;
-  const circles = '<section class="manual-accordion">' +
-    '<button type="button" class="accordion-trigger" data-accordion="circles" aria-expanded="' + String(circlesOpen) + '" aria-controls="manual-section-circles">' +
-    '<span><b>' + t("section_circles") + "</b>" + (circlesCount ? '<span class="accordion-count">' + t("advanced_count", { n: circlesCount }) + "</span>" : "") + '</span><span class="accordion-chevron">' + icon("chev", 14) + "</span></button>" +
-    (circlesOpen
-      ? '<div class="accordion-body" id="manual-section-circles"><div class="pick-row">' + CIRCLES.map((circle) =>
-        '<button type="button" class="pick circle-pick' + ((cap.formCircles || []).includes(circle.id) ? " on" : "") + '" data-c="' + circle.id + '">' + esc(circle.name) + "</button>"
-      ).join("") + "</div></div>"
-      : '<div id="manual-section-circles" hidden></div>') +
-    "</section>";
-  return '<div class="advanced-panel">' + sectionHTML + circles + "</div>";
+  return '<div class="advanced-panel">' + sectionHTML + "</div>";
 }
 
 function initManualDraft(editing) {
   if (cap.formDraft) return;
   cap.formDraft = createManualDraft(editing, cap.prefill || {}, cap.review);
-  cap.formCircles = (cap.prefill && Array.isArray(cap.prefill.circles))
-    ? [...cap.prefill.circles]
-    : editing && Array.isArray(editing.circles) ? [...editing.circles] : [];
   cap.initialFormDraft = manualSnapshot();
   cap.dirty = false;
 }
@@ -5246,7 +4838,6 @@ function saveManualCapture() {
   fields.title = fields.title || (editing ? "" : "—");
   fields.relationshipType = fields.relationshipType || (editing ? "" : "New");
   fields.strength = fields.strength || (editing ? "" : "normal");
-  fields.circles = [...(cap.formCircles || [])];
   fields.location = [fields.currentCity, fields.country].filter(Boolean).join(", ") || (editing ? "" : "—");
   fields.firstMet = {
     date: firstMetDate || (editing ? "" : "Today"),
@@ -5335,13 +4926,6 @@ function bindManualCapture(editing) {
     const field = MANUAL_FIELD_MAP[key];
     const input = field && $("#f-" + field.sec + "-" + field.k);
     if (input) { input.value = ""; if (input.focus) input.focus(); }
-  }));
-  $$(".circle-pick", body).forEach((button) => button.addEventListener("click", () => {
-    const next = new Set(cap.formCircles || []);
-    next.has(button.dataset.c) ? next.delete(button.dataset.c) : next.add(button.dataset.c);
-    cap.formCircles = [...next];
-    button.classList.toggle("on", next.has(button.dataset.c));
-    refreshManualDirty();
   }));
 
   const advanced = $("#manual-advanced-toggle");
@@ -5505,11 +5089,9 @@ function renderCapture() {
         (cap.photo ? '<img class="ocr-preview" src="' + cap.photo + '" alt="" />' : "") +
         '<div class="ocr-status" id="ocr-status">' + t("card_ocr_local") + "</div>" +
         '<div class="ocr-bar" aria-hidden="true"><span id="ocr-bar"></span></div>' +
-        '<div class="modal-foot"><button class="btn ghost" id="card-demo">' + t("card_use_demo") + "</button>" +
-        '<button class="btn primary" id="card-choose">' + icon("camera", 13) + " " + t("card_choose") + "</button></div>";
+        '<div class="modal-foot"><button class="btn primary" id="card-choose">' + icon("camera", 13) + " " + t("card_choose") + "</button></div>";
       $("#card-photo").addEventListener("change", handleCardPhoto);
       $("#card-choose").addEventListener("click", () => $("#card-photo").click());
-      $("#card-demo").addEventListener("click", () => { cap.ocrText = cardDemoText(); cap.step = 3; renderCapture(); });
     } else if (cap.step === 3) {
       setCapTitle(t("card_read"), t("card_step_review"));
       const extracted = cardFieldsToExtract(cap.prefill || parseCardOcrText(cap.ocrText || ""));
@@ -5631,7 +5213,7 @@ function renderCaptureResult() {
   ).join("");
   const chip = matched
     ? avatarHTML(matched, 24) + (cap.addInfo ? t("updating_person", { name: matched.name }) : t("matched_person", { name: matched.name }))
-    : '<span class="ai-orb" style="display:inline-flex">👤</span>' + t("text_new_person");
+    : '<span style="display:inline-flex">👤</span>' + t("text_new_person");
   body.innerHTML =
     '<div class="resolved-chip">' + chip + "</div>" +
     '<div class="field" style="margin-top:12px"><label>' + t("text_attach_to") + "</label>" +
@@ -5684,7 +5266,6 @@ function renderCaptureResult() {
         memories: [memory],
         raw: text,
         dates: [],
-        circles: [],
         tags: [cap.mode === "voice" ? "voice" : "text"],
         lastContactDays: 0,
         metCount: 1,
@@ -5739,10 +5320,6 @@ function parsedToPrefill(p) {
     followUpWhat: p.followUpWhat || "",
     notes: p.notes || "",
   };
-}
-
-function cardDemoText() {
-  return (CARD_DEMO.extracted || []).map((f) => f.label + ": " + f.value).join("\n");
 }
 
 function cardFieldsToExtract(pre) {
@@ -5849,7 +5426,7 @@ async function enterReviewFromText() {
 
 /** Vào màn confirm với trường từ namecard (chỉ trường CÓ dữ liệu). */
 async function enterReviewFromCard() {
-  const pre = parseCardOcrText(cap.ocrText || "") || cardDemoFields();
+  const pre = parseCardOcrText(cap.ocrText || "") || {};
   const matched = resolvePersonFromText(pre.name || "");
   renderAIWaiting("card");
   let prefill = pre;
@@ -5907,7 +5484,6 @@ function toggleTheme() {
   const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
   document.documentElement.setAttribute("data-theme", next);
   try { localStorage.setItem("nm-theme", next); } catch (e) {}
-  renderDemoPanel();
 }
 
 function initTheme() {
@@ -5947,7 +5523,6 @@ function updateCareBadge() {
 }
 
 function renderAll() {
-  renderDemoPanel();
   renderHome();
   renderPeople();
   renderCare();
@@ -6078,7 +5653,6 @@ function init() {
   }
 
   applyStaticI18n();
-  renderDemoPanel();
   renderHome();
   renderPeople();
   renderCare();

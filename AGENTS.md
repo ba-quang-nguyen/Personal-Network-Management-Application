@@ -8,7 +8,7 @@ App cá nhân "CRM quan hệ". **Frontend = chính mock gốc** (`index.html` + 
 - `omoide.html` — bản single-file, **sinh bằng `node build.mjs`** (đừng sửa tay; chạy lại sau mỗi lần đổi nguồn).
 - `js/store.js` — data layer DUY NHẤT (persist localStorage `nm-data`, đa tab). UI không đụng localStorage trực tiếp.
 - `js/data.js` — vocab + `SAMPLE_PEOPLE` (10 người hư cấu) + helpers tính động (`computeCareItems`, `home*`, `personPos`, `personLinks`, `daysUntilBirthday`…).
-- `js/i18n.js` — từ điển en/vi/ja (428 khoá/locale, mặc định **vi**).
+- `js/i18n.js` — từ điển **English-only** (theo D5; multi-language đã gỡ, chỉ `STR.en`).
 - `js/app.js` — UI/render (giữ nguyên HTML gốc, chỉ đổi nguồn dữ liệu sang Store + logic thật).
 - `app/` — **dự án React cũ, chỉ để tham khảo** + nơi chứa `app/firebase/firestore.rules` (đã test) cho Phase Firebase. Không xoá.
 - `screenshots/`, `BUILD-GUIDE.md` — tài liệu tham khảo.
@@ -19,7 +19,7 @@ App cá nhân "CRM quan hệ". **Frontend = chính mock gốc** (`index.html` + 
 2. **Mọi mutation phải persist**: gọi `Store.*` (đã tự persist + emit) — không mutate rồi quên lưu.
 3. **UI 100% mock**: không đổi layout/CSS hiện có khi thêm tính năng; chỉ thêm state/handler.
 4. **Data thật bắt đầu RỖNG** — 10 người hư cấu chỉ nạp qua nút "Load sample data".
-5. **Chuỗi mới phải thêm đủ 3 locale** (en/vi/ja) vào `js/i18n.js`.
+5. **Chuỗi mới phải thêm vào `STR.en`** trong `js/i18n.js` (app English-only theo D5).
 6. **Logic khó để ở `js/data.js` hoặc store.js** (thuần, test được bằng node) — không nhét vào handler DOM.
 7. **Không hard-code màu** — dùng token trong `css/styles.css`.
 8. **Sau khi sửa nguồn**: `node build.mjs` để cập nhật `omoide.html` + chạy bộ test smoke.

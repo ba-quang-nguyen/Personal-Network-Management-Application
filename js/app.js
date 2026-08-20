@@ -105,7 +105,6 @@ function setView(v) {
   document.body.classList.toggle("view-mobile", view === "mobile");
   document.body.classList.toggle("view-web", view === "web");
   try { if (!isCompactViewport() || requested === "mobile") localStorage.setItem("nm-view", requested); } catch (e) {}
-  renderDemoPanel();
 }
 
 /* ============================================================
@@ -159,7 +158,7 @@ function go(screen, opts = {}, isBack = false) {
   if (screen === "home") hash = "#/";
   else if (screen === "profile") hash = "#/people/" + profileId;
   else if (screen === "refresh") hash = "#/refresh/" + (opts.personId || "");
-  else if (screen === "people") hash = peopleTab === "circles" ? "#/circles" : "#/people";
+  else if (screen === "people") hash = "#/people";
   else hash = "#/" + screen;
   if (location.hash !== hash) history.replaceState(null, "", hash);
 
@@ -179,7 +178,6 @@ function routeFromHash() {
   if (s === "people" && v1 && PEOPLE.some((p) => p.id === v1)) return go("profile", { personId: v1 });
   if (s === "refresh" && v1) return go("refresh", { personId: v1 });
   if (s === "brief" && v1) return go("refresh", { personId: v1 }); // v0.1 alias
-  if (s === "circles") return go("people", { tab: "circles" });
   if (s === "capture") { go("home"); setTimeout(() => openCapture(null), 80); return; }
   if (s === "map") {
     if (v1 === "lens" && LENSES[v2]) { mapState.lens = v2; mapState.focusId = null; mapState.city = null; }
@@ -190,81 +188,6 @@ function routeFromHash() {
   if (s === "addinfo" && v1 && byId(v1)) { go("profile", { personId: v1 }); setTimeout(() => openCapture(null, { personId: v1, addInfo: true }), 80); return; }
   if (["home", "people", "care", "ask", "map", "settings"].includes(s)) return go(s);
   go("home");
-}
-
-/* ============================================================
-   DEMO PANEL (desktop, mobile view)
-   ============================================================ */
-function demoLinks() {
-  return [
-    { group: "Screens", items: [
-      { go: "home", label: t("nav_today") + " (home)", dot: "#E0452C" },
-      { go: "people", label: t("nav_people"), dot: "#3E7BB6" },
-      { go: "circles", label: t("people_tab_circles"), dot: "#7A5AF8" },
-      { go: "care", label: t("nav_care"), dot: "#B45F06" },
-      { go: "ask", label: t("nav_ask") + " " + t("nav_people"), dot: "#0E9F8A" }
-    ]},
-    { group: t("nav_map"), items: [
-      { go: "map", label: t("lens_people") + " (" + t("nav_map") + ")", dot: "#E0452C" },
-      { go: "map:lens:interest", label: t("lens_interest"), dot: "#8E5A9E" },
-      { go: "map:lens:location", label: t("lens_location") + " · Google Maps", dot: "#3E7BB6" },
-      { go: "map:focus:tanaka", label: "Focus — Tanaka (2°)", dot: "#B45F06" },
-      { go: "map:topic:robotics", label: "Topic — robotics", dot: "#E08B00" }
-    ]},
-    { group: "Person & flows", items: [
-      { go: "profile:tanaka", label: t("btn_profile") + " — Tanaka", dot: "#E0452C" },
-      { go: "profile:suzuki", label: t("btn_profile") + " — Suzuki", dot: "#7A5AF8" },
-      { go: "profile:mori", label: t("btn_profile") + " — Mori (investor)", dot: "#3E7BB6" },
-      { go: "refresh:tanaka", label: t("btn_refresh") + " — Tanaka", dot: "#5B8C5A" },
-      { go: "capture", label: t("btn_add_person") + " (4 modes)", dot: "#0E9F8A" },
-      { go: "addinfo:tanaka", label: t("btn_add_info") + " — Tanaka", dot: "#C43A8B" },
-      { go: "settings", label: t("nav_settings") + " (web companion)", dot: "#8D867C" }
-    ]}
-  ];
-}
-
-function renderDemoPanel() {
-  const p = $("#demo-panel");
-  if (!p) return;
-  let html =
-    '<div class="dp-brand"><div class="brand-mark" style="width:30px;height:30px;font-size:13px">NM</div>' +
-    "<div><b>" + esc(t("app_name")) + "</b><span>mock · 2 views</span></div></div>" +
-    '<div class="dp-title">View</div>' +
-    '<div class="dp-row">' +
-    '<button class="dp-btn' + (view === "mobile" ? " on" : "") + '" data-view="mobile">' + icon("phone", 13) + " Mobile</button>" +
-    '<button class="dp-btn' + (view === "web" ? " on" : "") + '" data-view="web">' + icon("monitor", 13) + " Web</button>" +
-    "</div>";
-  demoLinks().forEach((g) => {
-    html += '<div class="dp-title">' + esc(g.group) + "</div>";
-    html += g.items.map((it) => '<button class="dp-link" data-go="' + it.go + '"><span class="dot" style="background:' + it.dot + '"></span>' + esc(it.label) + "</button>").join("");
-  });
-  html +=
-    '<div class="dp-title">Theme</div>' +
-    '<div class="dp-row"><button class="dp-btn" id="dp-theme">' + (document.documentElement.getAttribute("data-theme") === "dark" ? "☀ Light" : "🌙 Dark") + "</button></div>" +
-    '<div class="dp-note">Mobile is the primary surface. The web view is the companion for big-map exploration, bulk edits and settings.</div>';
-  p.innerHTML = html;
-
-  $$("#demo-panel .dp-btn[data-view]").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
-  $$("#demo-panel .dp-link").forEach((b) =>
-    b.addEventListener("click", () => demoGo(b.dataset.go))
-  );
-  $("#dp-theme").addEventListener("click", () => { toggleTheme(); renderDemoPanel(); });
-}
-
-function demoGo(goKey) {
-  const [kind, a, b] = goKey.split(":");
-  if (kind === "map") {
-    if (a === "lens") { mapState.lens = b; mapState.focusId = null; mapState.topic = ""; mapState.city = null; go("map"); }
-    else if (a === "focus") { mapState.lens = "people"; mapState.focusId = b; mapState.topic = ""; go("map"); }
-    else if (a === "topic") { mapState.lens = "people"; mapState.topic = b; mapState.focusId = null; go("map"); }
-    else { mapState.lens = "people"; mapState.focusId = null; mapState.topic = ""; mapState.city = null; go("map"); }
-    return;
-  }
-  if (kind === "profile") return go("profile", { personId: a });
-  if (kind === "refresh") return go("refresh", { personId: a });
-  if (kind === "addinfo") return go("profile", { personId: a }), setTimeout(() => openCapture(null, { personId: a, addInfo: true }), 60);
-  if (kind === "capture") return go("home"), setTimeout(() => openCapture(null), 60);
-  go(kind);
 }
 
 /* ============================================================
@@ -400,50 +323,13 @@ function bindHome() {
 }
 
 /* ============================================================
-   PEOPLE + CIRCLES
+   PEOPLE
    ============================================================ */
-let peopleSearch = "", peopleCircle = "", peopleStatus = "active";
+let peopleSearch = "", peopleStatus = "active";
 
 function renderPeople() {
-  const seg = $("#people-segmented");
-  $$("button", seg).forEach((b) => b.classList.toggle("on", b.dataset.tab === peopleTab));
-
   const viewEl = $("#people-view");
-  if (peopleTab === "circles") {
-    viewEl.innerHTML =
-      '<div class="card" style="background:var(--accent-soft);border-color:transparent;padding:13px 16px;font-size:12.5px;color:var(--ink)">' +
-      icon("spark", 13) + " " + t("circles_hint") + "</div>" +
-      '<div style="margin-top:14px"></div>' +
-      '<div class="circle-grid">' +
-      CIRCLES.map((c) => {
-        const activeMembers = c.members.filter((id) => { const m = byId(id); return m && m.active !== false; });
-        const avs = activeMembers.map((id) => byId(id));
-        return (
-          '<button class="circle-card" data-circle="' + c.id + '">' +
-          '<div class="cc-head"><span class="cc-dot" style="background:' + c.color + '"></span><b>' + esc(c.name) + "</b>" +
-          '<span class="cc-count">' + activeMembers.length + "</span></div>" +
-          '<div class="cc-avs">' + avs.map((m) => avatarHTML(m, 24)).join("") + "</div>" +
-          "</button>"
-        );
-      }).join("") +
-      "</div>";
-    $$(".circle-card", viewEl).forEach((b) =>
-      b.addEventListener("click", () => {
-        const c = circleOf(b.dataset.circle);
-        peopleCircle = c.id;
-        peopleSearch = "";
-        peopleStatus = "active";
-        peopleTab = "people";
-        const si = $("#people-search");
-        if (si) si.value = "";
-        renderPeople();
-        toast(t("toast_filtered", { name: c.name }));
-      })
-    );
-    return;
-  }
 
-  const filterOptions = CIRCLES.map((c) => '<option value="' + c.id + '">' + esc(c.name) + "</option>").join("");
   viewEl.innerHTML =
     '<div class="toolbar">' +
     '<div class="search-input">' + icon("search", 14) + '<input id="people-search" data-i18n-ph="people_search_ph" placeholder="' + t("people_search_ph") + '" /></div>' +
@@ -452,7 +338,6 @@ function renderPeople() {
     '<option value="inactive">' + t("people_status_inactive") + "</option>" +
     '<option value="all">' + t("people_status_all") + "</option>" +
     "</select>" +
-    '<select class="filter-select" id="people-filter"><option value="">' + t("people_filter_all") + "</option>" + filterOptions + "</select>" +
     "</div>" +
     '<div id="people-list"></div>';
 
@@ -461,9 +346,8 @@ function renderPeople() {
     const mq = !q || p.name.toLowerCase().includes(q) || p.company.toLowerCase().includes(q) ||
       p.title.toLowerCase().includes(q) || p.interests.some((i) => i.toLowerCase().includes(q)) ||
       (p.nameJa || "").includes(q) || p.currentCity.toLowerCase().includes(q);
-    const mc = !peopleCircle || (p.circles || []).includes(peopleCircle);
     const ms = peopleStatus === "all" ? true : peopleStatus === "inactive" ? p.active === false : p.active !== false;
-    return mq && mc && ms;
+    return mq && ms;
   });
 
   $("#people-list").innerHTML = list.length
@@ -503,8 +387,6 @@ function renderPeople() {
   si.addEventListener("input", () => { peopleSearch = si.value; renderPeople(); });
   $("#people-status").value = peopleStatus;
   $("#people-status").addEventListener("change", () => { peopleStatus = $("#people-status").value; renderPeople(); });
-  $("#people-filter").value = peopleCircle;
-  $("#people-filter").addEventListener("change", () => { peopleCircle = $("#people-filter").value; renderPeople(); });
 }
 
 /* ============================================================
@@ -609,7 +491,7 @@ function renderAsk() {
 
   $("#ask-results").innerHTML =
     '<div class="answer-box" style="opacity:.85">' +
-    '<div class="answer-head"><div class="ai-orb">' + icon("spark", 13) + '</div><b>' + t("ai_name") + "</b><span>" + t("ai_example") + "</span></div>" +
+    '<div class="answer-head"><b>' + t("search_name") + "</b><span>" + t("search_example") + "</span></div>" +
     '<div class="answer-text">' + t("ask_hint") + "</div></div>";
 }
 
@@ -671,7 +553,6 @@ function analyze(q) {
     else if (hasTerm((p.company || "").toLowerCase())) add(p, t("ask_company"));
     else if (hasTerm((p.industry || "").toLowerCase() + " " + (p.title || "").toLowerCase())) add(p, t("ask_industry"));
     else if (hasTerm(((p.interests || []).join(" ") + " " + (p.hobbies || []).join(" ") + " " + (p.tags || []).join(" ")).toLowerCase())) add(p, t("ask_interest"));
-    else if (hasTerm((p.circles || []).map((c) => ((circleOf(c) || {}).name || "")).join(" ").toLowerCase())) add(p, t("ask_circle"));
     else if (hasTerm(((p.raw || "") + " " + (p.memories || []).map((m) => m.text).join(" ")).toLowerCase())) add(p, t("ask_memory"));
   });
 
@@ -689,17 +570,12 @@ function analyze(q) {
 
 function runAsk(q) {
   const box = $("#ask-results");
+  const r = analyze(q);
   box.innerHTML =
-    '<div class="answer-box"><div class="answer-head"><div class="ai-orb">' + icon("spark", 13) + '</div><b>' + t("ai_name") + "</b><span>" + t("ai_searching") + "</span></div>" +
-    '<div class="answer-text"><span class="typing-dots"><i></i><i></i><i></i></span></div></div>';
-  setTimeout(() => {
-    const r = analyze(q);
-    box.innerHTML =
-      '<div class="answer-box"><div class="answer-head"><div class="ai-orb">' + icon("spark", 13) + '</div><b>' + t("ai_name") + "</b><span>" + t("ai_answered", { n: r.sources.length, s: r.sources.length > 1 ? "s" : "" }) + "</span></div>" +
-      '<div class="answer-text">' + r.answer + "</div>" +
-      '<div class="answer-sources">' + r.sources.map((id) => sourceRow(id, r.why[id] || "")).join("") + "</div></div>";
-    $$(".source-row", box).forEach((el) => el.addEventListener("click", () => go("profile", { personId: el.dataset.id })));
-  }, 1000);
+    '<div class="answer-box"><div class="answer-head"><b>' + t("search_name") + "</b><span>" + t("search_answered", { n: r.sources.length }) + "</span></div>" +
+    '<div class="answer-text">' + r.answer + "</div>" +
+    '<div class="answer-sources">' + r.sources.map((id) => sourceRow(id, r.why[id] || "")).join("") + "</div></div>";
+  $$(".source-row", box).forEach((el) => el.addEventListener("click", () => go("profile", { personId: el.dataset.id })));
 }
 
 /* ============================================================
@@ -915,8 +791,19 @@ function renderMap() {
   buildMapSvg();
 }
 
+/** Nhóm người thật theo currentCity cho location lens (legend + fallback list). */
+function locationGroupsFromPeople() {
+  const byCity = {};
+  activePeople().forEach((p) => {
+    const city = String(p.currentCity || "").trim();
+    if (!city) return;
+    (byCity[city] = byCity[city] || []).push(p.id);
+  });
+  return Object.keys(byCity).map((city) => ({ label: city, members: byCity[city] }));
+}
+
 function renderLocationMap() {
-  const groups = LENSES.location.groups;
+  const groups = locationGroupsFromPeople();
   const people = activePeople();
 
   clearLocationMapInstance();
@@ -949,8 +836,7 @@ function personMatchTopic(p, topic) {
   const t2 = topic.toLowerCase();
   if (!t2) return false;
   const hay = [p.name, p.company, p.title, p.industry, p.currentCity, p.relationshipType, p.about,
-    ...(p.interests || []), ...(p.hobbies || []), ...(p.tags || []),
-    ...(p.circles || []).map((c) => (circleOf(c) || {}).name || "")].join(" ").toLowerCase();
+    ...(p.interests || []), ...(p.hobbies || []), ...(p.tags || [])].join(" ").toLowerCase();
   return hay.includes(t2);
 }
 
@@ -958,35 +844,17 @@ function buildMapSvg() {
   const W = 920, H = 640;
   mapNodes = []; mapEdges = [];
   const people = activePeople();
-  const lens = LENSES[mapState.lens];
 
-  if (mapState.lens === "people") {
-    mapNodes.push({ id: "you", label: t("map_legend_you"), type: "you", x: PERSON_POS.you[0], y: PERSON_POS.you[1], color: "#201D1A" });
-    people.forEach((p) => {
-      const pos = personPos(p);
-      mapNodes.push({ id: p.id, label: shortName(p), type: "person", x: pos[0], y: pos[1], color: p.color });
-    });
-    people.forEach((p) => mapEdges.push({ a: "you", b: p.id, why: t("nav_people") }));
-    personLinks().forEach((l) => {
-      const pa = byId(l.a), pb = byId(l.b);
-      if (pa && pb && pa.active !== false && pb.active !== false) mapEdges.push({ a: l.a, b: l.b, why: l.why });
-    });
-  } else {
-    const groups = lens.groups;
-    const cx = 460, cy = 320, R = 265;
-    groups.forEach((g, i) => {
-      const ang = (i / groups.length) * Math.PI * 2 - Math.PI / 2;
-      mapNodes.push({ id: g.id, label: g.label, type: "group", x: Math.round(cx + R * Math.cos(ang)), y: Math.round(cy + R * Math.sin(ang)), color: "#7A5AF8" });
-    });
-    people.forEach((p) => {
-      const pos = personPos(p);
-      mapNodes.push({ id: p.id, label: shortName(p), type: "person", x: pos[0], y: pos[1], color: p.color });
-    });
-    groups.forEach((g) => g.members.forEach((mid) => {
-      const mp = byId(mid);
-      if (mp && mp.active !== false) mapEdges.push({ a: g.id, b: mid, why: g.label });
-    }));
-  }
+  mapNodes.push({ id: "you", label: t("map_legend_you"), type: "you", x: PERSON_POS.you[0], y: PERSON_POS.you[1], color: "#201D1A" });
+  people.forEach((p) => {
+    const pos = personPos(p);
+    mapNodes.push({ id: p.id, label: shortName(p), type: "person", x: pos[0], y: pos[1], color: p.color });
+  });
+  people.forEach((p) => mapEdges.push({ a: "you", b: p.id, why: t("nav_people") }));
+  personLinks().forEach((l) => {
+    const pa = byId(l.a), pb = byId(l.b);
+    if (pa && pb && pa.active !== false && pb.active !== false) mapEdges.push({ a: l.a, b: l.b, why: l.why });
+  });
 
   // focus set
   let focusSet = null;
@@ -1013,10 +881,9 @@ function buildMapSvg() {
   };
 
   // legend
-  $("#map-legend").innerHTML = mapState.lens === "people"
-    ? '<span><i style="background:#201D1A"></i>' + t("map_legend_you") + "</span><span><i style='background:var(--accent)'></i>" + t("map_legend_people") + "</span><span><i style='background:#8D867C'></i>" + t("map_legend_rel") + "</span>" +
-      (mapState.focusId ? '<span><i style="background:var(--ok)"></i>' + t("map_legend_focus") + esc(byId(mapState.focusId).name) + "</span>" : "")
-    : '<span><i style="background:#7A5AF8"></i>' + t("lens_" + mapState.lens) + "</span><span><i style='background:var(--accent)'></i>" + t("map_legend_people") + "</span>";
+  $("#map-legend").innerHTML =
+    '<span><i style="background:#201D1A"></i>' + t("map_legend_you") + "</span><span><i style='background:var(--accent)'></i>" + t("map_legend_people") + "</span><span><i style='background:#8D867C'></i>" + t("map_legend_rel") + "</span>" +
+    (mapState.focusId ? '<span><i style="background:var(--ok)"></i>' + t("map_legend_focus") + esc(byId(mapState.focusId).name) + "</span>" : "");
 
   let svg = '<svg viewBox="0 0 ' + W + " " + H + '" xmlns="http://www.w3.org/2000/svg">';
 
@@ -1029,18 +896,14 @@ function buildMapSvg() {
   });
 
   mapNodes.forEach((n) => {
-    const r = n.type === "you" ? 26 : n.type === "person" ? 19 : 17;
+    const r = n.type === "you" ? 26 : 19;
     const dim = dimNode(n.id);
     const focusRing = mapState.focusId && n.id === mapState.focusId;
-    const isGroup = n.type === "group";
     svg +=
       '<g class="map-node" data-id="' + n.id + '" transform="translate(' + n.x + "," + n.y + ')">' +
-      (isGroup
-        ? '<rect class="' + (dim ? "dim" : "") + '" x="' + (-r - 6) + '" y="' + (-r - 4) + '" width="' + (r * 2 + 12) + '" height="' + (r * 2 + 8) + '" rx="12" fill="' + n.color + '" opacity="0.14" stroke="' + n.color + '" stroke-width="1.6"/>' +
-          '<text class="' + (dim ? "dim" : "") + '" y="4" text-anchor="middle" font-size="' + Math.round(r * 0.62) + '" font-weight="700" fill="' + n.color + '">' + esc(n.label.split(" ")[0].slice(0, 2).toUpperCase()) + "</text>"
-        : '<circle class="' + (dim ? "dim" : "") + '" r="' + r + '" fill="' + n.color + '" stroke="' + (focusRing ? "var(--ok)" : "var(--surface)") + '" stroke-width="' + (focusRing ? 4 : 2.5) + '"/>' +
-          (n.type !== "you" ? '<text class="' + (dim ? "dim" : "") + '" y="1" text-anchor="middle" font-size="' + Math.round(r * 0.62) + '" font-weight="700" fill="#fff">' + esc(n.type === "you" ? "You" : initialsOf(n.label)) + "</text>" : "")) +
-      '<text class="' + (dim ? "dim" : "") + '" y="' + (isGroup ? r + 22 : r + 16) + '" text-anchor="middle" font-size="' + (n.type === "you" ? 12 : 10.5) + '" font-weight="' + (n.type === "you" ? "700" : "600") + '" fill="var(--ink)">' + esc(n.label) + "</text>" +
+      '<circle class="' + (dim ? "dim" : "") + '" r="' + r + '" fill="' + n.color + '" stroke="' + (focusRing ? "var(--ok)" : "var(--surface)") + '" stroke-width="' + (focusRing ? 4 : 2.5) + '"/>' +
+      (n.type !== "you" ? '<text class="' + (dim ? "dim" : "") + '" y="1" text-anchor="middle" font-size="' + Math.round(r * 0.62) + '" font-weight="700" fill="#fff">' + esc(initialsOf(n.label)) + "</text>" : "") +
+      '<text class="' + (dim ? "dim" : "") + '" y="' + (r + 16) + '" text-anchor="middle" font-size="' + (n.type === "you" ? 12 : 10.5) + '" font-weight="' + (n.type === "you" ? "700" : "600") + '" fill="var(--ink)">' + esc(n.label) + "</text>" +
       "</g>";
   });
   svg += "</svg>";
@@ -1195,7 +1058,7 @@ function renderProfile(id) {
     '<div class="profile-grid">' +
     '<div class="stack">' +
     '<div class="card"><div class="card-title">' + icon("spark", 13) + " " + t("profile_about") + "</div>" +
-    '<div class="summary-quote">' + esc(p.about).replace("Interested in robotics, Vietnam and warehouse automation", "<span class='hl'>Interested in robotics, Vietnam and warehouse automation</span>") + "</div></div>" +
+    '<div class="summary-quote">' + esc(p.about) + "</div></div>" +
     '<div class="card"><div class="card-title">' + icon("users", 13) + " " + t("profile_rel_settings") + "</div>" +
     '<div class="fact-grid"><div class="fact"><div class="k">' + t("fact_relationship") + '</div><div class="v">' + esc(relTypeLabel(p.relationshipType)) + "</div></div>" +
     '<div class="fact"><div class="k">' + t("fact_first_met") + '</div><div class="v">' + esc(p.firstMet.date) + (p.firstMet.place ? " · " + esc(p.firstMet.place) : "") + "</div></div>" +
@@ -1213,9 +1076,8 @@ function renderProfile(id) {
     '<p style="font-size:11px;color:var(--ink-3);margin-top:9px">' + t("profile_care_note") + "</p></div>" +
     '<div class="card"><div class="card-title">' + icon("cake", 13) + " " + t("profile_important_dates") + "</div>" +
     (p.dates.length ? kvList(p.dates.map((d) => ({ k: d.label, v: d.when }))) : '<span class="chip ghost">' + t("no_dates_yet") + "</span>") + "</div>" +
-    '<div class="card"><div class="card-title">' + icon("tag", 13) + " " + t("profile_circles_tags") + "</div>" +
-    '<div class="chip-row">' + (p.circles || []).map((c) => { const cc = circleOf(c); return cc ? '<span class="chip dot" style="color:' + cc.color + '">' + esc(cc.name) + "</span>" : ""; }).join("") +
-    (p.tags || []).map((tg) => '<span class="chip">#' + esc(tg) + "</span>").join("") + "</div></div>" +
+    '<div class="card"><div class="card-title">' + icon("tag", 13) + " " + t("profile_tags") + "</div>" +
+    '<div class="chip-row">' + (p.tags || []).map((tg) => '<span class="chip">#' + esc(tg) + "</span>").join("") + "</div></div>" +
     "</div>" +
     '<div class="stack">' +
     '<div class="card followup-card" style="background:linear-gradient(135deg,var(--accent-soft),transparent 70%);border-color:var(--accent)">' +
@@ -1483,7 +1345,6 @@ function mergePeople(keep, dup) {
     photos: [...(keep.photos || []), ...(dup.photos || [])],
     photo: keep.photo || dup.photo || "",
     tags: [...new Set([...(keep.tags || []), ...(dup.tags || [])])],
-    circles: [...new Set([...(keep.circles || []), ...(dup.circles || [])])],
     connections: [...new Set([...(keep.connections || []), ...(dup.connections || [])])],
     metCount: (keep.metCount || 0) + (dup.metCount || 0),
     email: keep.email || dup.email || "",
@@ -1526,9 +1387,6 @@ function renderSettings() {
     '<input type="file" id="import-file" accept="application/json,.json" hidden />' +
     '<div class="setting-row"><div><b>' + t("settings_sample_row") + "</b><span>" + t("settings_sample_desc") + "</span></div>" +
     '<button class="btn small s-act" id="sample-btn">' + t("btn_load_sample") + "</button></div></div>" +
-    '<div class="card"><div class="card-title">' + icon("link", 13) + " " + t("settings_integrations") + "</div>" +
-    '<div class="chip-row"><span class="chip ghost">Calendar</span><span class="chip ghost">Email</span><span class="chip ghost">LINE</span><span class="chip ghost">LinkedIn</span><span class="chip ghost">Contacts</span></div>' +
-    '<p style="font-size:11.5px;color:var(--ink-3);margin-top:10px">' + t("settings_integrations_note") + "</p></div>" +
     (fbEnabled()
       ? '<div class="card"><div class="card-title">' + icon("users", 13) + " " + t("auth_account") + "</div>" +
         '<div class="setting-row"><div><b>' + esc(fbUser && fbUser.email ? fbUser.email : t("you")) + "</b><span>" + t("auth_sync_note") + "</span></div>" +
@@ -1607,7 +1465,7 @@ function openCapture(mode, opts = {}) {
   cap = {
     mode: mode || null, sourceMode: mode || null, step: 1, timer: null, seconds: 0, open: true,
     personId: opts.personId || null, addInfo: !!opts.addInfo, edit: !!opts.edit, text: "", photo: "",
-    prefill: opts.prefill || {}, review: false, formDraft: null, initialFormDraft: "", formCircles: [],
+    prefill: opts.prefill || {}, review: false, formDraft: null, initialFormDraft: "",
     advancedOpen: false, openSections: {}, dirty: false, nameFocused: false, aiAbort: null,
   };
   $("#capture-modal").classList.add("open");
@@ -1640,7 +1498,7 @@ function manualKey(field) {
 }
 
 function manualSnapshot() {
-  return JSON.stringify({ fields: cap.formDraft || {}, circles: cap.formCircles || [] });
+  return JSON.stringify({ fields: cap.formDraft || {} });
 }
 
 function refreshManualDirty() {
@@ -1843,26 +1701,12 @@ function manualAccordionHTML(visibleKeys) {
       "</section>";
   }).join("");
 
-  const circlesOpen = !!cap.openSections.circles;
-  const circlesCount = (cap.formCircles || []).length;
-  const circles = '<section class="manual-accordion">' +
-    '<button type="button" class="accordion-trigger" data-accordion="circles" aria-expanded="' + String(circlesOpen) + '" aria-controls="manual-section-circles">' +
-    '<span><b>' + t("section_circles") + "</b>" + (circlesCount ? '<span class="accordion-count">' + t("advanced_count", { n: circlesCount }) + "</span>" : "") + '</span><span class="accordion-chevron">' + icon("chev", 14) + "</span></button>" +
-    (circlesOpen
-      ? '<div class="accordion-body" id="manual-section-circles"><div class="pick-row">' + CIRCLES.map((circle) =>
-        '<button type="button" class="pick circle-pick' + ((cap.formCircles || []).includes(circle.id) ? " on" : "") + '" data-c="' + circle.id + '">' + esc(circle.name) + "</button>"
-      ).join("") + "</div></div>"
-      : '<div id="manual-section-circles" hidden></div>') +
-    "</section>";
-  return '<div class="advanced-panel">' + sectionHTML + circles + "</div>";
+  return '<div class="advanced-panel">' + sectionHTML + "</div>";
 }
 
 function initManualDraft(editing) {
   if (cap.formDraft) return;
   cap.formDraft = createManualDraft(editing, cap.prefill || {}, cap.review);
-  cap.formCircles = (cap.prefill && Array.isArray(cap.prefill.circles))
-    ? [...cap.prefill.circles]
-    : editing && Array.isArray(editing.circles) ? [...editing.circles] : [];
   cap.initialFormDraft = manualSnapshot();
   cap.dirty = false;
 }
@@ -1951,7 +1795,6 @@ function saveManualCapture() {
   fields.title = fields.title || (editing ? "" : "—");
   fields.relationshipType = fields.relationshipType || (editing ? "" : "New");
   fields.strength = fields.strength || (editing ? "" : "normal");
-  fields.circles = [...(cap.formCircles || [])];
   fields.location = [fields.currentCity, fields.country].filter(Boolean).join(", ") || (editing ? "" : "—");
   fields.firstMet = {
     date: firstMetDate || (editing ? "" : "Today"),
@@ -2040,13 +1883,6 @@ function bindManualCapture(editing) {
     const field = MANUAL_FIELD_MAP[key];
     const input = field && $("#f-" + field.sec + "-" + field.k);
     if (input) { input.value = ""; if (input.focus) input.focus(); }
-  }));
-  $$(".circle-pick", body).forEach((button) => button.addEventListener("click", () => {
-    const next = new Set(cap.formCircles || []);
-    next.has(button.dataset.c) ? next.delete(button.dataset.c) : next.add(button.dataset.c);
-    cap.formCircles = [...next];
-    button.classList.toggle("on", next.has(button.dataset.c));
-    refreshManualDirty();
   }));
 
   const advanced = $("#manual-advanced-toggle");
@@ -2210,11 +2046,9 @@ function renderCapture() {
         (cap.photo ? '<img class="ocr-preview" src="' + cap.photo + '" alt="" />' : "") +
         '<div class="ocr-status" id="ocr-status">' + t("card_ocr_local") + "</div>" +
         '<div class="ocr-bar" aria-hidden="true"><span id="ocr-bar"></span></div>' +
-        '<div class="modal-foot"><button class="btn ghost" id="card-demo">' + t("card_use_demo") + "</button>" +
-        '<button class="btn primary" id="card-choose">' + icon("camera", 13) + " " + t("card_choose") + "</button></div>";
+        '<div class="modal-foot"><button class="btn primary" id="card-choose">' + icon("camera", 13) + " " + t("card_choose") + "</button></div>";
       $("#card-photo").addEventListener("change", handleCardPhoto);
       $("#card-choose").addEventListener("click", () => $("#card-photo").click());
-      $("#card-demo").addEventListener("click", () => { cap.ocrText = cardDemoText(); cap.step = 3; renderCapture(); });
     } else if (cap.step === 3) {
       setCapTitle(t("card_read"), t("card_step_review"));
       const extracted = cardFieldsToExtract(cap.prefill || parseCardOcrText(cap.ocrText || ""));
@@ -2336,7 +2170,7 @@ function renderCaptureResult() {
   ).join("");
   const chip = matched
     ? avatarHTML(matched, 24) + (cap.addInfo ? t("updating_person", { name: matched.name }) : t("matched_person", { name: matched.name }))
-    : '<span class="ai-orb" style="display:inline-flex">👤</span>' + t("text_new_person");
+    : '<span style="display:inline-flex">👤</span>' + t("text_new_person");
   body.innerHTML =
     '<div class="resolved-chip">' + chip + "</div>" +
     '<div class="field" style="margin-top:12px"><label>' + t("text_attach_to") + "</label>" +
@@ -2389,7 +2223,6 @@ function renderCaptureResult() {
         memories: [memory],
         raw: text,
         dates: [],
-        circles: [],
         tags: [cap.mode === "voice" ? "voice" : "text"],
         lastContactDays: 0,
         metCount: 1,
@@ -2444,10 +2277,6 @@ function parsedToPrefill(p) {
     followUpWhat: p.followUpWhat || "",
     notes: p.notes || "",
   };
-}
-
-function cardDemoText() {
-  return (CARD_DEMO.extracted || []).map((f) => f.label + ": " + f.value).join("\n");
 }
 
 function cardFieldsToExtract(pre) {
@@ -2554,7 +2383,7 @@ async function enterReviewFromText() {
 
 /** Vào màn confirm với trường từ namecard (chỉ trường CÓ dữ liệu). */
 async function enterReviewFromCard() {
-  const pre = parseCardOcrText(cap.ocrText || "") || cardDemoFields();
+  const pre = parseCardOcrText(cap.ocrText || "") || {};
   const matched = resolvePersonFromText(pre.name || "");
   renderAIWaiting("card");
   let prefill = pre;
@@ -2612,7 +2441,6 @@ function toggleTheme() {
   const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
   document.documentElement.setAttribute("data-theme", next);
   try { localStorage.setItem("nm-theme", next); } catch (e) {}
-  renderDemoPanel();
 }
 
 function initTheme() {
@@ -2652,7 +2480,6 @@ function updateCareBadge() {
 }
 
 function renderAll() {
-  renderDemoPanel();
   renderHome();
   renderPeople();
   renderCare();
@@ -2783,7 +2610,6 @@ function init() {
   }
 
   applyStaticI18n();
-  renderDemoPanel();
   renderHome();
   renderPeople();
   renderCare();

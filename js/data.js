@@ -83,7 +83,7 @@ const SAMPLE_PEOPLE = [
     ],
     raw: 'Voice memo · Aug 22, 2026 — "Met Tanaka-san at the Yamato warehouse today. He is responsible for logistics DX at ABC. Very interested in warehouse robots — considering a PoC next year. We walked the floor, looked at AGV routes and the WMS. Agreed to meet again in October to talk about next steps."',
     connections: ["Ito Kenji", "Nguyen Minh"], mutual: ["Ito Kenji", "Yamamoto Ryo"],
-    circles: ["close", "robotics", "vietnam", "golf"], tags: ["logistics-dx", "po-c-2027", "warehouse"],
+    tags: ["logistics-dx", "po-c-2027", "warehouse"],
     lastContactDays: 47, metCount: 4,
     about: "Tanaka Hiroshi — ABC Logistics, Logistics DX Director. Met 4 times since 2025. Lives in Yokohama, plays golf, has two children. Interested in robotics, Vietnam and warehouse automation. Last met: Yamato warehouse visit — Aug 2026. Discussed: AGV integration and warehouse management system."
   },
@@ -121,7 +121,7 @@ const SAMPLE_PEOPLE = [
       { when: "Sep 2026", text: "Newly managing the AI platform team." }
     ],
     raw: 'Voice memo · Sep 30, 2026 — "I just met Suzuki-san again. Her daughter entered university this year. She is now managing the new AI team. She asked me to introduce someone familiar with Vietnam."',
-    connections: [], mutual: [], circles: ["ai", "vietnam"], tags: ["ai-agents", "vietnam-intro"],
+    connections: [], mutual: [], tags: ["ai-agents", "vietnam-intro"],
     lastContactDays: 8, metCount: 2,
     about: "Suzuki Keiko — Nihon AI Systems, AI Platform Team Lead. Met 2 times since 2025. Newly managing the AI team; daughter entered university this year. Asked for an introduction to someone familiar with Vietnam."
   },
@@ -158,7 +158,7 @@ const SAMPLE_PEOPLE = [
       { when: "Jan 2024", text: "Met through the founder community." }
     ],
     raw: "", connections: ["Kobayashi Miki"], mutual: ["Kobayashi Miki", "Watanabe Aiko"],
-    circles: ["mentors", "startups"], tags: ["headhunter", "founder-community"],
+    tags: ["headhunter", "founder-community"],
     lastContactDays: 120, metCount: 6,
     about: "Sato Yuki — TalentBridge, Founder & Headhunter. Known since 2024. A mentor for building in Japan. Last met: Marunouchi coffee — Jun 2026. Discussed founder hiring in tech."
   },
@@ -195,7 +195,7 @@ const SAMPLE_PEOPLE = [
       { when: "Sep 2026", text: "Can support a PoC at ABC — wants Tanaka to commit soon." }
     ],
     raw: "", connections: ["Tanaka Hiroshi"], mutual: ["Tanaka Hiroshi"],
-    circles: ["partners", "robotics"], tags: ["agv", "logis-tech"],
+    tags: ["agv", "logis-tech"],
     lastContactDays: 24, metCount: 2,
     about: "Ito Kenji — MotionWorks Robotics, Sales Director. Met 2 times since 2025. AGV & warehouse robotics. Connected to Tanaka Hiroshi. Next: Logis-Tech Expo — Oct 18."
   },
@@ -232,7 +232,7 @@ const SAMPLE_PEOPLE = [
       { when: "Apr 2025", text: "Very well connected in Vietnam retail." }
     ],
     raw: "", connections: ["Tanaka Hiroshi", "Mori Takashi"], mutual: [],
-    circles: ["partners", "vietnam"], tags: ["vietnam-retail", "cross-border"],
+    tags: ["vietnam-retail", "cross-border"],
     lastContactDays: 39, metCount: 2,
     about: "Nguyen Minh — Saigon Retail Group, CEO. Met 2 times since 2025. Deep network in Vietnam retail & e-commerce. Open action: introduce to Tanaka for Vietnam expansion."
   },
@@ -269,7 +269,7 @@ const SAMPLE_PEOPLE = [
       { when: "2019", text: "Old friend — no small talk needed." }
     ],
     raw: "", connections: ["Tanaka Hiroshi", "Kobayashi Miki"], mutual: ["Tanaka Hiroshi"],
-    circles: ["university", "startups"], tags: ["edtech", "sea"],
+    tags: ["edtech", "sea"],
     lastContactDays: 70, metCount: 12,
     about: "Yamamoto Ryo — EduTech Lab, Founder. Friend since 2019. Met 12 times. Last: Shibuya drinks — Jul 2026. Considering SEA expansion."
   },
@@ -306,7 +306,7 @@ const SAMPLE_PEOPLE = [
       { when: "Feb 2025", text: "Introduced by Sato Yuki." }
     ],
     raw: "", connections: ["Sato Yuki"], mutual: ["Sato Yuki"],
-    circles: ["close", "clients", "golf", "realestate"], tags: ["azabudai", "birthday-oct"],
+    tags: ["azabudai", "birthday-oct"],
     lastContactDays: 64, metCount: 3,
     about: "Watanabe Aiko — Hills Realty, Real Estate Agent. Met 3 times since 2025. Deep network in Azabudai / Roppongi. Birthday: Oct 11 — in 3 days."
   },
@@ -340,7 +340,7 @@ const SAMPLE_PEOPLE = [
     timelineExtra: [],
     memories: [{ when: "Oct 2026", text: "Independent consultant; retail & AI strategy." }],
     raw: "", connections: ["Sato Yuki", "Yamamoto Ryo"], mutual: ["Sato Yuki"],
-    circles: ["clients", "ai"], tags: ["strategy", "vietnam-study"],
+    tags: ["strategy", "vietnam-study"],
     lastContactDays: 7, metCount: 2,
     about: "Kobayashi Miki — Strategy & Co., Consultant. Met 2 times since 2025 (EDIX). Retail & AI strategy. Next: Nov 1 video call — share Vietnam retail notes."
   },
@@ -367,7 +367,7 @@ const SAMPLE_PEOPLE = [
     last: { type: "Business card", when: "Today", place: "Networking event", summary: "Captured from business card.", tags: [] },
     followUp: { when: "—", what: "Say hi in a few days with a note from today", kind: "reconnect" },
     meetings: [], timelineExtra: [], memories: [], raw: "",
-    connections: [], mutual: [], circles: ["robotics"], tags: ["card-scan", "new"],
+    connections: [], mutual: [], tags: ["card-scan", "new"],
     lastContactDays: 0, metCount: 0,
     about: "Nakamura Tetsuya — Kansai Robotics, Business Development Manager. Captured today from a business card. Interested in warehouse automation."
   },
@@ -404,7 +404,7 @@ const SAMPLE_PEOPLE = [
       { when: "Aug 2026", text: "Wants AI + retail crossover deals." }
     ],
     raw: "", connections: ["Nguyen Minh"], mutual: [],
-    circles: ["investors", "vietnam", "startups"], tags: ["investor", "ivs", "singapore"],
+    tags: ["investor", "ivs", "singapore"],
     lastContactDays: 55, metCount: 2,
     about: "Mori Takashi — XYZ Capital, Partner / Investor. Met 2 times since 2025 (IVS). Based in Singapore. Interested in Vietnam startups and AI. Open promise: intro to Vietnam startup dealflow."
   }
@@ -415,25 +415,6 @@ let PEOPLE = [];
 
 const byId = (id) => PEOPLE.find((p) => p.id === id);
 const personByName = (first) => PEOPLE.find((p) => p.name.split(" ")[0].toLowerCase() === first.toLowerCase());
-
-/* ============================================================
-   CIRCLES / TAGS (§14)
-   ============================================================ */
-const CIRCLES = [
-  { id: "close", name: "Close Business", color: "#E0452C", members: ["tanaka", "watanabe", "ito"] },
-  { id: "investors", name: "Investors", color: "#0E9F8A", members: ["mori"] },
-  { id: "clients", name: "Clients", color: "#3E7BB6", members: ["watanabe", "kobayashi"] },
-  { id: "partners", name: "Partners", color: "#7A5AF8", members: ["ito", "nguyen"] },
-  { id: "mentors", name: "Mentors", color: "#B45F06", members: ["sato"] },
-  { id: "university", name: "University Friends", color: "#5B8C5A", members: ["yamamoto"] },
-  { id: "vietnam", name: "Vietnam", color: "#C43A8B", members: ["tanaka", "nguyen", "mori", "suzuki"] },
-  { id: "robotics", name: "Robotics", color: "#8E5A9E", members: ["tanaka", "ito", "nakamura"] },
-  { id: "golf", name: "Golf", color: "#E08B00", members: ["tanaka", "watanabe"] },
-  { id: "startups", name: "Startup Founders", color: "#3E7BB6", members: ["yamamoto", "sato", "mori"] },
-  { id: "ai", name: "AI & Tech", color: "#7A5AF8", members: ["suzuki", "kobayashi"] },
-  { id: "realestate", name: "Real Estate", color: "#B45F06", members: ["watanabe"] }
-];
-const circleOf = (id) => CIRCLES.find((c) => c.id === id);
 
 /* ============================================================
    HOME / CARE — tính động từ PEOPLE (data thật của người dùng)
@@ -572,13 +553,13 @@ function homeMemories() {
    SEARCH (§15)
    ============================================================ */
 const QUICK_QUESTIONS = [
-  "Who is interested in robotics?",
-  "Who lives in Yokohama?",
+  "Who works in AI?",
+  "Who lives in Ho Chi Minh?",
   "Which investors do I know?",
-  "Who introduced me to Tanaka-san?",
-  "What do I know about Suzuki-san?",
+  "Who works at ABC Logistics?",
+  "What do I know about them?",
   "Who in my network has children?",
-  "Who did I meet at EDIX?"
+  "Who did I meet recently?"
 ];
 
 /* ============================================================
@@ -595,17 +576,7 @@ const PERSON_POS = {
   nakamura: [220, 480], mori: [120, 190]
 };
 
-// person ↔ person relationships (People lens, §16.1) — dùng cho sample data
-const PERSON_LINKS = [
-  { a: "tanaka", b: "yamamoto", why: "Introduced by Yamamoto" },
-  { a: "tanaka", b: "ito", why: "Introduced at Logis-Tech" },
-  { a: "tanaka", b: "nguyen", why: "Pending intro · Vietnam" },
-  { a: "sato", b: "watanabe", why: "Introduced by Sato" },
-  { a: "sato", b: "kobayashi", why: "Same community" },
-  { a: "nguyen", b: "mori", why: "Shared interest · Vietnam" },
-  { a: "yamamoto", b: "kobayashi", why: "Same event · EDIX" },
-  { a: "suzuki", b: "kobayashi", why: "Same circle · AI & Tech" }
-];
+// person ↔ person relationships (People lens, §16.1) — sinh động từ field connections/mutual (personLinks bên dưới)
 
 /** Vị trí node cho người BẤT KỲ (người mới thêm → vị trí tất định theo id). */
 function personPos(p) {
@@ -642,139 +613,12 @@ function personLinks() {
 
 const LENSES = {
   people: { label: "People", desc: "People and how they relate" },
-  location: {
-    label: "Location", desc: "Where people live",
-    groups: [
-      { id: "loc-tokyo", label: "Tokyo", query: "Tokyo, Japan", members: ["suzuki", "sato", "yamamoto", "watanabe", "kobayashi"] },
-      { id: "loc-yokohama", label: "Yokohama", query: "Yokohama, Japan", members: ["tanaka"] },
-      { id: "loc-osaka", label: "Osaka", query: "Osaka, Japan", members: ["ito", "nakamura"] },
-      { id: "loc-hcmc", label: "Ho Chi Minh", query: "Ho Chi Minh City, Vietnam", members: ["nguyen"] },
-      { id: "loc-sg", label: "Singapore", query: "Singapore", members: ["mori"] }
-    ]
-  },
-  industry: {
-    label: "Industry", desc: "Professional industry",
-    groups: [
-      { id: "ind-logistics", label: "Logistics", members: ["tanaka", "ito"] },
-      { id: "ind-robotics", label: "Robotics", members: ["ito", "nakamura"] },
-      { id: "ind-tech", label: "Technology / AI", members: ["suzuki", "kobayashi"] },
-      { id: "ind-retail", label: "Retail", members: ["nguyen"] },
-      { id: "ind-re", label: "Real Estate", members: ["watanabe"] },
-      { id: "ind-edu", label: "Education", members: ["yamamoto"] },
-      { id: "ind-fin", label: "Finance", members: ["mori"] },
-      { id: "ind-hr", label: "HR", members: ["sato"] }
-    ]
-  },
-  company: {
-    label: "Company", desc: "Current organization",
-    groups: [
-      { id: "co-abc", label: "ABC Logistics", members: ["tanaka"] },
-      { id: "co-nihon", label: "Nihon AI Systems", members: ["suzuki"] },
-      { id: "co-talent", label: "TalentBridge", members: ["sato"] },
-      { id: "co-motion", label: "MotionWorks", members: ["ito"] },
-      { id: "co-saigon", label: "Saigon Retail", members: ["nguyen"] },
-      { id: "co-edu", label: "EduTech Lab", members: ["yamamoto"] },
-      { id: "co-hills", label: "Hills Realty", members: ["watanabe"] },
-      { id: "co-strategy", label: "Strategy & Co.", members: ["kobayashi"] },
-      { id: "co-kansai", label: "Kansai Robotics", members: ["nakamura"] },
-      { id: "co-xyz", label: "XYZ Capital", members: ["mori"] }
-    ]
-  },
-  interest: {
-    label: "Interest", desc: "Shared topics & hobbies",
-    groups: [
-      { id: "in-robotics", label: "Robotics", members: ["tanaka", "ito", "nakamura"] },
-      { id: "in-vietnam", label: "Vietnam", members: ["tanaka", "nguyen", "mori", "suzuki"] },
-      { id: "in-golf", label: "Golf", members: ["tanaka", "watanabe"] },
-      { id: "in-ai", label: "AI", members: ["suzuki", "kobayashi", "mori"] },
-      { id: "in-startups", label: "Startups", members: ["yamamoto", "sato", "mori"] },
-      { id: "in-retail", label: "Retail", members: ["nguyen", "kobayashi"] },
-      { id: "in-re", label: "Real estate", members: ["watanabe"] }
-    ]
-  },
-  relationship: {
-    label: "Relationship", desc: "How you know them",
-    groups: [
-      { id: "rel-key", label: "Key contact", members: ["tanaka"] },
-      { id: "rel-collab", label: "Collaborator", members: ["suzuki"] },
-      { id: "rel-mentor", label: "Mentor", members: ["sato"] },
-      { id: "rel-partner", label: "Partner", members: ["ito", "nguyen"] },
-      { id: "rel-friend", label: "Friend", members: ["yamamoto"] },
-      { id: "rel-client", label: "Client", members: ["watanabe", "kobayashi"] },
-      { id: "rel-investor", label: "Investor", members: ["mori"] },
-      { id: "rel-new", label: "New", members: ["nakamura"] }
-    ]
-  },
-  community: {
-    label: "Community / Event", desc: "Where you know them from",
-    groups: [
-      { id: "ev-edix", label: "EDIX", members: ["tanaka", "yamamoto", "kobayashi"] },
-      { id: "ev-ivs", label: "IVS", members: ["mori", "nguyen"] },
-      { id: "ev-logis", label: "Logis-Tech", members: ["tanaka", "ito"] },
-      { id: "ev-meetup", label: "AI Meetup", members: ["suzuki"] },
-      { id: "ev-univ", label: "University", members: ["yamamoto"] },
-      { id: "ev-net", label: "Networking dinners", members: ["sato", "watanabe"] }
-    ]
-  }
+  location: { label: "Location", desc: "Where people live" }
 };
 
 /* ============================================================
    QUICK REFRESH (§21) — generated from memory via buildRefresh()
    ============================================================ */
-
-/* ============================================================
-   CAPTURE DEMOS (§7, §10, §11)
-   ============================================================ */
-const CARD_DEMO = {
-  kanji: "中村 哲也",
-  romaji: "NAKAMURA TETSUYA",
-  company: "Kansai Robotics Co., Ltd.",
-  title: "Business Development Manager",
-  dept: "Sales & BD Division",
-  email: "t.nakamura@kansai-robotics.jp",
-  phone: "+81 6-XXXX-XXXX",
-  address: "Osaka, Japan",
-  website: "www.kansai-robotics.jp",
-  extracted: [
-    { label: "Name", value: "Nakamura Tetsuya", conf: 98 },
-    { label: "Company", value: "Kansai Robotics Co., Ltd.", conf: 97 },
-    { label: "Department", value: "Sales & BD Division", conf: 94 },
-    { label: "Title", value: "Business Development Manager", conf: 96 },
-    { label: "Email", value: "t.nakamura@kansai-robotics.jp", conf: 99 },
-    { label: "Phone", value: "+81 6-XXXX-XXXX", conf: 91 },
-    { label: "Address", value: "Osaka, Japan", conf: 88 },
-    { label: "Website", value: "www.kansai-robotics.jp", conf: 90 }
-  ]
-};
-
-// §7.3 voice creation example (resolves to existing Tanaka — no duplicate)
-const VOICE_DEMO = {
-  transcript: "I met Tanaka Hiroshi from ABC Logistics today at an industry event. He manages warehouse automation. He likes golf and lives in Yokohama.",
-  resolved: {
-    personId: "tanaka",
-    note: "Matched existing person — no duplicate created.",
-    facts: [
-      { cat: "Profile update", text: "Lives in Yokohama", kind: "profile" },
-      { cat: "Profile update", text: "Likes golf", kind: "profile" },
-      { cat: "Work", text: "Manages warehouse automation at ABC Logistics", kind: "profile" },
-      { cat: "Interaction memory", text: "Met today at an industry event", kind: "interaction" }
-    ]
-  }
-};
-
-// §10 add-information example
-const ADDINFO_DEMO = {
-  transcript: "Met her again today. She recently moved to Setagaya. Her husband works in finance. She has a five-year-old son and recently started playing tennis.",
-  facts: [
-    { cat: "Profile update", text: "Location → Setagaya, Tokyo", kind: "both", note: "Also saved as interaction" },
-    { cat: "Profile update", text: "Family: husband in finance, five-year-old son", kind: "profile" },
-    { cat: "Profile update", text: "Hobby: recently started tennis", kind: "profile" },
-    { cat: "Interaction memory", text: "Met again today — recorded to timeline", kind: "interaction" }
-  ]
-};
-
-const TEXT_DEMO =
-  "I met Tanaka-san from ABC today. He is responsible for logistics DX. He is interested in warehouse robots and is considering a PoC next year. We agreed to meet again in October.";
 
 /* ---------- quick/manual entry form definition (§7.5, §9) ---------- */
 const MANUAL_SECTIONS = [
@@ -1128,23 +972,5 @@ function parseCaptureText(text) {
   merge(parseEn(text));
   merge(parseJa(text));
   if (out.interests.length) out.hobbies = [out.interests[0]];
-  return out;
-}
-
-/** Map CARD_DEMO.extracted → field của form manual (chỉ field CÓ dữ liệu). */
-function cardDemoFields() {
-  const map = {
-    "Name": "name",
-    "Company": "company",
-    "Department": "department",
-    "Title": "title",
-    "Email": "email",
-    "Phone": "phone",
-    "Address": "currentCity",
-  };
-  const out = { name: "", company: "", department: "", title: "", email: "", phone: "", currentCity: "" };
-  (CARD_DEMO.extracted || []).forEach((f) => {
-    if (map[f.label] && f.value) out[map[f.label]] = f.value;
-  });
   return out;
 }
