@@ -189,7 +189,7 @@ const STR = {
     field_helpReceived: "What they've helped me with", field_promises: "Promises / follow-ups",
     field_notes: "Other notes",
     birthday_flexible_ph: "22/11, Nov 22, or around 1990",
-    birthday_month_ph: "M", birthday_day_ph: "D", birthday_year_ph: "Y",
+    birthday_month_ph: "M", birthday_day_ph: "D", birthday_year_ph: "Y", birthday_calendar: "Pick birthday from calendar",
     location_ph: "Choose or type a city",
     work_notes_ph: "Job, department, role, company context, skills, projects",
     family_notes_ph: "Spouse, children, birthdays, family context",

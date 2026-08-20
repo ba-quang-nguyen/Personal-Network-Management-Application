@@ -768,9 +768,26 @@ textarea.story { min-height: 110px; resize: vertical; }
   margin-top: 5px; color: var(--ink-3); font-size: 10.5px; line-height: 1.4;
 }
 .birthday-parts {
-  display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, .9fr) minmax(0, 1fr); gap: 7px;
+  position: relative; display: grid; grid-template-columns: minmax(0, .75fr) minmax(0, .85fr) minmax(0, 1fr) 38px; gap: 4px;
+  align-items: center; min-height: 44px; padding: 3px;
+  background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 10px;
 }
-.birthday-parts .field-input { min-height: 40px; text-align: center; padding-left: 8px; padding-right: 8px; }
+.birthday-parts:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.birthday-parts .field-input {
+  min-height: 36px; text-align: center; padding: 7px 6px;
+  border: 0; border-radius: 7px; box-shadow: none; background: transparent;
+}
+.birthday-parts .field-input:focus { box-shadow: none; background: var(--surface-2); }
+.birthday-calendar-btn {
+  min-width: 36px; width: 36px; height: 36px; display: grid; place-items: center;
+  border-radius: 8px; color: var(--ink-2); background: var(--surface-2);
+}
+.birthday-calendar-btn:hover { color: var(--accent); background: var(--accent-soft); }
+.birthday-calendar-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.birthday-date-native {
+  position: absolute; right: 4px; bottom: 4px; width: 1px; height: 1px;
+  opacity: 0; pointer-events: none;
+}
 .field-inline-action {
   min-height: 44px; margin: -14px 0; display: inline-flex; align-items: center;
   color: var(--accent); font-weight: 700; font-size: 10.5px; flex-shrink: 0;
@@ -3146,7 +3163,7 @@ const STR = {
     field_helpReceived: "What they've helped me with", field_promises: "Promises / follow-ups",
     field_notes: "Other notes",
     birthday_flexible_ph: "22/11, Nov 22, or around 1990",
-    birthday_month_ph: "M", birthday_day_ph: "D", birthday_year_ph: "Y",
+    birthday_month_ph: "M", birthday_day_ph: "D", birthday_year_ph: "Y", birthday_calendar: "Pick birthday from calendar",
     location_ph: "Choose or type a city",
     work_notes_ph: "Job, department, role, company context, skills, projects",
     family_notes_ph: "Spouse, children, birthdays, family context",
@@ -5060,10 +5077,13 @@ function manualFieldHTML(field) {
     const month = validMonth(parseInt(parts.month, 10));
     const day = validDay(parseInt(parts.day, 10));
     const year = validYear(parseInt(parts.year, 10));
+    const dateValue = month && day && year ? String(year).padStart(4, "0") + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0") : "";
     control = '<div class="birthday-parts" data-birthday-key="' + key + '">' +
       '<input class="field-input" type="number" inputmode="numeric" min="1" max="31" data-birthday-part="' + key + '" data-part="day" placeholder="' + esc(t("birthday_day_ph")) + '" aria-label="' + esc(t("birthday_day_ph")) + '" value="' + esc(day || "") + '" />' +
       '<input class="field-input" type="number" inputmode="numeric" min="1" max="12" data-birthday-part="' + key + '" data-part="month" placeholder="' + esc(t("birthday_month_ph")) + '" aria-label="' + esc(t("birthday_month_ph")) + '" value="' + esc(month || "") + '" />' +
       '<input class="field-input" type="number" inputmode="numeric" min="1" max="9999" data-birthday-part="' + key + '" data-part="year" placeholder="' + esc(t("birthday_year_ph")) + '" aria-label="' + esc(t("birthday_year_ph")) + '" value="' + esc(year || "") + '" />' +
+      '<button class="birthday-calendar-btn" type="button" data-birthday-open="' + key + '" aria-label="' + esc(t("birthday_calendar")) + '">' + icon("cal", 14) + "</button>" +
+      '<input class="birthday-date-native" type="date" data-birthday-date="' + key + '" value="' + esc(dateValue) + '" aria-hidden="true" tabindex="-1" />' +
       "</div>";
   } else {
     const type = field.control === "email" || field.control === "tel" ? field.control : "text";
@@ -5338,6 +5358,27 @@ function bindManualCapture(editing) {
     };
     input.addEventListener("input", update);
     input.addEventListener("change", update);
+  });
+  $$('[data-birthday-open]', body).forEach((button) => {
+    button.addEventListener("click", () => {
+      const picker = $('[data-birthday-date="' + button.dataset.birthdayOpen + '"]', body);
+      if (!picker) return;
+      if (picker.showPicker) picker.showPicker();
+      else picker.click();
+    });
+  });
+  $$('[data-birthday-date]', body).forEach((input) => {
+    input.addEventListener("change", () => {
+      const parts = parseBirthdayParts(input.value) || {};
+      cap.formDraft[input.dataset.birthdayDate] = {
+        month: parts.month ? String(parts.month) : "",
+        day: parts.day ? String(parts.day) : "",
+        year: parts.year ? String(parts.year) : "",
+      };
+      refreshManualDirty();
+      updateManualSaveState();
+      renderManualCapture();
+    });
   });
   const advanced = $("#manual-advanced-toggle");
   if (advanced) advanced.addEventListener("click", () => {

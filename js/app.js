@@ -1749,10 +1749,13 @@ function manualFieldHTML(field) {
     const month = validMonth(parseInt(parts.month, 10));
     const day = validDay(parseInt(parts.day, 10));
     const year = validYear(parseInt(parts.year, 10));
+    const dateValue = month && day && year ? String(year).padStart(4, "0") + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0") : "";
     control = '<div class="birthday-parts" data-birthday-key="' + key + '">' +
       '<input class="field-input" type="number" inputmode="numeric" min="1" max="31" data-birthday-part="' + key + '" data-part="day" placeholder="' + esc(t("birthday_day_ph")) + '" aria-label="' + esc(t("birthday_day_ph")) + '" value="' + esc(day || "") + '" />' +
       '<input class="field-input" type="number" inputmode="numeric" min="1" max="12" data-birthday-part="' + key + '" data-part="month" placeholder="' + esc(t("birthday_month_ph")) + '" aria-label="' + esc(t("birthday_month_ph")) + '" value="' + esc(month || "") + '" />' +
       '<input class="field-input" type="number" inputmode="numeric" min="1" max="9999" data-birthday-part="' + key + '" data-part="year" placeholder="' + esc(t("birthday_year_ph")) + '" aria-label="' + esc(t("birthday_year_ph")) + '" value="' + esc(year || "") + '" />' +
+      '<button class="birthday-calendar-btn" type="button" data-birthday-open="' + key + '" aria-label="' + esc(t("birthday_calendar")) + '">' + icon("cal", 14) + "</button>" +
+      '<input class="birthday-date-native" type="date" data-birthday-date="' + key + '" value="' + esc(dateValue) + '" aria-hidden="true" tabindex="-1" />' +
       "</div>";
   } else {
     const type = field.control === "email" || field.control === "tel" ? field.control : "text";
@@ -2027,6 +2030,27 @@ function bindManualCapture(editing) {
     };
     input.addEventListener("input", update);
     input.addEventListener("change", update);
+  });
+  $$('[data-birthday-open]', body).forEach((button) => {
+    button.addEventListener("click", () => {
+      const picker = $('[data-birthday-date="' + button.dataset.birthdayOpen + '"]', body);
+      if (!picker) return;
+      if (picker.showPicker) picker.showPicker();
+      else picker.click();
+    });
+  });
+  $$('[data-birthday-date]', body).forEach((input) => {
+    input.addEventListener("change", () => {
+      const parts = parseBirthdayParts(input.value) || {};
+      cap.formDraft[input.dataset.birthdayDate] = {
+        month: parts.month ? String(parts.month) : "",
+        day: parts.day ? String(parts.day) : "",
+        year: parts.year ? String(parts.year) : "",
+      };
+      refreshManualDirty();
+      updateManualSaveState();
+      renderManualCapture();
+    });
   });
   const advanced = $("#manual-advanced-toggle");
   if (advanced) advanced.addEventListener("click", () => {
