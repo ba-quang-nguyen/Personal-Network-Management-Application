@@ -180,7 +180,6 @@ function routeFromHash() {
   if (s === "capture") { go("home"); setTimeout(() => openCapture(null), 80); return; }
   if (s === "map") {
     if (v1 === "lens" && LENSES[v2]) { mapState.lens = v2; mapState.focusId = null; mapState.city = null; }
-    else if (v1 === "focus" && byId(v2)) { mapState.lens = "people"; mapState.focusId = v2; }
     else if (v1 === "topic") { mapState.lens = "people"; mapState.topic = decodeURIComponent(v2 || ""); }
     return go("map");
   }
@@ -239,6 +238,9 @@ function renderHome() {
     if (c.reason === "birthday") {
       reasonTxt = t("care_birthday_in", { n: c.days });
       detailTxt = p.birthday;
+    } else if (c.reason === "date") {
+      reasonTxt = c.date ? t("care_date_in", { label: c.date.label, n: c.days }) : t("reason_date");
+      detailTxt = c.date ? c.date.when : "";
     } else if (c.reason === "silence") {
       reasonTxt = t("care_silence_days", { n: c.days });
       detailTxt = t("care_last", { v: (p.last && p.last.when) || "—" });
@@ -247,7 +249,7 @@ function renderHome() {
       detailTxt = c.followUp ? c.followUp.what : "";
     }
     const action = c.actions[0] || "dismiss";
-    const actionLabel = { message: t("care_action_message"), reconnect: t("care_action_reconnect"), do: t("care_action_do") }[action] || t("btn_view");
+    const actionLabel = { refresh: t("btn_refresh"), profile: t("btn_view") }[action] || t("btn_view");
     return (
       '<div class="card" style="border-left:3px solid ' + (c.urgency === "high" ? "var(--accent)" : "var(--warn)") + ';padding:13px 16px">' +
       '<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">' + avatarHTML(p, 36) +
@@ -311,8 +313,9 @@ function bindHome() {
   $$("#home-care .care-action").forEach((b) =>
     b.addEventListener("click", () => {
       const p = byId(b.dataset.id);
-      if (b.dataset.action === "message" || b.dataset.action === "do") toast(t("toast_draft", { name: p.name.split(" ")[0] }));
-      else go("profile", { personId: p.id });
+      if (!p) return;
+      if (b.dataset.action === "refresh") return go("refresh", { personId: p.id });
+      go("profile", { personId: p.id });
     })
   );
   $$("#home-upcoming .refresh-open").forEach((b) => b.addEventListener("click", () => go("refresh", { personId: b.dataset.id })));
@@ -391,10 +394,11 @@ function renderPeople() {
 /* ============================================================
    RELATIONSHIP CARE
    ============================================================ */
-const REASON_LABEL = { silence: "reason_silence", promise: "reason_promise", follow_up: "reason_follow_up", birthday: "reason_birthday", inactive: "reason_inactive" };
+const REASON_LABEL = { silence: "reason_silence", promise: "reason_promise", follow_up: "reason_follow_up", birthday: "reason_birthday", date: "reason_date", inactive: "reason_inactive" };
 
 function careTitle(r, p) {
   if (r.reason === "birthday") return t("care_birthday_in", { n: r.days }) + (p.birthday ? " (" + p.birthday + ")" : "");
+  if (r.reason === "date") return r.date ? t("care_date_in", { label: r.date.label, n: r.days }) + " (" + r.date.when + ")" : t("reason_date");
   if (r.reason === "silence") return t("care_silence_title", { n: r.days });
   return r.followUp ? r.followUp.what : "";
 }
@@ -403,6 +407,7 @@ function careContext(r, p) {
   if (r.reason === "birthday") {
     return (p.memories && p.memories.length) ? t("care_ctx_birthday") + " " + p.memories[p.memories.length - 1].text : t("care_ctx_birthday");
   }
+  if (r.reason === "date") return t("care_ctx_date");
   if (r.reason === "silence") return t("care_ctx_silence") + " " + t("care_last", { v: (p.last && p.last.when) || "—" }) + ".";
   if (r.reason === "promise") return t("care_ctx_promise");
   return t("care_ctx_followup");
@@ -448,8 +453,8 @@ function renderCare() {
         const freq = frequencyOf(p.frequency);
         return (
           '<div class="card rem-card">' +
-          '<div class="rem-icon ' + (r.reason === "birthday" ? "cake" : r.reason === "promise" ? "action" : r.reason === "follow_up" ? "meeting" : "alert") + '">' +
-          icon(r.reason === "birthday" ? "cake" : r.reason === "promise" ? "check" : r.reason === "follow_up" ? "meeting" : "alert", 17) + "</div>" +
+          '<div class="rem-icon ' + (r.reason === "birthday" || r.reason === "date" ? "cake" : r.reason === "promise" ? "action" : r.reason === "follow_up" ? "meeting" : "alert") + '">' +
+          icon(r.reason === "birthday" ? "cake" : r.reason === "date" ? "cal" : r.reason === "promise" ? "check" : r.reason === "follow_up" ? "meeting" : "alert", 17) + "</div>" +
           '<div class="rem-body">' +
           '<div class="rem-person">' + avatarHTML(p, 24) + "<span>" + esc(p.name) + "</span>" +
           '<span class="reason-chip ' + r.reason + '">' + t(REASON_LABEL[r.reason]) + "</span></div>" +
@@ -457,8 +462,8 @@ function renderCare() {
           "<p>" + esc(careContext(r, p)) + (freq ? " <i style='color:var(--ink-3)'>" + t("care_rhythm") + frequencyLabel(freq.id) + ".</i>" : "") + "</p>" +
           '<div class="rem-actions">' +
           r.actions.map((a) => {
-            const label = { reconnect: t("btn_reconnect"), snooze: t("btn_snooze_7d"), refresh: t("btn_refresh"), dismiss: t("btn_dismiss"), message: t("btn_message_send"), do: t("btn_do_it") }[a];
-            const cls = a === "snooze" || a === "dismiss" ? "btn small ghost" : "btn small primary";
+            const label = { refresh: t("btn_refresh"), profile: t("btn_view") }[a] || t("btn_view");
+            const cls = "btn small primary";
             return '<button class="' + cls + '" data-action="' + a + '" data-id="' + r.personId + '">' + label + "</button>";
           }).join("") +
           "</div></div></div>"
@@ -473,10 +478,7 @@ function renderCare() {
       const a = b.dataset.action, p = byId(b.dataset.id);
       if (!p) return;
       if (a === "refresh") return go("refresh", { personId: p.id });
-      if (a === "reconnect") return go("profile", { personId: p.id });
-      if (a === "do" || a === "message") return toast(t("toast_draft", { name: p.name.split(" ")[0] }));
-      if (a === "snooze") return snoozeFollowUp(p, 7);
-      dismissCare(p);
+      go("profile", { personId: p.id });
     })
   );
 }
@@ -770,25 +772,9 @@ function renderMap() {
   $$("#lens-tabs .q-chip").forEach((c) => c.addEventListener("click", () => { mapState.lens = c.dataset.lens; mapState.focusId = null; mapState.topic = ""; mapState.city = null; renderMap(); }));
 
   // focus bar
-  const focusP = mapState.focusId ? byId(mapState.focusId) : null;
   $("#focus-bar").innerHTML =
     '<span class="fb-label">' + t("map_focus_label") + "</span>" +
-    '<div class="fb-input">' + icon("search", 13) + '<input id="focus-topic" placeholder="' + t("map_focus_ph") + '" value="' + esc(mapState.topic) + '" /></div>' +
-    '<button class="btn small' + (focusP ? " primary" : "") + '" id="focus-toggle">' + icon("target", 13) + (focusP ? " " + esc(focusP.name.split(" ")[0]) + " " + t("map_clear") : " " + t("map_pick")) + "</button>" +
-    (focusP
-      ? '<div class="pick-row" style="display:inline-flex">' +
-        [1, 2].map((d) => '<button class="pick' + (mapState.degree === d ? " on" : "") + '" data-degree="' + d + '">' + d + "°</button>").join("") +
-        "</div>"
-      : "");
-  $("#focus-toggle").addEventListener("click", () => {
-    if (focusP) { mapState.focusId = null; mapState.topic = ""; renderMap(); return; }
-    const ids = activePeople().map((p) => p.id);
-    const id = ids[Math.floor(Math.random() * ids.length)];
-    mapState.focusId = id; renderMap();
-    const p = byId(id);
-    toast(t("toast_focus", { name: p.name }));
-  });
-  $$("#focus-bar .pick[data-degree]").forEach((b) => b.addEventListener("click", () => { mapState.degree = +b.dataset.degree; renderMap(); }));
+    '<div class="fb-input">' + icon("search", 13) + '<input id="focus-topic" placeholder="' + t("map_focus_ph") + '" value="' + esc(mapState.topic) + '" /></div>';
   $("#focus-topic").addEventListener("input", debounce(() => { mapState.topic = $("#focus-topic").value.trim(); renderMap(); }, 350));
 
   // location lens needs no filter bar
@@ -880,22 +866,7 @@ function buildMapSvg() {
     if (pa && pb && pa.active !== false && pb.active !== false) mapEdges.push({ a: l.a, b: l.b, why: l.why });
   });
 
-  // focus set
-  let focusSet = null;
-  if (mapState.focusId) {
-    focusSet = new Set([mapState.focusId]);
-    const linksOf = (id) => mapEdges.filter((e) => e.a === id || e.b === id);
-    const n1 = linksOf(mapState.focusId);
-    n1.forEach((e) => focusSet.add(e.a === mapState.focusId ? e.b : e.a));
-    if (mapState.degree >= 2) {
-      [...focusSet].forEach((id) => linksOf(id).forEach((e) => {
-        focusSet.add(e.a); focusSet.add(e.b);
-      }));
-    }
-  }
-
   const dimNode = (id) => {
-    if (mapState.focusId) return !focusSet.has(id);
     if (mapState.topic) {
       if (id === "you") return true;
       const p = byId(id);
@@ -906,8 +877,7 @@ function buildMapSvg() {
 
   // legend
   $("#map-legend").innerHTML =
-    '<span><i style="background:#201D1A"></i>' + t("map_legend_you") + "</span><span><i style='background:var(--accent)'></i>" + t("map_legend_people") + "</span><span><i style='background:#8D867C'></i>" + t("map_legend_rel") + "</span>" +
-    (mapState.focusId ? '<span><i style="background:var(--ok)"></i>' + t("map_legend_focus") + esc(byId(mapState.focusId).name) + "</span>" : "");
+    '<span><i style="background:#201D1A"></i>' + t("map_legend_you") + "</span><span><i style='background:var(--accent)'></i>" + t("map_legend_people") + "</span><span><i style='background:#8D867C'></i>" + t("map_legend_rel") + "</span>";
 
   let svg = '<svg viewBox="0 0 ' + W + " " + H + '" xmlns="http://www.w3.org/2000/svg">';
 
@@ -922,10 +892,9 @@ function buildMapSvg() {
   mapNodes.forEach((n) => {
     const r = n.type === "you" ? 26 : 19;
     const dim = dimNode(n.id);
-    const focusRing = mapState.focusId && n.id === mapState.focusId;
     svg +=
       '<g class="map-node" data-id="' + n.id + '" transform="translate(' + n.x + "," + n.y + ')">' +
-      '<circle class="' + (dim ? "dim" : "") + '" r="' + r + '" fill="' + n.color + '" stroke="' + (focusRing ? "var(--ok)" : "var(--surface)") + '" stroke-width="' + (focusRing ? 4 : 2.5) + '"/>' +
+      '<circle class="' + (dim ? "dim" : "") + '" r="' + r + '" fill="' + n.color + '" stroke="var(--surface)" stroke-width="2.5"/>' +
       (n.type !== "you" ? '<text class="' + (dim ? "dim" : "") + '" y="1" text-anchor="middle" font-size="' + Math.round(r * 0.62) + '" font-weight="700" fill="#fff">' + esc(initialsOf(n.label)) + "</text>" : "") +
       '<text class="' + (dim ? "dim" : "") + '" y="' + (r + 16) + '" text-anchor="middle" font-size="' + (n.type === "you" ? 12 : 10.5) + '" font-weight="' + (n.type === "you" ? "700" : "600") + '" fill="var(--ink)">' + esc(n.label) + "</text>" +
       "</g>";
@@ -992,11 +961,9 @@ function showMapPop(id) {
       '<div class="row"><span>' + t("map_links") + "</span>" + t("map_connections_count", { n: linked.length }) + "</div>" +
       '<div class="actions">' +
       '<button class="btn small primary pop-profile" data-id="' + id + '">' + t("btn_profile") + "</button>" +
-      '<button class="btn small pop-focus" data-id="' + id + '">' + t("btn_focus") + "</button>" +
       '<button class="btn small pop-refresh" data-id="' + id + '">' + t("btn_refresh") + "</button>" +
       "</div>";
     pop.querySelector(".pop-profile").addEventListener("click", () => go("profile", { personId: id }));
-    pop.querySelector(".pop-focus").addEventListener("click", () => { mapState.focusId = id; mapState.topic = ""; renderMap(); });
     pop.querySelector(".pop-refresh").addEventListener("click", () => go("refresh", { personId: id }));
   } else {
     const members = mapEdges.filter((e) => e.a === id || e.b === id).map((e) => (e.a === id ? e.b : e.a)).map((nid) => byId(nid)).filter(Boolean);
@@ -1209,7 +1176,7 @@ function bindProfile() {
   if (!p) return;
   $("#act-addinfo").addEventListener("click", () => openCapture(null, { personId: p.id, addInfo: true }));
   $("#act-edit").addEventListener("click", () => openCapture("manual", { personId: p.id, edit: true }));
-  $("#act-connections").addEventListener("click", () => go("map", { map: { lens: "people", focusId: p.id, topic: "" } }));
+  $("#act-connections").addEventListener("click", () => go("map", { map: { lens: "people", focusId: null, topic: "" } }));
   $("#act-archive").addEventListener("click", () => {
     const next = p.active === false;
     Store.setActive(p.id, next);
@@ -1681,12 +1648,21 @@ function manualFieldHTML(field) {
     control = '<textarea class="field-textarea" id="' + id + '" data-manual-key="' + key + '" placeholder="' + esc(placeholder) + '"' + attrs + ">" + esc(value || "") + "</textarea>";
   } else if (field.control === "chips") {
     const chips = Array.isArray(value) ? value : [];
+    const inputText = cap.chipInput && cap.chipInput[key] ? cap.chipInput[key] : "";
+    const suggestions = field.k === "tags" ? collectTagSuggestions(Store.people(), chips, inputText, 8) : [];
     control = '<div class="chip-input" data-chip-wrap="' + key + '">' +
       '<div class="chip-list">' + chips.map((chip, index) =>
         '<span class="input-chip"><span>' + esc(chip) + '</span><button type="button" data-chip-remove="' + key + '" data-chip-index="' + index + '" aria-label="' + esc(t("chip_remove", { value: chip })) + '"><span class="chip-remove-icon">' + icon("plus", 10) + "</span></button></span>"
       ).join("") + "</div>" +
-      '<input class="chip-entry" id="' + id + '" data-chip-entry="' + key + '" placeholder="' + esc(t("chip_add_ph")) + '" autocomplete="off" />' +
-      "</div>";
+      '<input class="chip-entry" id="' + id + '" data-chip-entry="' + key + '" placeholder="' + esc(t(field.k === "tags" ? "tag_add_ph" : "chip_add_ph")) + '" autocomplete="off" value="' + esc(inputText) + '" />' +
+      "</div>" +
+      (field.k === "tags"
+        ? '<div class="tag-suggestions" data-tag-suggestions="' + key + '" aria-label="' + esc(t("tag_suggestions")) + '">' +
+          (suggestions.length
+            ? suggestions.map((tag) => '<button type="button" class="tag-suggestion" data-tag-pick="' + key + '" data-tag-value="' + esc(tag) + '">#' + esc(tag) + "</button>").join("")
+            : '<span>' + esc(inputText ? t("tag_no_matches") : t("tag_suggestions_empty")) + "</span>") +
+          "</div>"
+        : "");
   } else if (field.control === "location") {
     control = '<input class="field-input" id="' + id + '" data-manual-key="' + key + '" list="manual-location-list" placeholder="' + esc(placeholder) + '" value="' + esc(value || "") + '"' + attrs + " />" +
       '<div class="field-help-row"><span>' + t("location_hint") + '</span><button type="button" class="field-inline-action" data-location-other="' + key + '">' + t("location_other") + "</button></div>";
@@ -1736,6 +1712,7 @@ function manualAccordionHTML(visibleKeys) {
 function initManualDraft(editing) {
   if (cap.formDraft) return;
   cap.formDraft = createManualDraft(editing, cap.prefill || {}, cap.review);
+  cap.chipInput = {};
   cap.initialFormDraft = manualSnapshot();
   cap.dirty = false;
 }
@@ -1772,6 +1749,7 @@ function addManualChips(key, raw, rerender) {
     if (!current.some((item) => item.toLocaleLowerCase() === value.toLocaleLowerCase())) current.push(value);
   });
   cap.formDraft[key] = current;
+  if (cap.chipInput) cap.chipInput[key] = "";
   refreshManualDirty();
   if (rerender) {
     renderManualCapture();
@@ -1906,6 +1884,19 @@ function bindManualCapture(editing) {
   });
 
   $$(".chip-entry", body).forEach((input) => {
+    input.addEventListener("input", () => {
+      cap.chipInput = cap.chipInput || {};
+      cap.chipInput[input.dataset.chipEntry] = input.value;
+      refreshManualDirty();
+      renderManualCapture();
+      setTimeout(() => {
+        const next = $('[data-chip-entry="' + input.dataset.chipEntry + '"]', $("#capture-body"));
+        if (next && next.focus) {
+          next.focus();
+          if (next.setSelectionRange) next.setSelectionRange(next.value.length, next.value.length);
+        }
+      }, 0);
+    });
     input.addEventListener("keydown", (event) => {
       if (!event.isComposing && (event.key === "Enter" || event.key === "," || event.key === "，")) {
         event.preventDefault();
@@ -1914,9 +1905,14 @@ function bindManualCapture(editing) {
     });
     input.addEventListener("blur", () => {
       addManualChips(input.dataset.chipEntry, input.value, false);
+      if (cap.chipInput) cap.chipInput[input.dataset.chipEntry] = "";
       input.value = "";
     });
   });
+  $$('[data-tag-pick]', body).forEach((button) => button.addEventListener("mousedown", (event) => event.preventDefault()));
+  $$('[data-tag-pick]', body).forEach((button) => button.addEventListener("click", () => {
+    addManualChips(button.dataset.tagPick, button.dataset.tagValue, true);
+  }));
   $$('[data-chip-remove]', body).forEach((button) => button.addEventListener("click", () => {
     const key = button.dataset.chipRemove;
     const values = Array.isArray(cap.formDraft[key]) ? [...cap.formDraft[key]] : [];

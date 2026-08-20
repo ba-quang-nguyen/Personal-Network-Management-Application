@@ -467,45 +467,116 @@ function silenceThreshold(freqId) {
   return FREQUENCY_DAYS[freqId] || 60;
 }
 
-/** Care queue tính động từ data: birthday / silence / promise / follow_up. */
-function computeCareItems(people) {
+function collectTagSuggestions(people, selected, query, limit) {
+  const chosen = new Set((selected || []).map((tag) => String(tag).trim().toLocaleLowerCase()).filter(Boolean));
+  const counts = new Map();
+  const add = (tag) => {
+    const value = String(tag || "").trim();
+    if (!value) return;
+    const key = value.toLocaleLowerCase();
+    if (chosen.has(key)) return;
+    const item = counts.get(key) || { value, count: 0 };
+    item.count += 1;
+    counts.set(key, item);
+  };
+  (people || []).forEach((p) => {
+    (p.tags || []).forEach(add);
+    (p.meetings || []).forEach((m) => (m.tags || []).forEach(add));
+    if (p.last && Array.isArray(p.last.tags)) p.last.tags.forEach(add);
+  });
+  let items = [...counts.values()];
+  const q = String(query || "").trim().toLocaleLowerCase();
+  if (q) {
+    items = items
+      .map((item) => {
+        const key = item.value.toLocaleLowerCase();
+        const rank = key.startsWith(q) ? 0 : key.includes(q) ? 1 : 2;
+        return Object.assign({ rank }, item);
+      })
+      .filter((item) => item.rank < 2)
+      .sort((a, b) => a.rank - b.rank || b.count - a.count || a.value.localeCompare(b.value));
+  } else {
+    items.sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
+  }
+  return items.slice(0, limit || 8).map((item) => item.value);
+}
+
+function eventDaysUntil(value, today) {
+  const parsed = parseMonthDay(value);
+  if (!parsed) return Number.POSITIVE_INFINITY;
+  const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  let next = new Date(today.getFullYear(), parsed.month - 1, parsed.day);
+  if (next < now) next = new Date(today.getFullYear() + 1, parsed.month - 1, parsed.day);
+  return Math.round((next.getTime() - now.getTime()) / 86400000);
+}
+
+function hasRealFollowUp(followUp) {
+  if (!followUp) return false;
+  const when = String(followUp.when || "").trim();
+  const what = String(followUp.what || "").trim();
+  return Boolean(what) || Boolean(when && when !== "—");
+}
+
+/** Care queue tính động từ data: birthday / date / silence / promise / follow_up. */
+function computeCareItems(people, todayInput) {
   const items = [];
-  const today = new Date();
+  const today = todayInput || new Date();
+  const nowTs = today.getTime();
   (people || []).forEach((p) => {
     if (p.active === false) return;
-    if (p.snoozedUntil && p.snoozedUntil > Date.now()) return; // snooze/dismiss
+    if (p.snoozedUntil && p.snoozedUntil > nowTs) return; // snooze/dismiss
     if (p.birthday) {
       const days = daysUntilBirthday(p.birthday, today);
-      if (days <= 14) {
+      if (days <= 30) {
         items.push({
           personId: p.id, reason: "birthday", group: "Coming up",
-          urgency: days <= 3 ? "high" : "medium", days,
-          actions: days <= 7 ? ["message", "dismiss"] : ["dismiss"],
+          urgency: days <= 3 ? "high" : "medium", days, sortDays: days,
+          actions: ["profile"],
         });
       }
     }
+    (p.dates || []).forEach((d) => {
+      if (!d || /birthday/i.test(String(d.label || ""))) return;
+      const days = eventDaysUntil(d.when, today);
+      if (days <= 30) {
+        items.push({
+          personId: p.id, reason: "date", group: "Coming up",
+          urgency: days <= 3 ? "high" : "medium", days, sortDays: days, date: d,
+          actions: ["profile"],
+        });
+      }
+    });
     if (typeof p.lastContactDays === "number") {
       const th = silenceThreshold(p.frequency);
       if (p.lastContactDays > th) {
         items.push({
           personId: p.id, reason: "silence", group: "Needs attention",
-          urgency: p.lastContactDays > th * 2 ? "high" : "medium", days: p.lastContactDays,
-          actions: ["reconnect", "snooze"],
+          urgency: p.lastContactDays > th * 2 ? "high" : "medium", days: p.lastContactDays, sortDays: -p.lastContactDays,
+          actions: ["profile"],
         });
       }
     }
-    if (p.followUp) {
+    if (hasRealFollowUp(p.followUp)) {
       const open = p.followUp.kind === "action" || p.followUp.when === "Open" || String(p.followUp.when).startsWith("Overdue");
+      const dueDays = open ? 0 : eventDaysUntil(p.followUp.when, today);
+      if (!open && Number.isFinite(dueDays) && dueDays > 30) return;
       items.push({
         personId: p.id, reason: open ? "promise" : "follow_up", group: open ? "Needs attention" : "Coming up",
-        urgency: open ? "high" : "low", followUp: p.followUp,
-        actions: open ? ["do", "snooze"] : ["refresh", "dismiss"],
+        urgency: open ? "high" : "low", days: Number.isFinite(dueDays) ? dueDays : undefined,
+        sortDays: Number.isFinite(dueDays) ? dueDays : 999, followUp: p.followUp,
+        actions: open ? ["profile"] : ["refresh"],
       });
     }
   });
   const urgencyOrder = { high: 0, medium: 1, low: 2 };
   const groupOrder = { "Needs attention": 0, "Coming up": 1 };
-  items.sort((a, b) => groupOrder[a.group] - groupOrder[b.group] || urgencyOrder[a.urgency] - urgencyOrder[b.urgency]);
+  items.sort((a, b) => {
+    const ap = byId(a.personId), bp = byId(b.personId);
+    return groupOrder[a.group] - groupOrder[b.group] ||
+      urgencyOrder[a.urgency] - urgencyOrder[b.urgency] ||
+      (a.sortDays || 0) - (b.sortDays || 0) ||
+      String((ap && ap.name) || "").localeCompare(String((bp && bp.name) || ""));
+  });
   return items;
 }
 
@@ -527,7 +598,11 @@ function homeDates() {
       const days = daysUntilBirthday(p.birthday, today);
       if (days <= 30) out.push({ personId: p.id, kind: "birthday", label: "birthday", when: p.birthday + (days <= 7 ? " · in " + days + " days" : "") });
     }
-    (p.dates || []).forEach((d) => out.push({ personId: p.id, kind: "date", label: d.label, when: d.when }));
+    (p.dates || []).forEach((d) => {
+      if (!d || /birthday/i.test(String(d.label || ""))) return;
+      const days = eventDaysUntil(d.when, today);
+      if (days <= 30) out.push({ personId: p.id, kind: "date", label: d.label, when: d.when + (days <= 7 ? " · in " + days + " days" : "") });
+    });
   });
   return out.slice(0, 6);
 }

@@ -766,6 +766,18 @@ textarea.story { min-height: 110px; resize: vertical; }
 .chip-remove-icon { display: inline-flex; transform: rotate(45deg); }
 .chip-entry { flex: 1 1 140px; min-width: 110px; min-height: 30px; border: none; outline: none; background: none; color: var(--ink); font-size: 13px; }
 .chip-entry::placeholder { color: var(--ink-3); }
+.tag-suggestions {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; min-height: 24px;
+  color: var(--ink-3); font-size: 10.5px;
+}
+.tag-suggestion {
+  min-height: 28px; max-width: 100%; padding: 5px 8px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-2);
+  font-size: 11px; font-weight: 700;
+}
+.tag-suggestion:hover, .tag-suggestion:focus-visible {
+  border-color: var(--accent); color: var(--accent); background: var(--accent-soft);
+}
 .duplicate-hint {
   margin-top: 11px; padding: 9px 11px; display: flex; align-items: center; gap: 7px;
   border-radius: 10px; background: var(--warn-soft); color: var(--warn); font-size: 11.5px;
