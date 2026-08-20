@@ -1437,11 +1437,14 @@ function renderSettings() {
    CAPTURE — voice / card / text / manual
    ============================================================ */
 let cap = { mode: null, step: 0, timer: null, seconds: 0, open: false, personId: null, addInfo: false, edit: false };
+const VOICE_LANGS = ["ja-JP", "vi-VN", "en-US"];
+const VOICE_LANG_KEY = "nm-voice-lang";
 
 function openCapture(mode, opts = {}) {
   cap = {
     mode: mode || null, sourceMode: mode || null, step: 1, timer: null, seconds: 0, open: true,
     personId: opts.personId || null, addInfo: !!opts.addInfo, edit: !!opts.edit, text: "", photo: "",
+    voiceLang: getVoiceLang(),
     prefill: opts.prefill || {}, review: false, formDraft: null, initialFormDraft: "",
     advancedOpen: false, openSections: {}, dirty: false, nameFocused: false, aiAbort: null,
   };
@@ -1495,12 +1498,27 @@ function aiProxyReady() {
   return !!aiProxyBaseUrl();
 }
 
+function getVoiceLang() {
+  const saved = localStorage.getItem(VOICE_LANG_KEY);
+  return VOICE_LANGS.includes(saved) ? saved : "ja-JP";
+}
+
+function setVoiceLang(value) {
+  cap.voiceLang = VOICE_LANGS.includes(value) ? value : "ja-JP";
+  localStorage.setItem(VOICE_LANG_KEY, cap.voiceLang);
+}
+
+function captureInputLocale() {
+  return cap.voiceLang || "ja-JP";
+}
+
 function buildExtractPrefill(parsed, rawText) {
   const source = parsed || {};
   const workNotes = [
     source.title ? "Role/title: " + source.title : "",
     source.department ? "Department: " + source.department : "",
     source.businessTopics && source.businessTopics.length ? "Business topics: " + source.businessTopics.join(", ") : "",
+    source.website ? "Website: " + source.website : "",
   ].filter(Boolean).join("\n");
   const interestsNotes = [
     source.hobbies && source.hobbies.length ? "Hobbies: " + source.hobbies.join(", ") : "",
@@ -1529,6 +1547,7 @@ function buildExtractPrefill(parsed, rawText) {
     title: source.title || "",
     email: source.email || "",
     phone: source.phone || "",
+    website: source.website || "",
     languages: source.languages || [],
     hobbies: source.hobbies || [],
     interests: source.interests || [],
@@ -1568,7 +1587,7 @@ async function requestProxyExtraction(mode, text) {
       signal: controller.signal,
       body: JSON.stringify({
         mode,
-        locale: "en",
+        locale: captureInputLocale(),
         text,
         existingPeople: existingPeopleHints(),
       }),
@@ -1580,6 +1599,45 @@ async function requestProxyExtraction(mode, text) {
       throw err;
     }
     return payload.extraction;
+  } finally {
+    clearTimeout(timer);
+    cap.aiAbort = null;
+  }
+}
+
+async function requestProxyCardOcr(imageDataUrl, mimeType) {
+  const baseUrl = aiProxyBaseUrl();
+  if (!baseUrl) {
+    const err = new Error("proxy-disabled");
+    err.code = "proxy-disabled";
+    throw err;
+  }
+  abortCapAI();
+  const controller = new AbortController();
+  cap.aiAbort = controller;
+  const timeoutMs = Number(aiProxyConfig().cardTimeoutMs || aiProxyConfig().timeoutMs || 30000);
+  const timer = setTimeout(() => controller.abort("timeout"), timeoutMs);
+  try {
+    const response = await fetch(baseUrl + "/card-ocr", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        imageDataUrl,
+        mimeType,
+        existingPeople: existingPeopleHints(),
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload || payload.ok !== true) {
+      const err = new Error(payload && payload.error ? payload.error : "card-ocr-failed");
+      err.code = "card-ocr-failed";
+      throw err;
+    }
+    return {
+      ocrText: String(payload.ocrText || "").trim(),
+      extraction: payload.extraction || {},
+    };
   } finally {
     clearTimeout(timer);
     cap.aiAbort = null;
@@ -1775,7 +1833,7 @@ function captureSource() {
 function hiddenStructuredPrefillFields(prefill) {
   const allowed = [
     "department", "title", "email", "phone", "languages", "hobbies", "interests",
-    "businessTopics", "introducedBy", "promises", "tags",
+    "businessTopics", "introducedBy", "promises", "tags", "website",
   ];
   const out = {};
   allowed.forEach((key) => {
@@ -2036,14 +2094,19 @@ function renderCapture() {
     if (cap.step === 2) {
       setCapTitle(cap.addInfo ? t("mode_voice") + " — " + (cap.personId ? byId(cap.personId).name.split(" ")[0] : "") : t("voice_title"), t("voice_step_record"));
       cap.seconds = 0;
+      const langOptions = VOICE_LANGS.map((lang) =>
+        '<option value="' + lang + '"' + (cap.voiceLang === lang ? " selected" : "") + ">" + t("voice_lang_" + lang.replace("-", "_")) + "</option>"
+      ).join("");
       body.innerHTML =
         '<div class="rec-wrap"><div class="rec-ring"><div class="pulse"></div><div class="core">' + icon("mic", 34) + "</div></div>" +
         '<div class="rec-timer" id="rec-timer">0:00</div>' +
+        '<label class="voice-lang"><span>' + t("voice_language") + '</span><select id="voice-lang">' + langOptions + "</select></label>" +
         '<div class="rec-hint">' + (cap.addInfo ? t("voice_hint_add") : t("voice_hint_new")) + "</div></div>" +
         '<div class="modal-foot"><button class="btn ghost" id="rec-cancel">' + t("btn_cancel") + "</button>" +
         '<button class="btn ghost" id="rec-type">' + t("btn_type_instead") + "</button>" +
         '<button class="btn accent" id="rec-stop">' + icon("check", 14) + " " + t("rec_stop") + "</button></div>";
       $("#rec-cancel").addEventListener("click", closeCapture);
+      $("#voice-lang").addEventListener("change", (e) => setVoiceLang(e.target.value));
       $("#rec-type").addEventListener("click", () => { stopRec(); cap.mode = "text"; cap.sourceMode = "text"; cap.step = 2; renderCapture(); });
       $("#rec-stop").addEventListener("click", () => stopRec(true));
       cap.timer = setInterval(() => {
@@ -2082,6 +2145,7 @@ function renderCapture() {
     if (cap.step === 2) {
       setCapTitle(t("card_scan"), t("card_step_scan"));
       body.innerHTML =
+        '<div class="ocr-surface">' +
         '<label class="ocr-picker" for="card-photo">' +
           '<span class="ico">' + icon("card", 24) + "</span>" +
           "<b>" + t("card_pick_photo") + "</b>" +
@@ -2091,18 +2155,22 @@ function renderCapture() {
         (cap.photo ? '<img class="ocr-preview" src="' + cap.photo + '" alt="" />' : "") +
         '<div class="ocr-status" id="ocr-status">' + t("card_ocr_local") + "</div>" +
         '<div class="ocr-bar" aria-hidden="true"><span id="ocr-bar"></span></div>' +
-        '<div class="modal-foot"><button class="btn primary" id="card-choose">' + icon("camera", 13) + " " + t("card_choose") + "</button></div>";
+        '</div>' +
+        '<div class="modal-foot ocr-foot"><button class="btn primary" id="card-choose">' + icon("camera", 13) + " " + t("card_choose") + "</button></div>";
       $("#card-photo").addEventListener("change", handleCardPhoto);
       $("#card-choose").addEventListener("click", () => $("#card-photo").click());
     } else if (cap.step === 3) {
       setCapTitle(t("card_read"), t("card_step_review"));
       const extracted = cardFieldsToExtract(cap.prefill || parseCardOcrText(cap.ocrText || ""));
+      const extractedHTML = extracted.length
+        ? '<div class="extract-grid">' +
+          extracted.map((f) => '<div class="extract-cell"><div class="k">' + esc(f.label) + (f.conf ? ' <span class="conf">' + f.conf + "%</span>" : "") + "</div><div class='v'>" + esc(f.value) + "</div></div>").join("") +
+          "</div>"
+        : '<p class="ocr-empty-review">' + t("card_no_fields") + "</p>";
       body.innerHTML =
-        '<div class="extract-grid">' +
-        extracted.map((f) => '<div class="extract-cell"><div class="k">' + esc(f.label) + (f.conf ? ' <span class="conf">' + f.conf + "%</span>" : "") + "</div><div class='v'>" + esc(f.value) + "</div></div>").join("") +
-        "</div>" +
+        extractedHTML +
         '<textarea class="story" id="card-raw" style="margin-top:12px;min-height:120px" placeholder="' + t("card_raw_ph") + '">' + esc(cap.ocrText || "") + "</textarea>" +
-        '<p style="font-size:12px;color:var(--ink-3);margin-top:10px">' + t("card_review_hint") + "</p>" +
+        '<p style="font-size:12px;color:var(--ink-3);margin-top:10px">' + t("card_review_hint") + (cap.ocrProvider ? " " + t("card_source", { provider: cap.ocrProvider }) : "") + "</p>" +
         '<div class="modal-foot"><button class="btn ghost" id="card-rescan">' + t("rescan") + "</button>" +
         '<button class="btn primary" id="card-next">' + icon("check", 13) + " " + t("looks_right") + "</button></div>";
       $("#card-rescan").addEventListener("click", () => { cap.step = 2; renderCapture(); });
@@ -2176,7 +2244,7 @@ function startVoiceRecognition() {
   if (!SR) return false;
   try {
     speechRec = new SR();
-    speechRec.lang = "en-US";
+    speechRec.lang = captureInputLocale();
     speechRec.continuous = true;
     speechRec.interimResults = false;
     let final = "";
@@ -2354,8 +2422,8 @@ function parseCardOcrText(text) {
     .map((l) => l.replace(/^\s*(name|company|department|title|email|phone|address)\s*:\s*/i, "").trim())
     .filter((l) => l && !l.includes("@") && !/[+()]\d|www\.|https?:\/\//i.test(l));
   const company = labeled.company || nonContact.find((l) => /(co\.?|corp|corporation|company|ltd|llc|inc|株式会社|有限会社|会社|group|solutions|technology|technologies|studio|agency)/i.test(l)) || "";
-  const title = labeled.title || nonContact.find((l) => /(manager|director|founder|ceo|cto|cfo|sales|marketing|engineer|designer|consultant|lead|head|代表|取締役|部長|課長|営業|開発|マネージャー|社長|giám đốc|trưởng|nhân viên|kỹ sư)/i.test(l)) || "";
-  const department = labeled.department || nonContact.find((l) => /(division|department|team|dept\.?|事業部|部|課|phòng|ban)/i.test(l) && l !== title) || "";
+  const department = labeled.department || nonContact.find((l) => /(division|department|team|dept\.?|事業部|本部|部|課|phòng|ban)/i.test(l)) || "";
+  const title = labeled.title || nonContact.find((l) => l !== department && /(manager|director|founder|ceo|cto|cfo|sales|marketing|engineer|designer|consultant|lead|head|代表取締役|代表|取締役|部長|課長|係長|主任|マネージャー|社長|giám đốc|trưởng|nhân viên|kỹ sư)/i.test(l)) || "";
   const cityLine = labeled.address || lines.find((l) => /(tokyo|osaka|kyoto|yokohama|ho chi minh|hanoi|ha noi|danang|da nang|singapore|japan|vietnam|〒|区|市|県|quận|phường)/i.test(l)) || "";
   const name = labeled.name || pickCardName(nonContact, company, title, department);
   const cardEmail = labeled.email || email;
@@ -2379,40 +2447,96 @@ function pickCardName(lines, company, title, department) {
   return roman || jp || candidates[0] || "";
 }
 
+function dataUrlMime(dataUrl) {
+  const m = String(dataUrl || "").match(/^data:([^;]+);/);
+  return m ? m[1] : "image/jpeg";
+}
+
+function readFileAsDataURLPromise(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(r.error || new Error("file-read-failed"));
+    r.readAsDataURL(file);
+  });
+}
+
+function compressImageFile(file) {
+  if (typeof Image === "undefined" || typeof document === "undefined") return readFileAsDataURLPromise(file);
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxSide = 1800;
+      const ratio = Math.min(1, maxSide / Math.max(img.width || maxSide, img.height || maxSide));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round((img.width || maxSide) * ratio));
+      canvas.height = Math.max(1, Math.round((img.height || maxSide) * ratio));
+      const ctx = canvas.getContext && canvas.getContext("2d");
+      if (!ctx || !canvas.toDataURL) {
+        resolve(img.src);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.86));
+    };
+    img.onerror = () => readFileAsDataURLPromise(file).then(resolve, () => resolve(""));
+    readFileAsDataURLPromise(file).then((url) => { img.src = url; }, () => resolve(""));
+  });
+}
+
+async function runLocalCardOcr(file, setProgress) {
+  if (!window.Tesseract || !window.Tesseract.recognize) {
+    const err = new Error("tesseract-unavailable");
+    err.code = "tesseract-unavailable";
+    throw err;
+  }
+  setProgress(t("card_ocr_fallback"), 0.12);
+  const result = await window.Tesseract.recognize(file, "jpn+eng+vie", {
+    logger: (m) => {
+      if (m.status) setProgress(t("card_ocr_reading") + " " + Math.round((m.progress || 0) * 100) + "%", m.progress || 0.1);
+    }
+  });
+  return ((result && result.data && result.data.text) || "").trim();
+}
+
 async function handleCardPhoto(e) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
-  readFileAsDataURL(file, (url) => {
-    cap.photo = url;
-    const prev = $(".ocr-preview", $("#capture-body"));
-    if (prev) prev.src = url;
-  });
   const status = $("#ocr-status");
   const bar = $("#ocr-bar");
   const setProgress = (msg, pct) => {
     if (status) status.textContent = msg;
     if (bar) bar.style.width = Math.max(3, Math.round((pct || 0) * 100)) + "%";
   };
-  if (!window.Tesseract || !window.Tesseract.recognize) {
-    toast(t("card_ocr_unavailable"));
-    cap.ocrText = "";
-    return;
-  }
   try {
-    setProgress(t("card_ocr_loading"), 0.05);
-    const result = await window.Tesseract.recognize(file, "eng+vie+jpn", {
-      logger: (m) => {
-        if (m.status) setProgress(t("card_ocr_reading") + " " + Math.round((m.progress || 0) * 100) + "%", m.progress || 0.1);
-      }
-    });
-    cap.ocrText = ((result && result.data && result.data.text) || "").trim();
-    cap.prefill = parseCardOcrText(cap.ocrText);
+    setProgress(t("card_image_preparing"), 0.05);
+    const imageDataUrl = await compressImageFile(file);
+    if (!imageDataUrl) throw new Error("image-read-failed");
+    cap.photo = imageDataUrl;
+    const prev = $(".ocr-preview", $("#capture-body"));
+    if (prev) prev.src = imageDataUrl;
+
+    try {
+      setProgress(t("card_ai_reading"), 0.18);
+      const ai = await requestProxyCardOcr(imageDataUrl, dataUrlMime(imageDataUrl));
+      cap.ocrText = (ai.ocrText || "").trim();
+      cap.prefill = buildExtractPrefill(ai.extraction || {}, cap.ocrText || "");
+      cap.ocrProvider = "AI";
+      if (!cap.ocrText && cap.prefill && cap.prefill.notes) cap.ocrText = cap.prefill.notes;
+    } catch (err) {
+      if (err && err.name === "AbortError") return;
+      setProgress(t("card_ocr_fallback"), 0.12);
+      const localText = await runLocalCardOcr(file, setProgress);
+      cap.ocrText = localText;
+      cap.prefill = parseCardOcrText(localText);
+      cap.ocrProvider = "local OCR";
+    }
     if (!cap.ocrText) { toast(t("card_ocr_empty")); return; }
     cap.step = 3;
     renderCapture();
   } catch (err) {
     console.warn("OCR failed", err);
-    toast(t("card_ocr_failed"));
+    toast(err && err.code === "tesseract-unavailable" ? t("card_ocr_unavailable") : t("card_ocr_failed"));
     setProgress(t("card_ocr_failed"), 0);
   }
 }
@@ -2443,14 +2567,16 @@ async function enterReviewFromText() {
 
 /** Vào màn confirm với trường từ namecard (chỉ trường CÓ dữ liệu). */
 async function enterReviewFromCard() {
-  const pre = parseCardOcrText(cap.ocrText || "") || {};
+  const pre = cap.prefill && manualHasValue(cap.prefill) ? cap.prefill : parseCardOcrText(cap.ocrText || "") || {};
   const matched = resolvePersonFromText(pre.name || "");
-  renderAIWaiting("card");
   let prefill = pre;
-  try {
-    prefill = await extractCapturePrefill("card", cap.ocrText || "", pre);
-  } catch (err) {
-    if (err && err.name === "AbortError") return;
+  if (cap.ocrProvider !== "AI") {
+    renderAIWaiting("card");
+    try {
+      prefill = await extractCapturePrefill("card", cap.ocrText || "", pre);
+    } catch (err) {
+      if (err && err.name === "AbortError") return;
+    }
   }
   if (!cap.open) return;
   cap.sourceMode = "card";

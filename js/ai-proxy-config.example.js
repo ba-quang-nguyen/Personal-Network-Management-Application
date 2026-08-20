@@ -7,4 +7,5 @@ window.AI_PROXY_CONFIG = Object.freeze({
 window.AI_PROXY_CONFIG = Object.freeze({
   baseUrl: "",
   timeoutMs: 22000,
+  cardTimeoutMs: 30000,
 });

@@ -11,7 +11,9 @@ const PORT = Number(process.env.PORT || 8787);
 const HOST = process.env.HOST || "127.0.0.1";
 const MODEL = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
 const API_KEY = String(process.env.DEEPSEEK_API_KEY || "").trim();
-const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES || 32768);
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+const GEMINI_API_KEY = String(process.env.GEMINI_API_KEY || "").trim();
+const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES || 10 * 1024 * 1024);
 const EXTRA_ALLOWED = String(process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((item) => item.trim())
@@ -35,6 +37,7 @@ const EMPTY_EXTRACTION = {
   birthday: "",
   email: "",
   phone: "",
+  website: "",
   languages: [],
   hobbies: [],
   interests: [],
@@ -165,6 +168,7 @@ function normalizeExtraction(payload, requestText) {
   out.birthday = cleanString(data.birthday, 60);
   out.email = cleanString(data.email, 160);
   out.phone = cleanString(data.phone, 60);
+  out.website = cleanString(data.website, 160);
   out.languages = cleanList(data.languages);
   out.hobbies = cleanList(data.hobbies);
   out.interests = cleanList(data.interests);
@@ -179,6 +183,116 @@ function normalizeExtraction(payload, requestText) {
   out.unmappedFacts = cleanList(data.unmappedFacts, 8, 160);
   if (out.followUpWhat && !out.promises.length) out.promises = [out.followUpWhat];
   return out;
+}
+
+function normalizeMimeType(value) {
+  const clean = cleanString(value, 80).toLowerCase();
+  if (["image/png", "image/jpeg", "image/webp", "image/heic", "image/heif"].includes(clean)) return clean;
+  return "image/jpeg";
+}
+
+function parseImageDataUrl(value) {
+  const dataUrl = cleanString(value, MAX_BODY_BYTES);
+  const match = dataUrl.match(/^data:(image\/(?:png|jpeg|jpg|webp|heic|heif));base64,([A-Za-z0-9+/=\s]+)$/i);
+  if (!match) {
+    const err = new Error("imageDataUrl must be a base64 image data URL");
+    err.status = 400;
+    throw err;
+  }
+  return {
+    mimeType: normalizeMimeType(match[1].toLowerCase() === "image/jpg" ? "image/jpeg" : match[1]),
+    data: match[2].replace(/\s/g, ""),
+  };
+}
+
+function buildCardOcrPrompt(existingPeople) {
+  const people = Array.isArray(existingPeople) ? existingPeople.slice(0, 20) : [];
+  const contactHints = people.map((person) => ({
+    name: cleanString(person && person.name, 80),
+    company: cleanString(person && person.company, 80),
+    currentCity: cleanString(person && person.currentCity, 80),
+  })).filter((person) => person.name);
+
+  return JSON.stringify({
+    task: "read_japanese_business_card_and_extract_contact_fields",
+    instructions: [
+      "Read the card image directly. Japanese namecards are the primary case.",
+      "Return one JSON object only. Never add markdown.",
+      "Set ocrText to the raw readable text, preserving line breaks as much as possible.",
+      "Only fill fields supported by the card image. If unknown, use empty string or empty array.",
+      "For Japanese names, prefer the person's printed primary name over company names, departments, or slogans.",
+      "Use currentCity/address for postal address or location text. Put website into website.",
+      "If this probably matches an existing person, fill duplicateHintName and duplicateHintReason conservatively.",
+    ],
+    existingPeople: contactHints,
+    schema: {
+      ocrText: "",
+      extraction: EMPTY_EXTRACTION,
+    },
+  });
+}
+
+async function extractCardWithGemini(input) {
+  if (!GEMINI_API_KEY) {
+    const err = new Error("GEMINI_API_KEY is missing");
+    err.status = 503;
+    throw err;
+  }
+  const image = parseImageDataUrl(input.imageDataUrl);
+  const upstream = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/" +
+      encodeURIComponent(GEMINI_MODEL) + ":generateContent?key=" + encodeURIComponent(GEMINI_API_KEY),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{
+          role: "user",
+          parts: [
+            { text: buildCardOcrPrompt(input.existingPeople) },
+            { inlineData: { mimeType: image.mimeType, data: image.data } },
+          ],
+        }],
+        generationConfig: {
+          temperature: 0.1,
+          responseMimeType: "application/json",
+        },
+      }),
+    },
+  );
+  const raw = await upstream.text();
+  if (!upstream.ok) {
+    const err = new Error("Gemini upstream error");
+    err.status = upstream.status;
+    err.details = raw.slice(0, 500);
+    throw err;
+  }
+  let payload = {};
+  try {
+    payload = JSON.parse(raw);
+  } catch (err) {
+    err.status = 502;
+    err.message = "Gemini returned invalid JSON envelope";
+    throw err;
+  }
+  const parts = payload && payload.candidates && payload.candidates[0] && payload.candidates[0].content
+    ? payload.candidates[0].content.parts || []
+    : [];
+  const content = parts.map((part) => part.text || "").join("").trim();
+  let parsed = {};
+  try {
+    parsed = content ? JSON.parse(content) : {};
+  } catch (err) {
+    err.status = 502;
+    err.message = "Gemini returned invalid JSON content";
+    throw err;
+  }
+  const ocrText = cleanString(parsed.ocrText, 5000);
+  const sourceExtraction = parsed.extraction && typeof parsed.extraction === "object" ? parsed.extraction : parsed;
+  return {
+    ocrText,
+    extraction: normalizeExtraction(sourceExtraction, ocrText),
+  };
 }
 
 function buildMessages(input) {
@@ -275,10 +389,45 @@ const server = createServer(async (req, res) => {
   if (req.url === "/health") {
     writeJson(res, 200, {
       ok: true,
-      provider: "deepseek",
-      model: MODEL,
-      configured: !!API_KEY,
+      providers: {
+        deepseek: { model: MODEL, configured: !!API_KEY },
+        gemini: { model: GEMINI_MODEL, configured: !!GEMINI_API_KEY },
+      },
     }, headers);
+    return;
+  }
+
+  if (req.method === "POST" && (req.url === "/card-ocr" || req.url === "/api/ai/card-ocr")) {
+    if (origin && !isAllowedOrigin(origin)) {
+      writeJson(res, 403, { error: "Origin not allowed" });
+      return;
+    }
+    try {
+      const body = await readBody(req);
+      const result = await extractCardWithGemini({
+        imageDataUrl: body.imageDataUrl,
+        mimeType: body.mimeType,
+        existingPeople: Array.isArray(body.existingPeople) ? body.existingPeople : [],
+      });
+      writeJson(res, 200, {
+        ok: true,
+        provider: "gemini",
+        model: GEMINI_MODEL,
+        ocrText: result.ocrText,
+        extraction: result.extraction,
+      }, headers);
+    } catch (err) {
+      writeJson(
+        res,
+        err && err.status ? err.status : 500,
+        {
+          ok: false,
+          error: err && err.message ? err.message : "Unexpected proxy error",
+          details: err && err.details ? err.details : "",
+        },
+        headers,
+      );
+    }
     return;
   }
 

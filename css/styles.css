@@ -618,15 +618,25 @@ body.view-web .main { flex: 1; min-width: 0; padding: 34px 40px 80px; max-width:
 }
 .rec-timer { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 14px; }
 .rec-hint { color: var(--ink-3); font-size: 12.5px; margin-top: 4px; }
+.voice-lang {
+  margin: 12px auto 8px; max-width: 260px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  color: var(--ink-3); font-size: 12px; font-weight: 700;
+}
+.voice-lang select {
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  border-radius: 10px; padding: 7px 28px 7px 10px; font: inherit;
+}
 
 .card-preview {
   background: linear-gradient(160deg, #ffffff, #f3f0ea);
   border: 1px solid var(--line-strong); border-radius: 14px;
   padding: 20px 22px; position: relative; overflow: hidden; font-family: var(--serif);
 }
+.ocr-surface { width: 100%; }
 .ocr-picker {
   border: 1.5px dashed var(--line-strong); border-radius: 16px; background: var(--surface);
-  padding: 18px; text-align: center;
+  padding: 18px; text-align: center; display: block; width: 100%;
 }
 .ocr-picker .ico {
   width: 48px; height: 48px; border-radius: 15px; margin: 0 auto 10px;
@@ -663,6 +673,10 @@ body.view-web .main { flex: 1; min-width: 0; padding: 34px 40px 80px; max-width:
 .extract-cell .k { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--ink-3); display: flex; justify-content: space-between; }
 .extract-cell .k .conf { color: var(--ok); }
 .extract-cell .v { font-size: 13px; font-weight: 500; margin-top: 2px; }
+.ocr-empty-review {
+  border: 1px dashed var(--line); border-radius: 12px; padding: 11px 13px;
+  background: var(--surface); color: var(--ink-3); font-size: 12.5px; line-height: 1.45;
+}
 
 .fact-line { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px dashed var(--line); font-size: 13px; align-items: flex-start; }
 .fact-line:last-child { border-bottom: none; }
@@ -924,6 +938,10 @@ body.view-mobile .profile-actions .btn { flex: 1; }
 body.view-mobile .screen-head-row { flex-direction: column; align-items: flex-start; gap: 10px; }
 body.view-mobile .map-pop { position: static; width: 100%; margin-top: 12px; }
 body.view-mobile .mode-grid { grid-template-columns: repeat(2, 1fr); }
+body.view-mobile .modal-foot { justify-content: stretch; }
+body.view-mobile .modal-foot .btn { flex: 1; min-height: 44px; }
+body.view-mobile .ocr-preview { max-height: 220px; }
+body.view-mobile .voice-lang { flex-direction: column; gap: 6px; }
 
 /* ============================================================
    Network Management v0.3 — additions
