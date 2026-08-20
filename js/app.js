@@ -141,7 +141,7 @@ function go(screen, opts = {}, isBack = false) {
   if (!el) { screen = "home"; }
   $("#screen-" + screen).classList.add("active");
 
-  const navKey = screen === "profile" ? "people" : screen === "refresh" ? "home" : screen;
+  const navKey = screen === "profile" ? "people" : screen === "refresh" || screen === "ask" || screen === "care" ? "home" : screen;
   $$(".nav-item, .tabbar .t").forEach((b) => b.classList.toggle("active", b.dataset.screen === navKey));
   const main = $(".main");
   if (main) main.scrollTop = 0;
