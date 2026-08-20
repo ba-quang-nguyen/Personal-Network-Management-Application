@@ -1,5 +1,7 @@
 # deps
 node_modules/
+.npm-cache/
+app/node_modules/
 
 # env (local secrets)
 .env.local
