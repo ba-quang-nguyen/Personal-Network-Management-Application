@@ -33,7 +33,7 @@ html = html.replace(
 html = inlineScript(html, '<script src="js/data.js?v=7"></script>', "js/data.js");
 html = inlineScript(html, '<script src="js/store.js?v=7"></script>', "js/store.js");
 html = inlineScript(html, '<script src="js/firebase-config.js"></script>', "js/firebase-config.js");
-html = inlineScript(html, '<script src="js/google-maps-config.js?v=7"></script>', "js/google-maps-config.js");
+html = inlineScript(html, '<script src="js/google-maps-config.js?v=8"></script>', "js/google-maps-config.js");
 html = inlineScript(html, '<script src="js/ai-proxy-config.js?v=7"></script>', "js/ai-proxy-config.js");
 html = inlineScript(html, '<script src="js/firebase.js?v=7"></script>', "js/firebase.js");
 html = inlineScript(html, '<script src="js/i18n.js?v=7"></script>', "js/i18n.js");

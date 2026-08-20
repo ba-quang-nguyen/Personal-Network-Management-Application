@@ -603,7 +603,10 @@ function googleMapsApiKey() {
 }
 
 function googleMapsMapId() {
-  return String(googleMapsConfig().mapId || "").trim();
+  // Google Maps bắt buộc Map ID khi nạp thư viện marker (Advanced Marker);
+  // thiếu/trống sẽ hiện lỗi "This page can't load Google Maps correctly".
+  // DEMO_MAP_ID chạy ngay không cần tạo trong Cloud Console.
+  return String(googleMapsConfig().mapId || "DEMO_MAP_ID").trim();
 }
 
 function googleMapsEnabled() {
