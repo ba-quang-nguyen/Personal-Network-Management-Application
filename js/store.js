@@ -5,6 +5,7 @@
    ============================================================ */
 const STORE_VERSION = 3;
 const STORE_KEY = 'nm-data';
+const SETTINGS_KEY = 'nm-settings';
 
 const Store = (() => {
   const listeners = new Set();
@@ -108,6 +109,62 @@ const Store = (() => {
       emit();
     }
   });
+
+  /* ============================================================
+     SETTINGS — app preferences + profile ("You")
+     Envelope riêng (nm-settings), KHÔNG đụng nm-data / STORE_VERSION.
+     Legacy keys (nm-theme / nm-view / nm-voice-lang) được migrate 1 lần.
+     ============================================================ */
+  const DEFAULT_SETTINGS = {
+    profile: { name: '', color: '#201D1A', photo: '' },
+    theme: 'light',        // light | dark | system
+    view: 'mobile',        // mobile | web
+    voiceLang: 'ja-JP',    // capture recognition language
+    notif: { care: true, toast: true },
+    language: 'en',        // fixed English-only (D5)
+  };
+  let SETTINGS = null;
+
+  function loadSettings() {
+    if (SETTINGS) return;
+    const base = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+    const hadSaved = (() => {
+      try { return !!localStorage.getItem(SETTINGS_KEY); } catch (e) { return false; }
+    })();
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (s && typeof s === 'object') {
+          base.profile = Object.assign({}, base.profile, s.profile || {});
+          base.theme = s.theme || base.theme;
+          base.view = s.view || base.view;
+          base.voiceLang = s.voiceLang || base.voiceLang;
+          base.notif = Object.assign({}, base.notif, s.notif || {});
+          base.language = s.language || base.language;
+        }
+      }
+    } catch (e) {
+      /* JSON hỏng → dùng default */
+    }
+    // Migrate legacy keys — chỉ khi chưa từng có nm-settings (tránh ghi đè lựa chọn mới).
+    if (!hadSaved) {
+      try {
+        const legacyTheme = localStorage.getItem('nm-theme') || localStorage.getItem('omoide-theme');
+        if (legacyTheme) base.theme = legacyTheme === 'dark' ? 'dark' : 'light';
+        const legacyView = localStorage.getItem('nm-view') || localStorage.getItem('omoide-view');
+        if (legacyView) base.view = legacyView === 'web' ? 'web' : 'mobile';
+        const legacyVoice = localStorage.getItem('nm-voice-lang');
+        if (legacyVoice) base.voiceLang = legacyVoice;
+      } catch (e) { /* ignore */ }
+    }
+    SETTINGS = base;
+    persistSettings();
+  }
+
+  function persistSettings() {
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(SETTINGS)); } catch (e) { /* quota — bỏ qua */ }
+  }
 
   return {
     /** Gọi 1 lần lúc khởi động; trả true nếu có dữ liệu cũ. */
@@ -268,6 +325,24 @@ const Store = (() => {
     /** js/firebase.js đăng ký write-through hooks. */
     setSyncHooks(h) {
       Object.assign(syncHooks, h);
+    },
+
+    /** Settings (profile + app prefs) — đọc/ghi qua Store, persist nm-settings. */
+    getSettings() {
+      loadSettings();
+      return SETTINGS;
+    },
+    setSettings(patch) {
+      loadSettings();
+      if (!patch || typeof patch !== 'object') return SETTINGS;
+      if (patch.profile) SETTINGS.profile = Object.assign({}, SETTINGS.profile, patch.profile);
+      if (patch.notif) SETTINGS.notif = Object.assign({}, SETTINGS.notif, patch.notif);
+      ['theme', 'view', 'voiceLang', 'language'].forEach((k) => {
+        if (patch[k] !== undefined) SETTINGS[k] = patch[k];
+      });
+      persistSettings();
+      emit();
+      return SETTINGS;
     },
 
     exportJson() {

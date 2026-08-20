@@ -65,6 +65,8 @@ function avatarHTML(p, px) {
 }
 
 function toast(msg, iconName) {
+  // Settings: "Action feedback" off → bỏ qua mọi toast.
+  if (Store && Store.getSettings && !Store.getSettings().notif.toast) return;
   const t = $("#toast");
   t.innerHTML = (iconName ? icon(iconName, 16) : icon("check", 16)) + "<span>" + esc(msg) + "</span>";
   t.classList.add("show");
@@ -104,7 +106,7 @@ function setView(v) {
   view = isCompactViewport() ? "mobile" : requested;
   document.body.classList.toggle("view-mobile", view === "mobile");
   document.body.classList.toggle("view-web", view === "web");
-  try { if (!isCompactViewport() || requested === "mobile") localStorage.setItem("nm-view", requested); } catch (e) {}
+  try { Store.setSettings({ view }); } catch (e) {}
 }
 
 /* ============================================================
@@ -262,7 +264,9 @@ function renderHome() {
       "</div></div>"
     );
   }).join("");
-  $("#home-care").innerHTML = '<div class="section-label"><h3>' + t("sec_care") + '</h3><button class="more" data-screen="care">' + t("btn_view_all") + "</button></div>" + care;
+  $("#home-care").innerHTML = Store.getSettings().notif.care
+    ? '<div class="section-label"><h3>' + t("sec_care") + '</h3><button class="more" data-screen="care">' + t("btn_view_all") + "</button></div>" + care
+    : "";
 
   // upcoming (tính động)
   const up = homeUpcoming().map((u) => {
@@ -1363,11 +1367,66 @@ function mergePeople(keep, dup) {
 }
 
 function renderSettings() {
+  const S = Store.getSettings();
+  const prof = S.profile || {};
+  const pname = prof.name || "";
+  const pInitials = (pname.split(/\s+/).map((w) => w[0]).join("") || "Yo").slice(0, 2).toUpperCase();
+  const avatarObj = { name: pname || t("you"), photo: prof.photo || "", color: prof.color || "#201D1A", initials: pInitials };
+  const swatches = ["#E0452C", "#B45F06", "#3E7BB6", "#2E7D5B", "#8D867C", "#201D1A"];
+  const email = fbEnabled() && fbUser && fbUser.email ? esc(fbUser.email) : "";
   const dups = findDuplicates();
+  const seg = (opts, cur, attr) => opts.map((o) =>
+    '<button type="button" class="opt' + (o.v === cur ? " active" : "") + '" data-' + attr + '="' + o.v + '">' + o.label + "</button>"
+  ).join("");
+
   $("#screen-settings").innerHTML =
     '<div class="screen-head"><div class="kicker">' + t("settings_kicker") + "</div>" +
     '<h1 class="screen-title">' + t("settings_title") + "</h1>" +
     '<p class="screen-sub">' + t("settings_sub") + "</p></div>" +
+
+    // ---------- Profile ----------
+    '<div class="card"><div class="card-title">' + icon("userplus", 13) + " " + t("settings_profile") + "</div>" +
+    '<div class="setting-row" style="align-items:flex-start">' + avatarHTML(avatarObj, 52) +
+    '<div style="flex:1;min-width:0"><label class="set-label" for="profile-name">' + t("settings_profile_name") + "</label>" +
+    '<input class="set-input" id="profile-name" type="text" value="' + esc(pname) + '" placeholder="' + t("you") + '" maxlength="40" /></div></div>' +
+    '<div class="setting-row"><div><b>' + t("settings_profile_color") + "</b></div>" +
+    '<div class="color-swatches">' + swatches.map((c) =>
+      '<button type="button" class="swatch' + (prof.color === c ? " on" : "") + '" data-color="' + c + '" style="background:' + c + '" aria-label="' + c + '"></button>'
+    ).join("") + "</div></div>" +
+    '<div class="setting-row"><div><b>' + t("settings_profile_photo") + "</b><span>JPG/PNG · small</span></div>" +
+    '<button class="btn small ghost s-act" id="profile-photo-btn">' + t(prof.photo ? "btn_change_photo" : "btn_add_photo") + "</button>" +
+    (prof.photo ? '<button class="btn small ghost s-act" id="profile-photo-remove">' + t("btn_remove_photo") + "</button>" : "") +
+    '<input type="file" id="profile-photo-file" accept="image/*" hidden /></div>' +
+    '<div class="setting-row"><div><b>' + t("settings_profile_email") + "</b><span>" + (email || t("settings_profile_email_none")) + "</span></div></div></div>" +
+
+    // ---------- Appearance ----------
+    '<div class="card"><div class="card-title">' + icon("monitor", 13) + " " + t("settings_appearance") + "</div>" +
+    '<div class="setting-row wrap"><div><b>' + t("settings_theme") + "</b></div>" +
+    '<div class="seg" id="theme-seg">' + seg([
+      { v: "light", label: t("theme_light") }, { v: "dark", label: t("theme_dark") }, { v: "system", label: t("theme_system") }
+    ], S.theme, "theme") + "</div></div>" +
+    '<div class="setting-row wrap"><div><b>' + t("settings_view") + "</b><span>" + t("view_mobile") + " / " + t("view_web") + "</span></div>" +
+    '<div class="seg" id="view-seg">' + seg([
+      { v: "mobile", label: t("view_mobile") }, { v: "web", label: t("view_web") }
+    ], view, "view") + "</div></div>" +
+    '<div class="setting-row wrap"><div><b>' + t("settings_voice_lang") + "</b><span>" + t("settings_voice_lang_desc") + "</span></div>" +
+    '<select class="set-select" id="voice-lang-sel">' + VOICE_LANGS.map((l) =>
+      '<option value="' + l + '"' + (S.voiceLang === l ? " selected" : "") + ">" + t("voice_lang_" + l.replace("-", "_")) + "</option>"
+    ).join("") + "</select></div></div>" +
+
+    // ---------- Notifications ----------
+    '<div class="card"><div class="card-title">' + icon("bell", 13) + " " + t("settings_notifications") + "</div>" +
+    '<div class="setting-row"><div><b>' + t("notif_care") + "</b><span>" + t("notif_care_desc") + "</span></div>" +
+    '<button type="button" class="net-switch' + (S.notif.care ? " on" : "") + '" id="notif-care" aria-pressed="' + S.notif.care + '"><i></i></button></div>' +
+    '<div class="setting-row"><div><b>' + t("notif_toast") + "</b><span>" + t("notif_toast_desc") + "</span></div>" +
+    '<button type="button" class="net-switch' + (S.notif.toast ? " on" : "") + '" id="notif-toast" aria-pressed="' + S.notif.toast + '"><i></i></button></div></div>' +
+
+    // ---------- Language ----------
+    '<div class="card"><div class="card-title">' + icon("globe", 13) + " " + t("settings_language") + "</div>" +
+    '<div class="setting-row"><div><b>' + t("settings_language") + "</b><span>" + t("lang_en_only") + "</span></div>" +
+    '<span class="chip">EN</span></div></div>' +
+
+    // ---------- Data & privacy ----------
     '<div class="card"><div class="card-title">' + icon("merge", 13) + " " + t("settings_duplicates") + "</div>" +
     (dups.length
       ? dups.map((g) =>
@@ -1392,8 +1451,42 @@ function renderSettings() {
     '<div class="card"><div class="card-title">' + icon("lock", 13) + " " + t("settings_privacy") + "</div>" +
     '<div class="setting-row"><div><b>' + t("settings_private") + "</b><span>" + t("settings_private_desc") + "</span></div><span class='chip ok'>On</span></div>" +
     '<div class="setting-row"><div><b>' + t("settings_delete") + "</b><span>" + t("settings_delete_desc") + "</span></div>" +
-    '<button class="btn small ghost s-act" id="delete-btn">' + icon("trash", 12) + " " + t("btn_delete") + "</button></div></div>";
+    '<button class="btn small ghost s-act" id="delete-btn">' + icon("trash", 12) + " " + t("btn_delete") + "</button></div></div>" +
 
+    // ---------- About ----------
+    '<div class="card"><div class="card-title">' + icon("spark", 13) + " " + t("settings_about") + "</div>" +
+    '<div class="setting-row"><div><b>Network Management</b><span>' + t("settings_about_desc") + "</span></div></div></div>";
+
+  // theme
+  $$("#theme-seg .opt").forEach((b) => b.addEventListener("click", () => {
+    if (b.classList.contains("active")) return;
+    Store.setSettings({ theme: b.dataset.theme });
+    applyTheme();
+  }));
+  // view
+  $$("#view-seg .opt").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
+  // voice lang
+  $("#voice-lang-sel").addEventListener("change", (e) => Store.setSettings({ voiceLang: e.target.value }));
+  // notifications
+  $("#notif-care").addEventListener("click", () => Store.setSettings({ notif: { care: !Store.getSettings().notif.care } }));
+  $("#notif-toast").addEventListener("click", () => Store.setSettings({ notif: { toast: !Store.getSettings().notif.toast } }));
+  // profile
+  $("#profile-name").addEventListener("change", (e) => Store.setSettings({ profile: { name: e.target.value.trim() } }));
+  $$(".color-swatches .swatch").forEach((b) => b.addEventListener("click", () => Store.setSettings({ profile: { color: b.dataset.color } })));
+  $("#profile-photo-btn").addEventListener("click", () => $("#profile-photo-file").click());
+  $("#profile-photo-file").addEventListener("change", (e) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!f) return;
+    if (f.size > 500 * 1024) { toast(t("toast_photo_too_large"), "alert"); return; }
+    const r = new FileReader();
+    r.onload = () => Store.setSettings({ profile: { photo: String(r.result) } });
+    r.readAsDataURL(f);
+  });
+  const pr = $("#profile-photo-remove");
+  if (pr) pr.addEventListener("click", () => Store.setSettings({ profile: { photo: "" } }));
+
+  // data & privacy (giữ nguyên logic cũ)
   $$(".merge-btn", $("#screen-settings")).forEach((b) => b.addEventListener("click", () => {
     mergePeople(byId(b.dataset.keep), byId(b.dataset.dup));
     renderSettings();
@@ -1449,7 +1542,6 @@ function renderSettings() {
    ============================================================ */
 let cap = { mode: null, step: 0, timer: null, seconds: 0, open: false, personId: null, addInfo: false, edit: false };
 const VOICE_LANGS = ["ja-JP", "vi-VN", "en-US"];
-const VOICE_LANG_KEY = "nm-voice-lang";
 
 function openCapture(mode, opts = {}) {
   cap = {
@@ -1512,13 +1604,13 @@ function aiProxyReady() {
 }
 
 function getVoiceLang() {
-  const saved = localStorage.getItem(VOICE_LANG_KEY);
+  const saved = Store.getSettings().voiceLang;
   return VOICE_LANGS.includes(saved) ? saved : "ja-JP";
 }
 
 function setVoiceLang(value) {
   cap.voiceLang = VOICE_LANGS.includes(value) ? value : "ja-JP";
-  localStorage.setItem(VOICE_LANG_KEY, cap.voiceLang);
+  Store.setSettings({ voiceLang: cap.voiceLang });
 }
 
 function captureInputLocale() {
@@ -2783,18 +2875,30 @@ function toggleActive(id) {
 /* ============================================================
    THEME
    ============================================================ */
+let systemDarkMq = null;
+
+function applyTheme() {
+  const s = Store.getSettings().theme;
+  const dark = s === "dark" || (s === "system" && systemDarkMq && systemDarkMq.matches);
+  document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+}
+
 function toggleTheme() {
-  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-  document.documentElement.setAttribute("data-theme", next);
-  try { localStorage.setItem("nm-theme", next); } catch (e) {}
+  const next = Store.getSettings().theme === "dark" ? "light" : "dark";
+  Store.setSettings({ theme: next });
+  applyTheme();
 }
 
 function initTheme() {
   const param = new URLSearchParams(location.search).get("theme");
-  const saved = localStorage.getItem("nm-theme") || localStorage.getItem("omoide-theme");
-  const theme = param || saved || "light";
-  document.documentElement.setAttribute("data-theme", theme);
-  if (param) { try { localStorage.setItem("nm-theme", param); } catch (e) {} }
+  if (param) Store.setSettings({ theme: ["light", "dark", "system"].includes(param) ? param : "light" });
+  if (window.matchMedia) {
+    systemDarkMq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => { if (Store.getSettings().theme === "system") applyTheme(); };
+    if (systemDarkMq.addEventListener) systemDarkMq.addEventListener("change", onChange);
+    else if (systemDarkMq.addListener) systemDarkMq.addListener(onChange);
+  }
+  applyTheme();
 }
 
 /* ============================================================
@@ -2929,7 +3033,20 @@ async function doReset() {
 
 function updateUserChip() {
   const b = document.querySelector(".user-chip .who b");
-  if (b) b.textContent = fbEnabled() && fbUser ? (fbUser.email || t("you")) : t("you");
+  const av = document.querySelector(".user-chip .avatar");
+  const prof = Store.getSettings().profile || {};
+  const name = fbEnabled() && fbUser ? (fbUser.email || prof.name || t("you")) : (prof.name || t("you"));
+  if (b) b.textContent = name;
+  if (av) {
+    av.style.background = prof.color || "#201D1A";
+    if (prof.photo) {
+      av.classList.add("photo");
+      av.innerHTML = '<img src="' + esc(prof.photo) + '" alt="' + esc(name) + '" />';
+    } else {
+      av.classList.remove("photo");
+      av.textContent = (name.split(/\s+/).map((w) => w[0]).join("") || "Yo").slice(0, 2).toUpperCase();
+    }
+  }
 }
 
 function init() {
@@ -2937,8 +3054,7 @@ function init() {
 
   // view
   const vParam = new URLSearchParams(location.search).get("view");
-  const vSaved = localStorage.getItem("nm-view") || localStorage.getItem("omoide-view");
-  setView(vParam || vSaved || "mobile");
+  setView(vParam || Store.getSettings().view || "mobile");
 
   // data — js/store.js: localStorage (local-only) HOẶC Firestore (Firebase đã cấu hình)
   Store.subscribe(() => { if (!cap.open) renderAll(); });
