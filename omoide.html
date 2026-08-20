@@ -3406,7 +3406,7 @@ function setView(v) {
 /* ============================================================
    ROUTER (+ back / history stack)
    ============================================================ */
-let currentScreen = "home", profileId = null, peopleTab = "people";
+let currentScreen = "home", profileId = null, peopleTab = "people", profileTab = "overview";
 const navStack = [];
 
 function go(screen, opts = {}, isBack = false) {
@@ -3426,9 +3426,11 @@ function go(screen, opts = {}, isBack = false) {
     }
   }
 
+  if (screen === "profile" && opts.personId && opts.personId !== profileId && !opts.profileTab) profileTab = "overview";
   currentScreen = screen;
   profileId = opts.personId || null;
   if (opts.tab) peopleTab = opts.tab;
+  if (opts.profileTab) profileTab = opts.profileTab;
 
   $$(".screen").forEach((s) => s.classList.remove("active"));
   const el = $("#screen-" + screen);
@@ -4454,7 +4456,7 @@ function renderProfile(id) {
   const head =
     '<button class="btn ghost" style="margin-bottom:12px" id="back-people">' + icon("back") + " " + t("btn_back") + "</button>" +
     '<div class="screen-head-row"><div class="profile-head">' + avatarHTML(p, 62) +
-    "<div><h1>" + esc(p.name) + '<span class="ja">' + esc(p.nameJa) + "</span></h1>" +
+    "<div><h1>" + esc(p.name) + "</h1>" +
     '<div class="role-line"><b>' + esc(p.title) + "</b> at " + esc(p.company) + "</div>" +
     '<div class="chip-row" style="margin-top:8px">' +
     '<span class="chip dot" style="color:' + st.color + '">' + strengthLabel(st.id) + "</span>" +
@@ -4479,8 +4481,8 @@ function renderProfile(id) {
 
   const tabs =
     '<div class="tabs">' +
-    ["overview", "personal", "work", "relationship", "timeline", "photos"].map((tb, i) =>
-      '<button class="tab' + (i === 0 ? " active" : "") + '" data-tab="' + tb + '">' + t("profile_tab_" + tb) + "</button>"
+    ["overview", "personal", "work", "relationship", "timeline", "photos"].map((tb) =>
+      '<button class="tab' + (tb === profileTab ? " active" : "") + '" data-tab="' + tb + '">' + t("profile_tab_" + tb) + "</button>"
     ).join("") +
     "</div>";
 
@@ -4596,13 +4598,15 @@ function renderProfile(id) {
     '<input type="file" id="ph-multi" accept="image/*" multiple hidden /></div>' +
     "</div></div>";
 
-  $("#screen-profile").innerHTML = head + tabs + '<div id="profile-body">' + overview + "</div>";
-
   const bodies = { overview, personal, work, relationship, timeline: timelineCard, photos: photosTab };
+  if (!bodies[profileTab]) profileTab = "overview";
+  $("#screen-profile").innerHTML = head + tabs + '<div id="profile-body">' + bodies[profileTab] + "</div>";
+
   $$(".tab", $("#screen-profile")).forEach((tb) =>
     tb.addEventListener("click", () => {
+      profileTab = tb.dataset.tab;
       $$(".tab", $("#screen-profile")).forEach((x) => x.classList.toggle("active", x === tb));
-      $("#profile-body").innerHTML = bodies[tb.dataset.tab];
+      $("#profile-body").innerHTML = bodies[profileTab];
       bindProfile();
     })
   );
@@ -4655,11 +4659,21 @@ function bindProfile() {
     phFile.addEventListener("change", (e) => {
       const f = e.target.files && e.target.files[0];
       if (!f) return;
-      readFileAsDataURL(f, (src) => { setProfilePhoto(p.id, src); toast(t("toast_photo_saved")); renderProfile(p.id); });
+      readFileAsDataURL(f, (src) => {
+        profileTab = "photos";
+        setProfilePhoto(p.id, src);
+        toast(t("toast_photo_saved"));
+        renderProfile(p.id);
+      });
     });
   }
   const phRemove = $("#ph-remove");
-  if (phRemove) phRemove.addEventListener("click", () => { removeProfilePhoto(p.id); toast(t("toast_photo_removed")); renderProfile(p.id); });
+  if (phRemove) phRemove.addEventListener("click", () => {
+    profileTab = "photos";
+    removeProfilePhoto(p.id);
+    toast(t("toast_photo_removed"));
+    renderProfile(p.id);
+  });
   const phAdd = $("#ph-add");
   const phMulti = $("#ph-multi");
   if (phAdd && phMulti) {
@@ -4669,10 +4683,22 @@ function bindProfile() {
       if (!files.length) return;
       const srcs = [];
       let remaining = files.length;
-      files.forEach((f) => readFileAsDataURL(f, (src) => { srcs.push(src); if (--remaining === 0) { addPhotos(p.id, srcs); toast(t("toast_photo_added")); renderProfile(p.id); } }));
+      files.forEach((f) => readFileAsDataURL(f, (src) => {
+        srcs.push(src);
+        if (--remaining === 0) {
+          profileTab = "photos";
+          addPhotos(p.id, srcs);
+          toast(t("toast_photo_added"));
+          renderProfile(p.id);
+        }
+      }));
     });
   }
-  $$(".photo-remove", scope).forEach((b) => b.addEventListener("click", () => { removePhoto(p.id, +b.dataset.idx); renderProfile(p.id); }));
+  $$(".photo-remove", scope).forEach((b) => b.addEventListener("click", () => {
+    profileTab = "photos";
+    removePhoto(p.id, +b.dataset.idx);
+    renderProfile(p.id);
+  }));
   $$(".photo-note", scope).forEach((inp) => inp.addEventListener("change", () => { setPhotoNote(p.id, +inp.dataset.idx, inp.value); }));
 }
 
@@ -5334,9 +5360,20 @@ function bindManualCapture(editing) {
   updateManualDuplicateHint(editing && editing.id);
 }
 
+function syncManualDraftFromDOM() {
+  const body = $("#capture-body");
+  if (!body || !cap.formDraft) return;
+  $$('[data-manual-key]', body).forEach((input) => {
+    cap.formDraft[input.dataset.manualKey] = input.value;
+  });
+  commitPendingManualChips(body);
+  refreshManualDirty();
+}
+
 function renderManualCapture() {
   const body = $("#capture-body");
   const editing = cap.personId ? byId(cap.personId) : null;
+  if (cap.formDraft) syncManualDraftFromDOM();
   initManualDraft(editing);
   setCapTitle(
     cap.review ? t("review_title") : editing ? t("btn_edit") + " — " + editing.name.split(" ")[0] : t("manual_entry"),
