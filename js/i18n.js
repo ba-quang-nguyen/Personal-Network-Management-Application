@@ -274,7 +274,7 @@ const STR = {
 
     review_title: "Review & confirm",
     review_note: "Auto-filled from your input — correct anything wrong; empty fields can stay for later.",
-    review_check_hint: "This is what I understood. Check it, then confirm — fields are auto-filled and editable."
+    review_check_hint: "Recognition may be wrong — correct the text below; the fields will be filled from this corrected text."
   },
 
   vi: {
@@ -547,7 +547,7 @@ const STR = {
 
     review_title: "Kiểm tra & xác nhận",
     review_note: "Đã tự điền từ lời kể — sửa chỗ sai; trường trống để nhập sau.",
-    review_check_hint: "Đây là điều tôi hiểu. Kiểm tra rồi bấm Đúng — các trường sẽ tự điền và có thể sửa."
+    review_check_hint: "Giọng nói có thể bị sai — hãy sửa văn bản bên dưới; các trường sẽ được điền từ văn bản đã sửa."
   },
 
   ja: {
@@ -820,7 +820,7 @@ const STR = {
 
     review_title: "確認して保存",
     review_note: "入力内容から自動入力しました — 間違いは修正、空欄は後で入力。",
-    review_check_hint: "これは私が理解した内容です。確認して「OK」— フィールドは自動入力され編集できます。"
+    review_check_hint: "認識が間違っている可能性があります — 下のテキストを修正してください。修正後の内容が各フィールドに入力されます。"
   }
 };
 

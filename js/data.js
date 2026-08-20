@@ -833,15 +833,19 @@ function personGeo(p) {
 
 /* ============================================================
    CAPTURE PARSE — trích tự động trường từ text/voice (heuristic, không LLM).
+   3 pass ngôn ngữ (vi → en → ja), merge first-wins; notes luôn = raw text.
    Người dùng sẽ KIỂM TRA + SỬA trong màn confirm trước khi lưu.
    ============================================================ */
-function parseCaptureText(text) {
-  const out = { name: "", company: "", title: "", currentCity: "", hobbies: [], interests: [], followUpWhat: "", notes: text || "" };
+const _grab = (re, s) => {
+  const m = re.exec(s);
+  return m && m[1] ? m[1].trim().replace(/[.,;!?]+$/, "") : null;
+};
+
+/** Pass tiếng Anh (logic cũ, giữ nguyên). */
+function parseEn(text) {
+  const out = { name: "", company: "", title: "", currentCity: "", hobbies: [], interests: [], followUpWhat: "" };
   const s = " " + String(text || "") + " ";
-  const grab = (re) => {
-    const m = re.exec(s);
-    return m && m[1] ? m[1].trim().replace(/[.,;!?]+$/, "") : null;
-  };
+  const grab = (re) => _grab(re, s);
 
   // Tên: "met X" / "X from" / "with X"
   let name = grab(/ (?:met|saw|talked with|spoke with|had coffee with|met up with) ([A-Z][a-zA-Z-]+(?: [A-Z][a-zA-Z-]+){0,2}) /);
@@ -875,7 +879,6 @@ function parseCaptureText(text) {
     const v = mm[1].trim().replace(/[.,;!?]+$/, "");
     if (v && !out.interests.includes(v)) out.interests.push(v);
   }
-  if (out.interests.length) out.hobbies = [out.interests[0]];
 
   // Follow-up: "agreed to / promised / will / meet again / follow up"
   const fu =
@@ -886,6 +889,108 @@ function parseCaptureText(text) {
     grab(/ follow up (?:on|with) ([^.]{3,90})[.]?/);
   if (fu) out.followUpWhat = fu;
 
+  return out;
+}
+
+/** Pass tiếng Việt (locale mặc định) — pattern dấu qua Unicode property escapes. */
+function parseVi(text) {
+  const out = { name: "", company: "", title: "", currentCity: "", hobbies: [], interests: [], followUpWhat: "" };
+  const s = " " + String(text || "") + " ";
+  const grab = (re) => _grab(re, s);
+  const END = "(?= |,|\\.|;|$)";
+  const CAP = "\\p{Lu}";
+  const LOW = "\\p{Ll}";
+  const WORD = "(" + CAP + LOW + "*(?: " + CAP + LOW + "*){0,3})";
+
+  // Tên: "gặp anh X" / "tên (là) X" / "anh X làm…"
+  let name = grab(new RegExp(" (?:gặp|quen|biết|mới quen|gặp được) (?:anh|chị|em|ông|bà|cô|chú|bác|bạn|thầy) " + WORD + END, "u"));
+  if (!name) name = grab(new RegExp(" (?:tên|tên đầy đủ) (?:là )?" + WORD + END, "u"));
+  if (!name) name = grab(new RegExp(" (?:anh|chị|em|ông|bà|cô|chú|bác|bạn|thầy) " + WORD + " (?:là|học|làm|ở|sống|chơi|mới|hiện)" + END, "u"));
+  if (name) out.name = name;
+
+  // Công ty: "làm (tại|ở|cho) X" / "(ở|tại) công ty X" / hậu tố tên công ty
+  let company = grab(new RegExp(" (?:làm|làm việc) (?:tại|ở|cho) (" + CAP + "[\\p{L}\\p{N}&.' -]{2,45}?)" + END, "u"));
+  if (!company) company = grab(new RegExp(" (?:ở|tại) (?:công ty|cty|tập đoàn|trung tâm|ngân hàng) (" + CAP + "[\\p{L}\\p{N}&.' -]{2,45}?)" + END, "u"));
+  if (!company) company = grab(new RegExp(" (" + CAP + "[\\p{L}\\p{N}&.'-]{0,40}?(?:Logistics|Robotics|Systems|Technologies|Group|JSC|Corp|Inc|Ltd|TNHH|Pharmaceuticals|Bank|Retail|Media|Capital|Construction)[\\p{L}\\p{N}&.'-]{0,12}?)" + END, "u"));
+  if (company) out.company = company;
+
+  // Chức danh: danh sách chức vụ (+modifier) trước, rồi fallback "là X"
+  let title = grab(new RegExp(" (?:là|làm|đảm nhận vị trí|giữ chức) (?:một )?(giám đốc|trưởng phòng|phó giám đốc|chuyên viên|nhân viên|kỹ sư|quản lý|trợ lý|điều phối viên|thư ký|kế toán trưởng|kế toán|kiến trúc sư|bác sĩ|luật sư|giáo viên|nhà thiết kế|lập trình viên|developer|director|manager|engineer)( (?:kinh doanh|marketing|bán hàng|nhân sự|tài chính|kỹ thuật|vận hành|dự án|sản phẩm|thiết kế|it|sales|truyền thông|đối ngoại|kỹ thuật số))?" + END, "iu"));
+  if (!title) title = grab(new RegExp(" (?:là) (?:một )?(" + LOW + "[\\p{L}\\p{N} &-]{2,45}?)(?= (?:của|tại|ở|cho)|,|\\.| và |$)", "iu"));
+  if (title) out.title = title.replace(/^(?:một |các )/, "");
+
+  // Thành phố: danh sách TP VN trước, rồi fallback "sống (ở|tại) X"
+  const VN_CITIES = "Hà Nội|Hồ Chí Minh|TP\\.? ?HCM|Sài Gòn|Đà Nẵng|Hải Phòng|Cần Thơ|Huế|Nha Trang|Đà Lạt|Vũng Tàu|Biên Hòa|Bình Dương|Đồng Nai|Long An|Bắc Ninh|Hải Dương|Thái Nguyên|Hạ Long|Quảng Ninh|Phú Quốc|Vinh|Thanh Hóa|Buôn Ma Thuột|Cà Mau|Rạch Giá";
+  let city = grab(new RegExp(" (?:sống|đang sống|định cư)? ?(?:ở|tại) (" + VN_CITIES + ")" + END, "iu"));
+  if (!city) city = grab(new RegExp(" (?:sống|đang sống|định cư) (?:ở|tại) (" + CAP + LOW + "*(?: " + CAP + LOW + "*){0,2})" + END, "u"));
+  if (city) out.currentCity = city;
+
+  // Sở thích: "thích/đam mê/mê/chơi X"
+  const reInt = new RegExp(" (?:thích|đam mê|mê|chơi) (" + LOW + "[\\p{L}\\p{N} &-]{2,35}?)(?= và |,|\\.| nhưng | với |$)", "giu");
+  let mm;
+  while ((mm = reInt.exec(s))) {
+    let v = mm[1].trim().replace(/[.,;!?]+$/, "");
+    v = v.replace(/^(?:anh|chị|em|ông|bà|cô|chú|bác|bạn|thầy) /, "");
+    if (v && !out.interests.includes(v)) out.interests.push(v);
+  }
+
+  // Follow-up: "hẹn gặp lại…" / "hứa…" / "sẽ <hành động>…"
+  let fu =
+    grab(/ (?:hẹn gặp lại|sẽ gặp lại|hẹn) ([^.,]{3,70})[.,]?/) ||
+    grab(/ (?:hứa|thống nhất|dự định) (?:sẽ )?([^.,]{3,90})[.,]?/) ||
+    grab(/ sẽ ((?:gửi|gọi|liên hệ|trao đổi|gặp|họp|bàn|chia sẻ|chuyển|email|book|lên lịch|sắp xếp|cập nhật|share)[^.,]{3,90})[.,]?/);
+  if (fu) out.followUpWhat = fu;
+
+  return out;
+}
+
+/** Pass tiếng Nhật (tối thiểu). */
+function parseJa(text) {
+  const out = { name: "", company: "", title: "", currentCity: "", hobbies: [], interests: [], followUpWhat: "" };
+  const s = " " + String(text || "") + " ";
+  const grab = (re) => _grab(re, s);
+
+  // Tên: "Xさん/くん/ちゃん" (kanji hoặc romaji) — không END vì sau さん là trợ từ
+  let name = grab(new RegExp(" ([\\p{Script=Han}]{1,4}|[A-Za-z][A-Za-z-]{1,30}?)(?:さん|くん|ちゃん)", "u"));
+  if (name) out.name = name;
+
+  // Công ty: "株式会社X" / "X株式会社" / "Xの会社で働く" / "X社"
+  let company =
+    grab(new RegExp(" (株式会社[A-Za-z0-9&.'-]{2,30}?)", "u")) ||
+    grab(new RegExp("(?:の| |^)([A-Za-z][A-Za-z0-9&.'-]{1,40}?株式会社)", "u")) ||
+    grab(new RegExp("(?:の| |^)([\\p{Script=Katakana}]{1,20}?株式会社)", "u")) ||
+    grab(new RegExp(" ([A-Za-z][A-Za-z0-9&.'-]{1,40}?)(?:の会社|社)で働", "u"));
+  if (company) out.company = company;
+
+  // Chức danh: "X部長/課長/…"
+  let title = grab(new RegExp("(?:で|の|は| |^)(部長|課長|社長|マネージャー|エンジニア|担当|ディレクター|マネジャー|リーダー)(?:として|を務め|をしてい)?", "u"));
+  if (title) out.title = title;
+
+  // Thành phố: danh sách TP Nhật + trợ từ
+  let city = grab(new RegExp("(?:は|が| |^)(東京|大阪|横浜|京都|名古屋|福岡|札幌|神戸|広島|仙台|千葉|さいたま|川崎)(?:に|で|の)", "u"));
+  if (city) out.currentCity = city;
+
+  // Sở thích: "Xが好き" / "Xに興味"
+  const reInt = new RegExp("(?:、| |^)([\\p{L}]{2,30}?)(?:が好き|に興味)", "gu");
+  let mm;
+  while ((mm = reInt.exec(s))) {
+    const v = mm[1].trim().replace(/[.,;!?]+$/, "");
+    if (v && !out.interests.includes(v)) out.interests.push(v);
+  }
+
+  return out;
+}
+
+function parseCaptureText(text) {
+  const out = { name: "", company: "", title: "", currentCity: "", hobbies: [], interests: [], followUpWhat: "", notes: String(text || "") };
+  const merge = (p) => {
+    ["name", "company", "title", "currentCity", "followUpWhat"].forEach((k) => { if (!out[k] && p[k]) out[k] = p[k]; });
+    (p.interests || []).forEach((v) => { if (v && !out.interests.includes(v)) out.interests.push(v); });
+  };
+  merge(parseVi(text));
+  merge(parseEn(text));
+  merge(parseJa(text));
+  if (out.interests.length) out.hobbies = [out.interests[0]];
   return out;
 }
 

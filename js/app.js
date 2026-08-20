@@ -1909,13 +1909,13 @@ function renderCaptureResult() {
    CAPTURE — transcript check → màn confirm tự điền trường → lưu
    ============================================================ */
 
-/** Bước kiểm tra text nhận diện (voice/text): user đọc, sửa, rồi bấm "Đúng rồi". */
+/** Bước kiểm tra text nhận diện (voice/text): user đọc, SỬA, rồi bấm "Đúng rồi". */
 function renderTranscriptCheck() {
   setCapTitle(t("here_heard"), t("result_step"));
   const body = $("#capture-body");
   const kind = cap.mode === "voice" ? "voice" : "text";
   body.innerHTML =
-    '<div class="raw-block" style="white-space:pre-wrap;font-size:13.5px;line-height:1.65">' + esc(cap.text || "") + "</div>" +
+    '<textarea class="story" id="tx-edit" placeholder="' + t("text_ph") + '">' + esc(cap.text || "") + "</textarea>" +
     '<p style="font-size:12px;color:var(--ink-3);margin-top:10px">' + t("review_check_hint") + "</p>" +
     '<div class="modal-foot"><button class="btn ghost" id="tx-again">' + (kind === "voice" ? t("record_again") : t("edit_text")) + "</button>" +
     '<button class="btn primary" id="tx-next">' + icon("check", 14) + " " + t("looks_right") + "</button></div>";
@@ -1925,7 +1925,12 @@ function renderTranscriptCheck() {
     cap.step = 2;
     renderCapture();
   });
-  $("#tx-next").addEventListener("click", enterReviewFromText);
+  $("#tx-next").addEventListener("click", () => {
+    const edited = $("#tx-edit").value.trim();
+    if (!edited) { toast(t("text_empty")); return; }
+    cap.text = edited;
+    enterReviewFromText();
+  });
 }
 
 /** Map kết quả parse → các trường của form manual. */
