@@ -1,7 +1,7 @@
 {
   "projects": {
-    "default": "nm-app-dev",
-    "dev": "nm-app-dev",
-    "prod": "nm-app-prod"
+    "default": "personal-network-management",
+    "dev": "personal-network-management",
+    "prod": "personal-network-management"
   }
 }

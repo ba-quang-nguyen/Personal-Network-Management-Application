@@ -24,7 +24,7 @@ node build.mjs                # sinh lại omoide.html (bản single-file)
 
 1. Tạo project → bật Firestore + Auth Email/Password.
 2. `cp js/firebase-config.example.js js/firebase-config.js` → điền config.
-3. Deploy rules: `cd app && npx firebase deploy --only firestore:rules` (rules đã test 5/5 ở `app/firebase/`).
+3. Deploy rules: `npx firebase deploy --only firestore:rules` (rules đã test 5/5 ở `app/firebase/`). Project mặc định: `personal-network-management`.
 
 ## Deploy GitHub Pages (tự động)
 
