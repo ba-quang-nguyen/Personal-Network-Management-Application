@@ -2182,7 +2182,6 @@ function onFbUser(user) {
     renderAll();
     if (currentScreen === "login") go("home");
   } else {
-    Store.replaceFromRemote([]); // đăng xuất → xoá bản local (cloud là nguồn chân lý)
     go("login");
   }
 }
@@ -2269,6 +2268,7 @@ function init() {
 
   // data — js/store.js: localStorage (local-only) HOẶC Firestore (Firebase đã cấu hình)
   Store.subscribe(() => { if (!cap.open) renderAll(); });
+  Store.init();
   if (fbEnabled()) {
     Store.setSyncHooks({
       create: Firebase.syncCreate,
@@ -2279,8 +2279,6 @@ function init() {
     Firebase.init(onFbUser);
     // chưa biết trạng thái đăng nhập → về login; onAuthStateChanged sẽ điều hướng tiếp
     go("login");
-  } else {
-    Store.init();
   }
 
   applyStaticI18n();

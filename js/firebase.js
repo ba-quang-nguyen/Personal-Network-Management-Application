@@ -14,6 +14,7 @@ const Firebase = (() => {
   let auth = null;
   let uid = null;
   let remoteIds = new Set();
+  let unsubRemote = null;
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -63,19 +64,30 @@ const Firebase = (() => {
     }
     ensure().then(({ auth: a }) => {
       a.onAuthStateChanged((user) => {
+        if (unsubRemote) {
+          try { unsubRemote(); } catch (e) { /* ignore */ }
+          unsubRemote = null;
+        }
         uid = user ? user.uid : null;
         remoteIds = new Set();
-        if (uid) attachRemote();
+        if (uid) unsubRemote = attachRemote();
         onUserChange(user ? { uid: user.uid, email: user.email } : null);
       });
     });
   }
 
   function attachRemote() {
+    let firstSnapshot = true;
     return peoplePath().onSnapshot(
       (snap) => {
         remoteIds = new Set(snap.docs.map((d) => d.id));
         const people = snap.docs.map((d) => Object.assign({}, d.data(), { id: d.id }));
+        if (firstSnapshot && people.length === 0 && Store.people().length > 0) {
+          firstSnapshot = false;
+          syncReplaceAll(Store.people());
+          return;
+        }
+        firstSnapshot = false;
         Store.replaceFromRemote(people);
       },
       (err) => console.error('firestore snapshot error', err),
