@@ -234,6 +234,8 @@ body.view-web .main { flex: 1; min-width: 0; padding: 34px 40px 80px; max-width:
 .chip.warn { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
 .chip.ghost { border-style: dashed; color: var(--ink-3); }
 .chip-row { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip-action { cursor: pointer; }
+.chip-action:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -422,8 +424,9 @@ body.view-web .main { flex: 1; min-width: 0; padding: 34px 40px 80px; max-width:
   border-radius: 16px; padding: 13px 16px; box-shadow: var(--shadow);
 }
 .ask-input-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
-.ask-input-wrap input { border: none; outline: none; background: none; flex: 1; font-size: 14.5px; color: var(--ink); min-width: 0; }
+.ask-input-wrap input { border: none; outline: none; background: none; flex: 1 1 auto; width: 100%; font-size: 14.5px; color: var(--ink); min-width: 0; }
 .ask-input-wrap input::placeholder { color: var(--ink-3); }
+.ask-input-wrap .btn { flex-shrink: 0; }
 .q-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .q-chip {
   font-size: 12px; color: var(--ink-2); border: 1px solid var(--line-strong);

@@ -627,7 +627,8 @@ const MANUAL_SECTIONS = [
     { k: "relationshipType", label: "Relationship type", control: "select", tier: "quick", options: ["", "Key contact", "Client", "Partner", "Investor", "Mentor", "Friend", "Collaborator", "Acquaintance"] },
     { k: "company", label: "Company", control: "text", tier: "quick", autocomplete: "organization" },
     { k: "currentCity", label: "Current city", control: "location", tier: "quick", phKey: "location_ph", autocomplete: "address-level2" },
-    { k: "birthday", label: "Birthday", control: "text", tier: "quick", phKey: "birthday_flexible_ph", autocomplete: "bday" }
+    { k: "birthday", label: "Birthday", control: "text", tier: "quick", phKey: "birthday_flexible_ph", autocomplete: "bday" },
+    { k: "tags", label: "Tags", control: "chips", tier: "quick" }
   ]},
   { key: "work", title: "Work notes", fields: [
     { k: "workNotes", label: "Work notes", control: "textarea", phKey: "work_notes_ph" }
@@ -656,10 +657,11 @@ const MANUAL_QUICK_FIELDS = [
   "basic.company",
   "basic.currentCity",
   "basic.birthday",
+  "basic.tags",
 ];
 const MANUAL_ARRAY_FIELDS = new Set([
   "languages", "expertise", "skills", "hobbies", "sports", "businessTopics", "previousCompanies",
-  "careerHistory", "travelInterests", "interests", "helpGiven", "helpReceived", "promises",
+  "careerHistory", "travelInterests", "interests", "helpGiven", "helpReceived", "promises", "tags",
 ]);
 
 function manualHasValue(value) {

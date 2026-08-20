@@ -113,12 +113,12 @@
           </button>
           <div class="kicker" data-i18n="ask_kicker">Network search</div>
           <h1 class="screen-title" data-i18n="ask_title">Search your network.</h1>
-          <p class="screen-sub" data-i18n="ask_sub">Find people by name, company, city, topic, notes, or memories.</p>
+          <p class="screen-sub" data-i18n="ask_sub">Keyword search across people, companies, work topics, notes, and memories.</p>
         </div>
         <div class="ask-input-wrap">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          <input id="ask-input" data-i18n-ph="ask_ph" placeholder="Search name, company, city, topic…" />
-          <button class="btn accent small" id="ask-submit" data-i18n="ask_btn">Search</button>
+          <input id="ask-input" type="search" autocomplete="off" autocapitalize="none" spellcheck="false" data-i18n-ph="ask_ph" placeholder="Search keyword, company, city, topic…" />
+          <button class="btn accent small" type="button" id="ask-submit" data-i18n="ask_btn">Search</button>
         </div>
         <div class="q-chips" id="q-chips"></div>
         <div id="ask-results"></div>

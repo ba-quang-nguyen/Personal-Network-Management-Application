@@ -506,14 +506,44 @@ function sourceRow(id, why, src) {
   );
 }
 
+const SEARCH_STOPWORDS = new Set([
+  "a", "an", "and", "about", "at", "by", "do", "does", "did", "for", "from", "i", "in", "is", "me", "my",
+  "of", "on", "or", "related", "relate", "to", "the", "them", "they", "what", "where", "which", "who",
+  "work", "works", "working", "know", "lives", "live",
+  "ai", "co", "cua", "dau", "den", "gi", "lam", "lien", "nao", "nguoi", "quan", "toi", "ve", "voi",
+]);
+
+function searchNormalize(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+function searchTerms(query) {
+  const normalized = searchNormalize(query);
+  const rawTerms = normalized.split(/\s+/).filter(Boolean);
+  const filtered = rawTerms.filter((term) => term.length > 1 && !SEARCH_STOPWORDS.has(term));
+  return filtered.length ? filtered : rawTerms.filter((term) => term.length > 1);
+}
+
+function searchHaystack(parts) {
+  return searchNormalize(parts.flat(Infinity).filter(Boolean).join(" "));
+}
+
 function analyze(q) {
-  const s = String(q || "").trim().toLowerCase();
+  const s = searchNormalize(q);
   const people = activePeople();
   if (!people.length) return { answer: t("ask_no_people"), sources: [], why: {} };
   if (!s) return { answer: t("ask_hint"), sources: [], why: {} };
 
-  const terms = s.split(/\s+/).filter((w) => w.length > 2);
-  const hasTerm = (hay) => (terms.length ? terms.some((w) => hay.includes(w)) : hay.includes(s));
+  const terms = searchTerms(q);
+  const hasTerm = (hay) => {
+    const hayTerms = new Set(hay.split(/\s+/).filter(Boolean));
+    return terms.some((term) => term.length <= 2 ? hayTerms.has(term) : hay.includes(term));
+  };
 
   let sources = [];
   const why = {};
@@ -527,13 +557,13 @@ function analyze(q) {
     }
   };
   people.forEach((p) => {
-    if (hasTerm(((p.name || "") + " " + (p.nameJa || "") + " " + (p.nickname || "")).toLowerCase())) add(p, t("ask_asked_about"));
-    else if (hasTerm((p.currentCity || "").toLowerCase() + " " + (p.country || "").toLowerCase())) add(p, t("ask_where"));
-    else if (hasTerm((p.company || "").toLowerCase())) add(p, t("ask_company"));
-    else if (hasTerm(((p.industry || "") + " " + (p.title || "") + " " + (p.department || "") + " " + (p.workNotes || "")).toLowerCase())) add(p, t("ask_industry"));
-    else if (hasTerm(((p.relationshipType || "") + " " + (p.firstMet && p.firstMet.how || "") + " " + (p.relationshipNotes || "")).toLowerCase())) add(p, t("ask_relationship"));
-    else if (hasTerm(((p.interests || []).join(" ") + " " + (p.hobbies || []).join(" ") + " " + (p.tags || []).join(" ") + " " + (p.interestsNotes || "")).toLowerCase())) add(p, t("ask_interest"));
-    else if (hasTerm(((p.notes || "") + " " + (p.familyNotes || "") + " " + (p.raw || "") + " " + (p.memories || []).map((m) => m.text).join(" ")).toLowerCase())) add(p, t("ask_memory"));
+    if (hasTerm(searchHaystack([p.name, p.nameJa, p.nickname]))) add(p, t("ask_asked_about"));
+    else if (hasTerm(searchHaystack([p.currentCity, p.country, p.area, p.location]))) add(p, t("ask_where"));
+    else if (hasTerm(searchHaystack([p.company, p.previousCompanies]))) add(p, t("ask_company"));
+    else if (hasTerm(searchHaystack([p.industry, p.title, p.department, p.profession, p.expertise, p.skills, p.businessTopics, p.workNotes]))) add(p, t("ask_industry"));
+    else if (hasTerm(searchHaystack([p.relationshipType, p.role, p.firstMet && p.firstMet.how, p.introducedBy, p.helpGiven, p.helpReceived, p.promises, p.relationshipNotes]))) add(p, t("ask_relationship"));
+    else if (hasTerm(searchHaystack([p.interests, p.hobbies, p.sports, p.tags, p.favoriteFood, p.favoriteDrink, p.travelInterests, p.interestsNotes]))) add(p, t("ask_interest"));
+    else if (hasTerm(searchHaystack([p.notes, p.familyNotes, p.spouse, p.children, p.schools, p.pets, p.about, p.raw, (p.memories || []).map((m) => m.text), (p.meetings || []).map((m) => [m.title, m.summary, m.tags])]))) add(p, t("ask_memory"));
   });
 
   if (found.length) {
@@ -611,7 +641,10 @@ function clearLocationMapInstance() {
 }
 
 function renderLocationListFallback(groups) {
-  const list = groups.map((g) => {
+  const visibleGroups = mapState.city
+    ? groups.filter((g) => searchNormalize(g.label) === searchNormalize(mapState.city))
+    : groups;
+  const list = visibleGroups.map((g) => {
     const members = (g.members || []).map((id) => byId(id)).filter((p) => p && p.active !== false);
     if (!members.length) return "";
     return '<div class="loc-off-row"><b>' + esc(g.label) + "</b>" +
@@ -657,12 +690,14 @@ async function renderGoogleLocationMap(people, renderId) {
   const infoWindow = new maps.InfoWindow();
   const bounds = new maps.LatLngBounds();
   let count = 0;
+  let firstPosition = null;
 
   people.forEach((p) => {
     const geo = personGeo(p);
     if (!geo) return;
     count += 1;
     const position = { lat: geo[0], lng: geo[1] };
+    if (!firstPosition) firstPosition = position;
     bounds.extend(position);
     const markerContent = document.createElement("div");
     markerContent.className = "loc-marker-wrap";
@@ -712,7 +747,7 @@ async function renderGoogleLocationMap(people, renderId) {
   });
 
   if (count > 1) map.fitBounds(bounds, 40);
-  else if (count === 1) map.setZoom(10);
+  else if (count === 1) { map.setCenter(firstPosition); map.setZoom(10); }
   locMap = { provider: "google", instance: map };
   return true;
 }
@@ -780,7 +815,10 @@ function locationGroupsFromPeople() {
 
 function renderLocationMap() {
   const groups = locationGroupsFromPeople();
-  const people = activePeople();
+  const selectedCity = String(mapState.city || "").trim();
+  const mapPeople = selectedCity
+    ? activePeople().filter((p) => searchNormalize(p.currentCity) === searchNormalize(selectedCity))
+    : activePeople();
 
   clearLocationMapInstance();
   const renderId = ++locMapRenderId;
@@ -788,19 +826,29 @@ function renderLocationMap() {
   // compact legend: per-city counts (active people only)
   const counts = groups.map((g) => {
     const n = (g.members || []).filter((id) => { const p = byId(id); return p && p.active !== false; }).length;
+    if (selectedCity && searchNormalize(g.label) !== searchNormalize(selectedCity)) return null;
     return n ? esc(g.label) + " " + n : null;
   }).filter(Boolean);
   $("#map-legend").innerHTML =
     '<span><i style="background:#7A5AF8"></i>' + t("lens_location") + "</span>" +
+    (selectedCity ? '<span>' + esc(selectedCity) + '</span><button class="q-chip" id="location-clear">' + t("map_clear") + "</button>" : "") +
     counts.map((c) => "<span>" + c + "</span>").join("");
-  if (googleMapsEnabled()) {
-    renderGoogleLocationMap(people, renderId).catch(() => {
+  const clear = $("#location-clear");
+  if (clear) clear.addEventListener("click", () => { mapState.city = null; renderMap(); });
+  if (googleMapsEnabled() && mapPeople.some((p) => personGeo(p))) {
+    renderGoogleLocationMap(mapPeople, renderId).catch(() => {
       if (renderId !== locMapRenderId || mapState.lens !== "location") return;
       renderLocationListFallback(groups);
     });
     return;
   }
   renderLocationListFallback(groups);
+}
+
+function openMapLocation(city) {
+  const clean = String(city || "").trim();
+  if (!clean) return;
+  go("map", { map: { lens: "location", focusId: null, topic: "", city: clean } });
 }
 
 function debounce(fn, ms) {
@@ -1004,7 +1052,7 @@ function renderProfile(id) {
     '<div class="role-line"><b>' + esc(p.title) + "</b> at " + esc(p.company) + "</div>" +
     '<div class="chip-row" style="margin-top:8px">' +
     '<span class="chip dot" style="color:' + st.color + '">' + strengthLabel(st.id) + "</span>" +
-    '<span class="chip">' + esc(p.currentCity) + "</span>" +
+    (p.currentCity ? '<button class="chip chip-action" data-profile-location="' + esc(p.currentCity) + '">' + icon("pin", 11) + esc(p.currentCity) + "</button>" : "") +
     (p.metCount ? '<span class="chip">' + t("profile_met", { n: p.metCount }).replace("{n}", p.metCount) + "</span>" : "") +
     '<span class="chip ' + (p.lastContactDays > 90 ? "warn" : "ok") + '">' + t("profile_last_contact_label", { d: daysAgo(p.lastContactDays) }).replace("{d}", daysAgo(p.lastContactDays)) + "</span>" +
     (inactive ? '<span class="chip warn">' + t("badge_inactive") + "</span>" : "") +
@@ -1017,7 +1065,6 @@ function renderProfile(id) {
     '<div class="profile-actions">' +
     '<button class="btn accent" id="act-addinfo">' + icon("plus", 13) + " " + t("btn_add_info") + "</button>" +
     '<button class="btn small" id="act-edit">' + t("btn_edit") + "</button>" +
-    '<button class="btn small" id="act-followup">' + t("btn_followup") + "</button>" +
     '<button class="btn small refresh-open" data-id="' + p.id + '">' + icon("refresh", 12) + " " + t("btn_refresh") + "</button>" +
     '<button class="btn small" id="act-connections">' + icon("graph", 12) + " " + t("btn_connections") + "</button>" +
     "</div></div>";
@@ -1047,14 +1094,9 @@ function renderProfile(id) {
     '<div class="card"><div class="card-title">' + icon("cake", 13) + " " + t("profile_important_dates") + "</div>" +
     (p.dates.length ? kvList(p.dates.map((d) => ({ k: d.label, v: d.when }))) : '<span class="chip ghost">' + t("no_dates_yet") + "</span>") + "</div>" +
     '<div class="card"><div class="card-title">' + icon("tag", 13) + " " + t("profile_tags") + "</div>" +
-    '<div class="chip-row">' + (p.tags || []).map((tg) => '<span class="chip">#' + esc(tg) + "</span>").join("") + "</div></div>" +
+    '<div class="chip-row">' + (p.tags || []).map((tg) => '<button class="chip chip-action tag-search" data-tag-search="' + esc(tg) + '" title="' + esc(t("tag_search_hint")) + '">#' + esc(tg) + "</button>").join("") + "</div></div>" +
     "</div>" +
     '<div class="stack">' +
-    '<div class="card followup-card" style="background:linear-gradient(135deg,var(--accent-soft),transparent 70%);border-color:var(--accent)">' +
-    '<div class="card-title" style="color:var(--accent)">' + icon("cal", 13) + " " + t("profile_next_followup") + "</div>" +
-    '<div class="followup-when" style="font-family:var(--serif);font-size:18px;font-weight:600;color:var(--accent)">' + esc(p.followUp.when) + "</div>" +
-    '<div style="font-size:13px;color:var(--ink-2);margin-top:4px">' + esc(p.followUp.what) + "</div>" +
-    '<div style="display:flex;gap:7px;margin-top:12px"><button class="btn small primary" id="act-done">' + icon("check", 12) + " " + t("btn_done") + '</button><button class="btn small ghost" id="act-snooze">' + t("btn_snooze") + "</button></div></div>" +
     '<div class="card"><div class="card-title">' + icon("pin", 13) + " " + t("profile_last_interaction") + "</div>" +
     '<div class="chip-row"><span class="chip ok">' + esc(p.last.type) + "</span><span class='chip'>" + esc(p.last.when) + "</span><span class='chip'>" + esc(p.last.place) + "</span></div>" +
     '<p style="font-size:13px;color:var(--ink-2);margin-top:10px">' + esc(p.last.summary) + "</p></div>" +
@@ -1167,7 +1209,6 @@ function bindProfile() {
   if (!p) return;
   $("#act-addinfo").addEventListener("click", () => openCapture(null, { personId: p.id, addInfo: true }));
   $("#act-edit").addEventListener("click", () => openCapture("manual", { personId: p.id, edit: true }));
-  $("#act-followup").addEventListener("click", () => { toast(t("toast_followup_added")); });
   $("#act-connections").addEventListener("click", () => go("map", { map: { lens: "people", focusId: p.id, topic: "" } }));
   $("#act-archive").addEventListener("click", () => {
     const next = p.active === false;
@@ -1183,6 +1224,18 @@ function bindProfile() {
   });
   $$(".refresh-open", scope).forEach((b) => b.addEventListener("click", () => go("refresh", { personId: b.dataset.id })));
   $$(".person-link", scope).forEach((b) => b.addEventListener("click", () => b.dataset.id && go("profile", { personId: b.dataset.id })));
+  $$("[data-profile-location]", scope).forEach((b) => b.addEventListener("click", () => openMapLocation(b.dataset.profileLocation)));
+  $$("[data-tag-search]", scope).forEach((b) => b.addEventListener("click", () => {
+    go("ask");
+    setTimeout(() => {
+      const input = $("#ask-input");
+      if (input) {
+        input.value = b.dataset.tagSearch || "";
+        runAsk(input.value);
+        input.focus();
+      }
+    }, 60);
+  }));
   $$(".strength-pick", scope).forEach((b) => b.addEventListener("click", () => {
     Store.setStrength(p.id, b.dataset.s);
     toast(t("toast_strength", { label: strengthLabel(b.dataset.s) }));
@@ -1193,10 +1246,6 @@ function bindProfile() {
     toast(t("toast_rhythm", { label: frequencyLabel(b.dataset.f) }));
     renderProfile(p.id);
   }));
-  const done = $("#act-done"), snooze = $("#act-snooze");
-  if (done) done.addEventListener("click", () => { completeFollowUp(p); renderProfile(p.id); });
-  if (snooze) snooze.addEventListener("click", () => { snoozeFollowUp(p, 7); renderProfile(p.id); });
-
   // photos
   const phChange = $("#ph-change");
   const phFile = $("#ph-file");
@@ -1508,6 +1557,7 @@ function buildExtractPrefill(parsed, rawText) {
     relationshipNotes,
     followUpWhat: source.followUpWhat || "",
     promises: source.promises || [],
+    tags: source.tags || [],
     department: source.department || "",
     title: source.title || "",
     email: source.email || "",
@@ -1747,7 +1797,7 @@ function captureSource() {
 function hiddenStructuredPrefillFields(prefill) {
   const allowed = [
     "department", "title", "email", "phone", "languages", "hobbies", "interests",
-    "businessTopics", "introducedBy", "promises",
+    "businessTopics", "introducedBy", "promises", "tags",
   ];
   const out = {};
   allowed.forEach((key) => {
@@ -1774,6 +1824,7 @@ function saveManualCapture() {
     cap.review ? hiddenStructuredPrefillFields(cap.prefill || {}) : {},
     manualDraftToFields(cap.formDraft),
   );
+  fields.tags = manualArrayValue(fields.tags);
   const note = String(cap.formDraft["notes.notes"] || "").trim();
   const source = captureSource();
   const sourceLabel = source === "voice" ? "Voice memo" : source === "card" ? "Card scan" : source === "text" ? "Text note" : "Manual entry";
@@ -1822,6 +1873,8 @@ function saveManualCapture() {
   }
 
   const summary = cap.text || note || "Created manually.";
+  const sourceTags = source === "manual" ? [] : [source];
+  const tags = [...new Set([...(fields.tags || []), ...sourceTags].map((tag) => String(tag).trim()).filter(Boolean))];
   const newPerson = Object.assign({}, fields, {
     id: "p" + Date.now(),
     role: "New · just created", since: "Today", color: "#8E5A9E",
@@ -1830,7 +1883,7 @@ function saveManualCapture() {
     followUp: followUpFromPrefill || { when: "—", what: "Say hi in a few days", kind: "reconnect" },
     meetings: [], timelineExtra: [],
     memories: cap.review && transMemory ? [transMemory] : noteMemory ? [noteMemory] : [],
-    raw: cap.text || "", connections: [], mutual: [], tags: [source], lastContactDays: 0,
+    raw: cap.text || "", connections: [], mutual: [], tags, lastContactDays: 0,
     metCount: cap.review ? 1 : 0, active: true, photo: "", photos: [], _custom: true,
   });
   Store.createPerson(newPerson);
