@@ -679,6 +679,23 @@ body.view-web .main { flex: 1; min-width: 0; padding: 34px 40px 80px; max-width:
   border: 1px solid var(--line-strong); border-radius: 14px;
   padding: 20px 22px; position: relative; overflow: hidden; font-family: var(--serif);
 }
+.ocr-picker {
+  border: 1.5px dashed var(--line-strong); border-radius: 16px; background: var(--surface);
+  padding: 18px; text-align: center;
+}
+.ocr-picker .ico {
+  width: 48px; height: 48px; border-radius: 15px; margin: 0 auto 10px;
+  display: grid; place-items: center; color: var(--ok); background: var(--ok-soft);
+}
+.ocr-picker p { color: var(--ink-3); font-size: 12px; margin-top: 8px; line-height: 1.45; }
+.ocr-file { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+.ocr-preview {
+  margin-top: 12px; border-radius: 14px; max-height: 180px; width: 100%;
+  object-fit: contain; background: var(--surface-2); border: 1px solid var(--line);
+}
+.ocr-status { margin-top: 12px; font-size: 12.5px; color: var(--ink-3); text-align: center; }
+.ocr-bar { height: 8px; border-radius: 999px; overflow: hidden; background: var(--surface-2); margin-top: 10px; }
+.ocr-bar span { display: block; height: 100%; width: 0%; background: var(--accent); transition: width 0.18s ease; }
 .card-preview .co { font-size: 11px; letter-spacing: 2px; font-weight: 700; color: var(--ink-3); }
 .card-preview .name { font-size: 24px; font-weight: 700; margin-top: 6px; }
 .card-preview .kana { font-size: 11px; color: var(--ink-3); letter-spacing: 1px; margin-top: -1px; }

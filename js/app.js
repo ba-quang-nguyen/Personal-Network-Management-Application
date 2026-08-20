@@ -1577,22 +1577,37 @@ function renderCapture() {
     if (cap.step === 2) {
       setCapTitle(t("card_scan"), t("card_step_scan"));
       body.innerHTML =
-        '<div class="card-preview"><div class="scanline"></div>' +
-        '<div class="co">KANSAI ROBOTICS CO., LTD.</div><div class="name">中村 哲也</div><div class="kana">NAKAMURA TETSUYA</div>' +
-        '<div class="title">Business Development Manager<br/>Sales &amp; BD Division</div>' +
-        '<div class="addr">t.nakamura@kansai-robotics.jp · +81 6-XXXX-XXXX<br/>Osaka, Japan · www.kansai-robotics.jp</div></div>' +
-        '<p style="text-align:center;color:var(--ink-3);font-size:12.5px;margin-top:14px">' + icon("spark", 12) + " " + t("ai_reading") + "</p>";
-      setTimeout(() => { if (!cap.open) return; cap.step = 3; renderCapture(); }, 1700);
+        '<label class="ocr-picker" for="card-photo">' +
+          '<span class="ico">' + icon("card", 24) + "</span>" +
+          "<b>" + t("card_pick_photo") + "</b>" +
+          "<p>" + t("card_pick_hint") + "</p>" +
+        "</label>" +
+        '<input class="ocr-file" id="card-photo" type="file" accept="image/*" capture="environment" />' +
+        (cap.photo ? '<img class="ocr-preview" src="' + cap.photo + '" alt="" />' : "") +
+        '<div class="ocr-status" id="ocr-status">' + t("card_ocr_local") + "</div>" +
+        '<div class="ocr-bar" aria-hidden="true"><span id="ocr-bar"></span></div>' +
+        '<div class="modal-foot"><button class="btn ghost" id="card-demo">' + t("card_use_demo") + "</button>" +
+        '<button class="btn primary" id="card-choose">' + icon("camera", 13) + " " + t("card_choose") + "</button></div>";
+      $("#card-photo").addEventListener("change", handleCardPhoto);
+      $("#card-choose").addEventListener("click", () => $("#card-photo").click());
+      $("#card-demo").addEventListener("click", () => { cap.ocrText = cardDemoText(); cap.step = 3; renderCapture(); });
     } else if (cap.step === 3) {
       setCapTitle(t("card_read"), t("card_step_review"));
+      const extracted = cardFieldsToExtract(cap.prefill || parseCardOcrText(cap.ocrText || ""));
       body.innerHTML =
         '<div class="extract-grid">' +
-        CARD_DEMO.extracted.map((f) => '<div class="extract-cell"><div class="k">' + esc(f.label) + ' <span class="conf">' + f.conf + "%</span></div><div class='v'>" + esc(f.value) + "</div></div>").join("") +
+        extracted.map((f) => '<div class="extract-cell"><div class="k">' + esc(f.label) + (f.conf ? ' <span class="conf">' + f.conf + "%</span>" : "") + "</div><div class='v'>" + esc(f.value) + "</div></div>").join("") +
         "</div>" +
+        '<textarea class="story" id="card-raw" style="margin-top:12px;min-height:120px" placeholder="' + t("card_raw_ph") + '">' + esc(cap.ocrText || "") + "</textarea>" +
+        '<p style="font-size:12px;color:var(--ink-3);margin-top:10px">' + t("card_review_hint") + "</p>" +
         '<div class="modal-foot"><button class="btn ghost" id="card-rescan">' + t("rescan") + "</button>" +
         '<button class="btn primary" id="card-next">' + icon("check", 13) + " " + t("looks_right") + "</button></div>";
       $("#card-rescan").addEventListener("click", () => { cap.step = 2; renderCapture(); });
-      $("#card-next").addEventListener("click", enterReviewFromCard);
+      $("#card-next").addEventListener("click", () => {
+        cap.ocrText = $("#card-raw").value.trim();
+        if (!cap.ocrText) { toast(t("text_empty")); return; }
+        enterReviewFromCard();
+      });
     }
     return;
   }
@@ -1947,6 +1962,88 @@ function parsedToPrefill(p) {
   };
 }
 
+function cardDemoText() {
+  return (CARD_DEMO.extracted || []).map((f) => f.label + ": " + f.value).join("\n");
+}
+
+function cardFieldsToExtract(pre) {
+  const labels = {
+    name: "Name", company: "Company", department: "Department", title: "Title",
+    email: "Email", phone: "Phone", currentCity: "Address"
+  };
+  return Object.keys(labels).filter((k) => pre[k]).map((k) => ({ label: labels[k], value: pre[k], conf: "" }));
+}
+
+function parseCardOcrText(text) {
+  const raw = (text || "").replace(/\r/g, "\n");
+  const lines = raw.split("\n").map((s) => s.trim()).filter(Boolean);
+  const joined = lines.join("\n");
+  const labeled = {};
+  lines.forEach((l) => {
+    const m = l.match(/^\s*(name|company|department|title|email|phone|address)\s*:\s*(.+)\s*$/i);
+    if (m) labeled[m[1].toLowerCase()] = m[2].trim();
+  });
+  const email = (joined.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i) || [""])[0];
+  const phone = (joined.match(/(?:\+?\d[\d\s().-]{7,}\d)/) || [""])[0].trim();
+  const web = (joined.match(/(?:https?:\/\/)?(?:www\.)?[A-Z0-9-]+\.[A-Z]{2,}(?:\/[^\s]*)?/i) || [""])[0];
+  const nonContact = lines
+    .map((l) => l.replace(/^\s*(name|company|department|title|email|phone|address)\s*:\s*/i, "").trim())
+    .filter((l) => l && !l.includes("@") && !/[+()]\d|www\.|https?:\/\//i.test(l));
+  const company = labeled.company || nonContact.find((l) => /(co\.?|corp|corporation|company|ltd|llc|inc|株式会社|有限会社|会社|group|solutions|technology|technologies|studio|agency)/i.test(l)) || "";
+  const title = labeled.title || nonContact.find((l) => /(manager|director|founder|ceo|cto|cfo|sales|marketing|engineer|designer|consultant|lead|head|代表|取締役|部長|課長|営業|開発|マネージャー|社長|giám đốc|trưởng|nhân viên|kỹ sư)/i.test(l)) || "";
+  const department = labeled.department || nonContact.find((l) => /(division|department|team|dept\.?|事業部|部|課|phòng|ban)/i.test(l) && l !== title) || "";
+  const cityLine = labeled.address || lines.find((l) => /(tokyo|osaka|kyoto|yokohama|ho chi minh|hanoi|ha noi|danang|da nang|singapore|japan|vietnam|〒|区|市|県|quận|phường)/i.test(l)) || "";
+  const name = labeled.name || pickCardName(nonContact, company, title, department);
+  const notes = [web && "Website: " + web, raw].filter(Boolean).join("\n\n");
+  return { name, company, department, title, email: labeled.email || email, phone: labeled.phone || phone, currentCity: cityLine, notes };
+}
+
+function pickCardName(lines, company, title, department) {
+  const skip = new Set([company, title, department].filter(Boolean));
+  const candidates = lines.filter((l) => !skip.has(l) && l.length >= 2 && l.length <= 40 && !/\d/.test(l));
+  const roman = candidates.find((l) => /^[A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3}$/.test(l));
+  const jp = candidates.find((l) => /[\u3040-\u30ff\u3400-\u9fff]/.test(l) && l.replace(/\s/g, "").length <= 8);
+  return roman || jp || candidates[0] || "";
+}
+
+async function handleCardPhoto(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  readFileAsDataURL(file, (url) => {
+    cap.photo = url;
+    const prev = $(".ocr-preview", $("#capture-body"));
+    if (prev) prev.src = url;
+  });
+  const status = $("#ocr-status");
+  const bar = $("#ocr-bar");
+  const setProgress = (msg, pct) => {
+    if (status) status.textContent = msg;
+    if (bar) bar.style.width = Math.max(3, Math.round((pct || 0) * 100)) + "%";
+  };
+  if (!window.Tesseract || !window.Tesseract.recognize) {
+    toast(t("card_ocr_unavailable"));
+    cap.ocrText = "";
+    return;
+  }
+  try {
+    setProgress(t("card_ocr_loading"), 0.05);
+    const result = await window.Tesseract.recognize(file, "eng+vie+jpn", {
+      logger: (m) => {
+        if (m.status) setProgress(t("card_ocr_reading") + " " + Math.round((m.progress || 0) * 100) + "%", m.progress || 0.1);
+      }
+    });
+    cap.ocrText = ((result && result.data && result.data.text) || "").trim();
+    cap.prefill = parseCardOcrText(cap.ocrText);
+    if (!cap.ocrText) { toast(t("card_ocr_empty")); return; }
+    cap.step = 3;
+    renderCapture();
+  } catch (err) {
+    console.warn("OCR failed", err);
+    toast(t("card_ocr_failed"));
+    setProgress(t("card_ocr_failed"), 0);
+  }
+}
+
 /** Vào màn confirm (form manual) với trường đã tự điền từ text/voice. */
 function enterReviewFromText() {
   const parsed = parseCaptureText(cap.text || "");
@@ -1962,10 +2059,11 @@ function enterReviewFromText() {
 
 /** Vào màn confirm với trường từ namecard (chỉ trường CÓ dữ liệu). */
 function enterReviewFromCard() {
-  const pre = cardDemoFields();
+  const pre = parseCardOcrText(cap.ocrText || "") || cardDemoFields();
   const matched = resolvePersonFromText(pre.name || "");
   cap.mode = "manual";
   cap.review = true;
+  cap.text = cap.ocrText || "";
   cap.prefill = pre;
   cap.personId = matched ? matched.id : null;
   cap.edit = !!matched;
