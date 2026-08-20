@@ -238,6 +238,9 @@ function renderHome() {
     if (c.reason === "birthday") {
       reasonTxt = t("care_birthday_in", { n: c.days });
       detailTxt = p.birthday;
+    } else if (c.reason === "birthday_month") {
+      reasonTxt = t("care_birthday_month_in", { n: c.days });
+      detailTxt = c.detail || p.birthday;
     } else if (c.reason === "date") {
       reasonTxt = c.date ? t("care_date_in", { label: c.date.label, n: c.days }) : t("reason_date");
       detailTxt = c.date ? c.date.when : "";
@@ -279,9 +282,9 @@ function renderHome() {
   const dates = homeDates().map((d) => {
     const p = byId(d.personId);
     if (!p) return "";
-    const label = d.kind === "birthday" ? t("reason_birthday") : d.label;
+    const label = d.kind === "birthday" ? t("reason_birthday") : d.kind === "birthday_month" ? t("reason_birthday_month") : d.label;
     return (
-      '<div class="date-item"><div class="di-ico">' + icon(d.kind === "birthday" ? "cake" : "cal", 14) + "</div>" +
+      '<div class="date-item"><div class="di-ico">' + icon(d.kind === "birthday" || d.kind === "birthday_month" ? "cake" : "cal", 14) + "</div>" +
       '<div style="flex:1;min-width:0"><b>' + esc(p.name) + " — " + esc(label) + "</b><span>" + esc(d.when) + "</span></div>" +
       '<button class="btn small ghost" data-id="' + p.id + '">' + t("btn_view") + "</button></div>"
     );
@@ -394,17 +397,18 @@ function renderPeople() {
 /* ============================================================
    RELATIONSHIP CARE
    ============================================================ */
-const REASON_LABEL = { silence: "reason_silence", promise: "reason_promise", follow_up: "reason_follow_up", birthday: "reason_birthday", date: "reason_date", inactive: "reason_inactive" };
+const REASON_LABEL = { silence: "reason_silence", promise: "reason_promise", follow_up: "reason_follow_up", birthday: "reason_birthday", birthday_month: "reason_birthday_month", date: "reason_date", inactive: "reason_inactive" };
 
 function careTitle(r, p) {
   if (r.reason === "birthday") return t("care_birthday_in", { n: r.days }) + (p.birthday ? " (" + p.birthday + ")" : "");
+  if (r.reason === "birthday_month") return t("care_birthday_month_in", { n: r.days }) + (p.birthday ? " (" + p.birthday + ")" : "");
   if (r.reason === "date") return r.date ? t("care_date_in", { label: r.date.label, n: r.days }) + " (" + r.date.when + ")" : t("reason_date");
   if (r.reason === "silence") return t("care_silence_title", { n: r.days });
   return r.followUp ? r.followUp.what : "";
 }
 
 function careContext(r, p) {
-  if (r.reason === "birthday") {
+  if (r.reason === "birthday" || r.reason === "birthday_month") {
     return (p.memories && p.memories.length) ? t("care_ctx_birthday") + " " + p.memories[p.memories.length - 1].text : t("care_ctx_birthday");
   }
   if (r.reason === "date") return t("care_ctx_date");
@@ -453,8 +457,8 @@ function renderCare() {
         const freq = frequencyOf(p.frequency);
         return (
           '<div class="card rem-card">' +
-          '<div class="rem-icon ' + (r.reason === "birthday" || r.reason === "date" ? "cake" : r.reason === "promise" ? "action" : r.reason === "follow_up" ? "meeting" : "alert") + '">' +
-          icon(r.reason === "birthday" ? "cake" : r.reason === "date" ? "cal" : r.reason === "promise" ? "check" : r.reason === "follow_up" ? "meeting" : "alert", 17) + "</div>" +
+          '<div class="rem-icon ' + (r.reason === "birthday" || r.reason === "birthday_month" || r.reason === "date" ? "cake" : r.reason === "promise" ? "action" : r.reason === "follow_up" ? "meeting" : "alert") + '">' +
+          icon(r.reason === "birthday" || r.reason === "birthday_month" ? "cake" : r.reason === "date" ? "cal" : r.reason === "promise" ? "check" : r.reason === "follow_up" ? "meeting" : "alert", 17) + "</div>" +
           '<div class="rem-body">' +
           '<div class="rem-person">' + avatarHTML(p, 24) + "<span>" + esc(p.name) + "</span>" +
           '<span class="reason-chip ' + r.reason + '">' + t(REASON_LABEL[r.reason]) + "</span></div>" +
@@ -1014,6 +1018,10 @@ function renderProfile(id) {
   const st = strengthOf(p.strength);
   const freq = frequencyOf(p.frequency);
   const inactive = p.active === false;
+  const importantDates = [
+    ...(p.birthday ? [{ label: t("field_birthday"), when: p.birthday }] : []),
+    ...(p.dates || []),
+  ];
 
   const head =
     '<button class="btn ghost" style="margin-bottom:12px" id="back-people">' + icon("back") + " " + t("btn_back") + "</button>" +
@@ -1062,7 +1070,7 @@ function renderProfile(id) {
     '<div class="pick-row" style="margin-top:7px">' + FREQUENCIES.map((f) => '<button class="pick freq-pick' + (f.id === p.frequency ? " on" : "") + '" data-f="' + f.id + '">' + frequencyLabel(f.id) + "</button>").join("") + "</div>" +
     '<p style="font-size:11px;color:var(--ink-3);margin-top:9px">' + t("profile_care_note") + "</p></div>" +
     '<div class="card"><div class="card-title">' + icon("cake", 13) + " " + t("profile_important_dates") + "</div>" +
-    (p.dates.length ? kvList(p.dates.map((d) => ({ k: d.label, v: d.when }))) : '<span class="chip ghost">' + t("no_dates_yet") + "</span>") + "</div>" +
+    (importantDates.length ? kvList(importantDates.map((d) => ({ k: d.label, v: d.when }))) : '<span class="chip ghost">' + t("no_dates_yet") + "</span>") + "</div>" +
     '<div class="card"><div class="card-title">' + icon("tag", 13) + " " + t("profile_tags") + "</div>" +
     '<div class="chip-row">' + (p.tags || []).map((tg) => '<button class="chip chip-action tag-search" data-tag-search="' + esc(tg) + '" title="' + esc(t("tag_search_hint")) + '">#' + esc(tg) + "</button>").join("") + "</div></div>" +
     "</div>" +
@@ -1450,6 +1458,7 @@ function openCapture(mode, opts = {}) {
     voiceLang: getVoiceLang(),
     prefill: opts.prefill || {}, review: false, formDraft: null, initialFormDraft: "",
     advancedOpen: false, openSections: {}, dirty: false, nameFocused: false, aiAbort: null,
+    cardStream: null, cardCameraStarted: false,
   };
   $("#capture-modal").classList.add("open");
   renderCapture();
@@ -1466,6 +1475,7 @@ function closeCapture(force = false) {
   if (force !== true && cap.mode === "manual" && cap.dirty && !confirm(t("discard_changes"))) return false;
   clearInterval(cap.timer);
   abortCapAI();
+  stopCardCamera();
   cap.open = false;
   $("#capture-modal").classList.remove("open");
   return true;
@@ -1517,6 +1527,8 @@ function captureInputLocale() {
 
 function buildExtractPrefill(parsed, rawText) {
   const source = parsed || {};
+  const birthdayParts = parseBirthdayParts(source.birthday) || {};
+  const birthdayParsed = manualHasValue(birthdayParts);
   const workNotes = [
     source.title ? "Role/title: " + source.title : "",
     source.department ? "Department: " + source.department : "",
@@ -1533,12 +1545,17 @@ function buildExtractPrefill(parsed, rawText) {
     source.followUpWhat ? "Follow-up: " + source.followUpWhat : "",
     source.promises && source.promises.length ? "Promises: " + source.promises.join(", ") : "",
   ].filter(Boolean).join("\n");
+  const notes = [
+    source.notes || rawText || "",
+    source.birthday && !birthdayParsed ? "Birthday: " + source.birthday : "",
+  ].filter(Boolean).join("\n");
   const prefill = {
     name: source.name || "",
     relationshipType: source.relationshipType || "",
     company: source.company || "",
     currentCity: source.currentCity || "",
     birthday: source.birthday || "",
+    birthdayParts,
     workNotes,
     familyNotes: source.familyNotes || "",
     interestsNotes,
@@ -1556,7 +1573,7 @@ function buildExtractPrefill(parsed, rawText) {
     interests: source.interests || [],
     businessTopics: source.businessTopics || [],
     introducedBy: source.introducedBy || "",
-    notes: source.notes || rawText || "",
+    notes,
   };
   if (prefill.followUpWhat && !prefill.promises.length) prefill.promises = [prefill.followUpWhat];
   return prefill;
@@ -1727,12 +1744,35 @@ function manualFieldHTML(field) {
   } else if (field.control === "location") {
     control = '<input class="field-input" id="' + id + '" data-manual-key="' + key + '" list="manual-location-list" placeholder="' + esc(placeholder) + '" value="' + esc(value || "") + '"' + attrs + " />" +
       '<div class="field-help-row"><span>' + t("location_hint") + '</span><button type="button" class="field-inline-action" data-location-other="' + key + '">' + t("location_other") + "</button></div>";
+  } else if (field.control === "birthday") {
+    const parts = value && typeof value === "object" ? value : parseBirthdayParts(value) || {};
+    const month = validMonth(parseInt(parts.month, 10));
+    const day = validDay(parseInt(parts.day, 10));
+    const year = validYear(parseInt(parts.year, 10));
+    const dateValue = month && day && year ? String(year).padStart(4, "0") + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0") : "";
+    const monthOptions = ['<option value="">' + esc(t("birthday_month_ph")) + "</option>"]
+      .concat(Array.from({ length: 12 }, (_, index) => {
+        const option = index + 1;
+        return '<option value="' + option + '"' + (month === option ? " selected" : "") + ">" + esc(t("birthday_month_" + option)) + "</option>";
+      })).join("");
+    const dayOptions = ['<option value="">' + esc(t("birthday_day_ph")) + "</option>"]
+      .concat(Array.from({ length: 31 }, (_, index) => {
+        const option = index + 1;
+        return '<option value="' + option + '"' + (day === option ? " selected" : "") + ">" + option + "</option>";
+      })).join("");
+    control = '<div class="birthday-parts" data-birthday-key="' + key + '">' +
+      '<select class="field-input" data-birthday-part="' + key + '" data-part="month" aria-label="' + esc(t("birthday_month_ph")) + '">' + monthOptions + "</select>" +
+      '<select class="field-input" data-birthday-part="' + key + '" data-part="day" aria-label="' + esc(t("birthday_day_ph")) + '">' + dayOptions + "</select>" +
+      '<input class="field-input" type="number" inputmode="numeric" min="1" max="9999" data-birthday-part="' + key + '" data-part="year" placeholder="' + esc(t("birthday_year_ph")) + '" aria-label="' + esc(t("birthday_year_ph")) + '" value="' + esc(year || "") + '" />' +
+      "</div>" +
+      '<div class="birthday-calendar-row"><input class="field-input" type="date" data-birthday-date="' + key + '" value="' + esc(dateValue) + '" aria-label="' + esc(t("birthday_calendar")) + '" />' +
+      '<span>' + esc(t("birthday_partial_hint")) + "</span></div>";
   } else {
     const type = field.control === "email" || field.control === "tel" ? field.control : "text";
     control = '<input class="field-input" id="' + id + '" type="' + type + '" data-manual-key="' + key + '" placeholder="' + esc(placeholder) + '" value="' + esc(value || "") + '"' + attrs + " />";
   }
 
-  return '<div class="field' + (field.control === "textarea" ? " full" : "") + '"><label for="' + id + '">' + label + "</label>" + control + "</div>";
+  return '<div class="field' + (field.control === "textarea" || field.control === "birthday" ? " full" : "") + '"><label for="' + id + '">' + label + "</label>" + control + "</div>";
 }
 
 function manualVisibleFields() {
@@ -1990,6 +2030,29 @@ function bindManualCapture(editing) {
     const input = field && $("#f-" + field.sec + "-" + field.k);
     if (input) { input.value = ""; if (input.focus) input.focus(); }
   }));
+  $$('[data-birthday-part]', body).forEach((input) => {
+    const update = () => {
+      const key = input.dataset.birthdayPart;
+      const current = cap.formDraft[key] && typeof cap.formDraft[key] === "object" ? cap.formDraft[key] : {};
+      cap.formDraft[key] = Object.assign({}, current, { [input.dataset.part]: input.value });
+      refreshManualDirty();
+      updateManualSaveState();
+    };
+    input.addEventListener("input", update);
+    input.addEventListener("change", update);
+  });
+  $$('[data-birthday-date]', body).forEach((input) => {
+    input.addEventListener("change", () => {
+      const parts = parseBirthdayParts(input.value) || {};
+      cap.formDraft[input.dataset.birthdayDate] = {
+        month: parts.month ? String(parts.month) : "",
+        day: parts.day ? String(parts.day) : "",
+        year: parts.year ? String(parts.year) : "",
+      };
+      refreshManualDirty();
+      renderManualCapture();
+    });
+  });
 
   const advanced = $("#manual-advanced-toggle");
   if (advanced) advanced.addEventListener("click", () => {
@@ -2063,13 +2126,11 @@ function renderCapture() {
     const modes = cap.addInfo
       ? [
           ["voice", t("mode_voice"), t("mode_voice_sub"), "voice"],
-          ["text", t("mode_text"), t("mode_text_sub"), "text"],
           ["manual", t("mode_manual"), t("mode_manual_sub"), "text"]
         ]
       : [
-          ["card", t("mode_card"), t("mode_card_sub"), "card"],
           ["voice", t("mode_voice"), t("mode_voice_sub"), "voice"],
-          ["text", t("mode_text"), t("mode_text_sub"), "text"],
+          ["card", t("mode_card"), t("mode_card_sub"), "card"],
           ["manual", t("mode_manual"), t("mode_manual_sub"), "text"]
         ];
     body.innerHTML =
@@ -2085,6 +2146,7 @@ function renderCapture() {
       "</div>" +
       '<p style="font-size:11px;color:var(--ink-3);margin-top:13px">' + t("cap_every_mode_note") + "</p>";
     $$(".mode-cell", body).forEach((b) => b.addEventListener("click", () => {
+      stopCardCamera();
       cap.mode = b.dataset.mode;
       cap.sourceMode = b.dataset.mode;
       cap.step = 2;
@@ -2149,20 +2211,24 @@ function renderCapture() {
       setCapTitle(t("card_scan"), t("card_step_scan"));
       body.innerHTML =
         '<div class="ocr-surface">' +
-        '<label class="ocr-picker" for="card-photo">' +
-          '<span class="ico">' + icon("card", 24) + "</span>" +
-          "<b>" + t("card_pick_photo") + "</b>" +
-          "<p>" + t("card_pick_hint") + "</p>" +
-        "</label>" +
+        '<div class="card-camera">' +
+          '<video id="card-video" autoplay muted playsinline></video>' +
+          '<div class="card-guide"><span></span></div>' +
+          '<div class="card-camera-empty" id="card-camera-empty">' + icon("camera", 28) + '<b>' + t("card_camera_starting") + "</b></div>" +
+        "</div>" +
         '<input class="ocr-file" id="card-photo" type="file" accept="image/*" capture="environment" />' +
         (cap.photo ? '<img class="ocr-preview" src="' + cap.photo + '" alt="" />' : "") +
         '<div class="ocr-status" id="ocr-status">' + t("card_ocr_local") + "</div>" +
         '<div class="ocr-bar" aria-hidden="true"><span id="ocr-bar"></span></div>' +
         '</div>' +
-        '<div class="modal-foot ocr-foot"><button class="btn primary" id="card-choose">' + icon("camera", 13) + " " + t("card_choose") + "</button></div>";
+        '<div class="modal-foot ocr-foot"><button class="btn primary" id="card-capture" disabled>' + icon("camera", 13) + " " + t("card_capture") + "</button>" +
+        '<button class="btn ghost" id="card-choose">' + icon("image", 13) + " " + t("card_choose_instead") + "</button></div>";
       $("#card-photo").addEventListener("change", handleCardPhoto);
       $("#card-choose").addEventListener("click", () => $("#card-photo").click());
+      $("#card-capture").addEventListener("click", captureCardFrame);
+      startCardCamera();
     } else if (cap.step === 3) {
+      stopCardCamera();
       setCapTitle(t("card_read"), t("card_step_review"));
       const extracted = cardFieldsToExtract(cap.prefill || parseCardOcrText(cap.ocrText || ""));
       const extractedHTML = extracted.length
@@ -2176,7 +2242,7 @@ function renderCapture() {
         '<p style="font-size:12px;color:var(--ink-3);margin-top:10px">' + t("card_review_hint") + (cap.ocrProvider ? " " + t("card_source", { provider: cap.ocrProvider }) : "") + "</p>" +
         '<div class="modal-foot"><button class="btn ghost" id="card-rescan">' + t("rescan") + "</button>" +
         '<button class="btn primary" id="card-next">' + icon("check", 13) + " " + t("looks_right") + "</button></div>";
-      $("#card-rescan").addEventListener("click", () => { cap.step = 2; renderCapture(); });
+      $("#card-rescan").addEventListener("click", () => { stopCardCamera(); cap.cardCameraStarted = false; cap.step = 2; renderCapture(); });
       $("#card-next").addEventListener("click", () => {
         cap.ocrText = $("#card-raw").value.trim();
         if (!cap.ocrText) { toast(t("text_empty")); return; }
@@ -2455,6 +2521,74 @@ function dataUrlMime(dataUrl) {
   return m ? m[1] : "image/jpeg";
 }
 
+function cardProgressSetter() {
+  const status = $("#ocr-status");
+  const bar = $("#ocr-bar");
+  return (msg, pct) => {
+    if (status) status.textContent = msg;
+    if (bar) bar.style.width = Math.max(3, Math.round((pct || 0) * 100)) + "%";
+  };
+}
+
+function stopCardCamera() {
+  const video = $("#card-video");
+  if (video) {
+    try { video.pause(); } catch (e) { /* ignore */ }
+    video.srcObject = null;
+    video.classList.remove("ready");
+  }
+  if (!cap || !cap.cardStream) return;
+  try {
+    cap.cardStream.getTracks().forEach((track) => track.stop());
+  } catch (e) { /* ignore */ }
+  cap.cardStream = null;
+}
+
+async function startCardCamera() {
+  if (!cap.open || cap.mode !== "card" || cap.step !== 2 || cap.cardCameraStarted) return;
+  cap.cardCameraStarted = true;
+  const setProgress = cardProgressSetter();
+  const video = $("#card-video");
+  const empty = $("#card-camera-empty");
+  const capture = $("#card-capture");
+  const media = navigator.mediaDevices;
+  if (!media || !media.getUserMedia) {
+    setProgress(t("card_camera_unavailable"), 0);
+    if (empty) empty.innerHTML = icon("camera", 28) + "<b>" + t("card_camera_unavailable") + "</b>";
+    if (capture) capture.disabled = true;
+    return;
+  }
+  try {
+    setProgress(t("card_camera_starting"), 0.05);
+    const stream = await media.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+      audio: false,
+    });
+    if (!cap.open || cap.mode !== "card" || cap.step !== 2) {
+      stream.getTracks().forEach((track) => track.stop());
+      return;
+    }
+    cap.cardStream = stream;
+    if (video) {
+      video.srcObject = stream;
+      await video.play().catch(() => {});
+      video.classList.add("ready");
+    }
+    if (empty) empty.hidden = true;
+    if (capture) capture.disabled = false;
+    setProgress(t("card_camera_align"), 0.08);
+  } catch (err) {
+    console.warn("Camera unavailable", err);
+    setProgress(t("card_camera_unavailable"), 0);
+    if (empty) empty.innerHTML = icon("camera", 28) + "<b>" + t("card_camera_unavailable") + "</b>";
+    if (capture) capture.disabled = true;
+  }
+}
+
 function readFileAsDataURLPromise(file) {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
@@ -2502,41 +2636,65 @@ async function runLocalCardOcr(file, setProgress) {
   return ((result && result.data && result.data.text) || "").trim();
 }
 
+async function processCardImageDataUrl(imageDataUrl, fallbackImage, setProgress) {
+  if (!imageDataUrl) throw new Error("image-read-failed");
+  cap.photo = imageDataUrl;
+  const prev = $(".ocr-preview", $("#capture-body"));
+  if (prev) prev.src = imageDataUrl;
+  try {
+    setProgress(t("card_ai_reading"), 0.18);
+    const ai = await requestProxyCardOcr(imageDataUrl, dataUrlMime(imageDataUrl));
+    cap.ocrText = (ai.ocrText || "").trim();
+    cap.prefill = buildExtractPrefill(ai.extraction || {}, cap.ocrText || "");
+    cap.ocrProvider = "AI";
+    if (!cap.ocrText && cap.prefill && cap.prefill.notes) cap.ocrText = cap.prefill.notes;
+  } catch (err) {
+    if (err && err.name === "AbortError") return false;
+    setProgress(t("card_ocr_fallback"), 0.12);
+    const localText = await runLocalCardOcr(fallbackImage || imageDataUrl, setProgress);
+    cap.ocrText = localText;
+    cap.prefill = parseCardOcrText(localText);
+    cap.ocrProvider = "local OCR";
+  }
+  if (!cap.ocrText) { toast(t("card_ocr_empty")); return false; }
+  stopCardCamera();
+  cap.step = 3;
+  renderCapture();
+  return true;
+}
+
+async function captureCardFrame() {
+  const video = $("#card-video");
+  const setProgress = cardProgressSetter();
+  if (!video || !video.videoWidth || !video.videoHeight) {
+    toast(t("card_camera_not_ready"));
+    return;
+  }
+  try {
+    setProgress(t("card_image_preparing"), 0.1);
+    const maxSide = 1800;
+    const ratio = Math.min(1, maxSide / Math.max(video.videoWidth, video.videoHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(video.videoWidth * ratio));
+    canvas.height = Math.max(1, Math.round(video.videoHeight * ratio));
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    await processCardImageDataUrl(canvas.toDataURL("image/jpeg", 0.88), null, setProgress);
+  } catch (err) {
+    console.warn("Camera capture failed", err);
+    toast(t("card_ocr_failed"));
+    setProgress(t("card_ocr_failed"), 0);
+  }
+}
+
 async function handleCardPhoto(e) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
-  const status = $("#ocr-status");
-  const bar = $("#ocr-bar");
-  const setProgress = (msg, pct) => {
-    if (status) status.textContent = msg;
-    if (bar) bar.style.width = Math.max(3, Math.round((pct || 0) * 100)) + "%";
-  };
+  const setProgress = cardProgressSetter();
   try {
     setProgress(t("card_image_preparing"), 0.05);
     const imageDataUrl = await compressImageFile(file);
-    if (!imageDataUrl) throw new Error("image-read-failed");
-    cap.photo = imageDataUrl;
-    const prev = $(".ocr-preview", $("#capture-body"));
-    if (prev) prev.src = imageDataUrl;
-
-    try {
-      setProgress(t("card_ai_reading"), 0.18);
-      const ai = await requestProxyCardOcr(imageDataUrl, dataUrlMime(imageDataUrl));
-      cap.ocrText = (ai.ocrText || "").trim();
-      cap.prefill = buildExtractPrefill(ai.extraction || {}, cap.ocrText || "");
-      cap.ocrProvider = "AI";
-      if (!cap.ocrText && cap.prefill && cap.prefill.notes) cap.ocrText = cap.prefill.notes;
-    } catch (err) {
-      if (err && err.name === "AbortError") return;
-      setProgress(t("card_ocr_fallback"), 0.12);
-      const localText = await runLocalCardOcr(file, setProgress);
-      cap.ocrText = localText;
-      cap.prefill = parseCardOcrText(localText);
-      cap.ocrProvider = "local OCR";
-    }
-    if (!cap.ocrText) { toast(t("card_ocr_empty")); return; }
-    cap.step = 3;
-    renderCapture();
+    await processCardImageDataUrl(imageDataUrl, file, setProgress);
   } catch (err) {
     console.warn("OCR failed", err);
     toast(err && err.code === "tesseract-unavailable" ? t("card_ocr_unavailable") : t("card_ocr_failed"));

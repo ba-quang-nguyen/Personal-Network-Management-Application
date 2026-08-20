@@ -3,7 +3,7 @@
    Quản lý mảng PEOPLE toàn cục + persist localStorage + đồng bộ đa tab.
    UI (app.js) chỉ đọc/ghi dữ liệu qua Store — không đụng localStorage trực tiếp.
    ============================================================ */
-const STORE_VERSION = 2;
+const STORE_VERSION = 3;
 const STORE_KEY = 'nm-data';
 
 const Store = (() => {
@@ -70,6 +70,7 @@ const Store = (() => {
     if (!Array.isArray(p.mutual)) p.mutual = [];
     if (!Array.isArray(p.interests)) p.interests = [];
     if (!Array.isArray(p.hobbies)) p.hobbies = [];
+    normalizeBirthdayFields(p);
     if (typeof p.workNotes !== 'string') p.workNotes = p.workNotes == null ? '' : String(p.workNotes);
     if (typeof p.familyNotes !== 'string') p.familyNotes = p.familyNotes == null ? '' : String(p.familyNotes);
     if (typeof p.interestsNotes !== 'string') p.interestsNotes = p.interestsNotes == null ? '' : String(p.interestsNotes);

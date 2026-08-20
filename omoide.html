@@ -608,13 +608,14 @@ body.view-web .main { flex: 1; min-width: 0; padding: 34px 40px 80px; max-width:
 .modal-close { position: absolute; right: 16px; top: 16px; color: var(--ink-3); width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; }
 .modal-close:hover { background: var(--surface-2); color: var(--ink); }
 
-.mode-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.mode-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
 .mode-cell {
   border: 1.5px solid var(--line-strong); border-radius: 14px;
-  padding: 15px 12px; text-align: center; background: var(--surface);
+  padding: 14px 16px; text-align: left; background: var(--surface);
+  display: grid; grid-template-columns: 40px 1fr; align-items: center; column-gap: 12px;
 }
 .mode-cell:hover { border-color: var(--accent); transform: translateY(-2px); }
-.mode-cell .ico { width: 40px; height: 40px; margin: 0 auto 8px; border-radius: 12px; display: grid; place-items: center; }
+.mode-cell .ico { width: 40px; height: 40px; margin: 0; border-radius: 12px; display: grid; place-items: center; grid-row: span 2; }
 .mode-cell b { font-size: 12.5px; display: block; }
 .mode-cell span { font-size: 10.5px; color: var(--ink-3); }
 
@@ -645,6 +646,27 @@ body.view-web .main { flex: 1; min-width: 0; padding: 34px 40px 80px; max-width:
   padding: 20px 22px; position: relative; overflow: hidden; font-family: var(--serif);
 }
 .ocr-surface { width: 100%; }
+.card-camera {
+  position: relative; width: 100%; aspect-ratio: 16 / 10; overflow: hidden;
+  border-radius: 16px; border: 1px solid var(--line-strong); background: var(--surface-2);
+}
+.card-camera video {
+  width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0;
+}
+.card-camera video.ready { opacity: 1; }
+.card-guide {
+  position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
+}
+.card-guide span {
+  width: 86%; aspect-ratio: 1.72 / 1; border: 2px solid var(--accent);
+  border-radius: 10px; box-shadow: 0 0 0 999px rgba(20, 16, 12, 0.25);
+}
+.card-camera-empty {
+  position: absolute; inset: 0; display: grid; place-items: center; align-content: center;
+  gap: 8px; color: var(--ink-3); text-align: center; padding: 18px;
+}
+.card-camera-empty[hidden] { display: none; }
+.card-camera-empty b { font-size: 12.5px; font-weight: 700; }
 .ocr-picker {
   border: 1.5px dashed var(--line-strong); border-radius: 16px; background: var(--surface);
   padding: 18px; text-align: center; display: block; width: 100%;
@@ -745,6 +767,14 @@ textarea.story { min-height: 110px; resize: vertical; }
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   margin-top: 5px; color: var(--ink-3); font-size: 10.5px; line-height: 1.4;
 }
+.birthday-parts {
+  display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .85fr) minmax(0, 1fr); gap: 8px;
+}
+.birthday-calendar-row {
+  display: grid; grid-template-columns: minmax(0, 160px) 1fr; gap: 9px; align-items: center;
+  margin-top: 8px; color: var(--ink-3); font-size: 10.5px; line-height: 1.4;
+}
+.birthday-calendar-row .field-input { min-height: 40px; }
 .field-inline-action {
   min-height: 44px; margin: -14px 0; display: inline-flex; align-items: center;
   color: var(--accent); font-weight: 700; font-size: 10.5px; flex-shrink: 0;
@@ -935,6 +965,7 @@ textarea.story { min-height: 110px; resize: vertical; }
   .profile-actions .btn { flex: 1; }
   .extract-grid { grid-template-columns: 1fr; }
   .form-grid { grid-template-columns: 1fr; }
+  .birthday-parts, .birthday-calendar-row { grid-template-columns: 1fr; }
   .screen-head-row { flex-direction: column; align-items: flex-start; gap: 10px; }
   .map-pop { position: static; width: 100%; margin-top: 12px; }
 }
@@ -948,11 +979,12 @@ body.view-mobile .profile-actions { margin-left: 0; width: 100%; }
 body.view-mobile .profile-actions .btn { flex: 1; }
 body.view-mobile .screen-head-row { flex-direction: column; align-items: flex-start; gap: 10px; }
 body.view-mobile .map-pop { position: static; width: 100%; margin-top: 12px; }
-body.view-mobile .mode-grid { grid-template-columns: repeat(2, 1fr); }
 body.view-mobile .modal-foot { justify-content: stretch; }
 body.view-mobile .modal-foot .btn { flex: 1; min-height: 44px; }
 body.view-mobile .ocr-preview { max-height: 220px; }
 body.view-mobile .voice-lang { flex-direction: column; gap: 6px; }
+body.view-mobile .birthday-parts,
+body.view-mobile .birthday-calendar-row { grid-template-columns: 1fr; }
 
 /* ============================================================
    Network Management v0.3 — additions
@@ -1702,22 +1734,37 @@ const personByName = (first) => PEOPLE.find((p) => p.name.split(" ")[0].toLowerC
    HOME / CARE — tính động từ PEOPLE (data thật của người dùng)
    ============================================================ */
 const MONTHS_MAP = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+function validMonth(month) {
+  return month >= 1 && month <= 12 ? month : "";
+}
+function validDay(day) {
+  return day >= 1 && day <= 31 ? day : "";
+}
+function validYear(year) {
+  return year >= 1 && year <= 9999 ? year : "";
+}
 function validMonthDay(month, day) {
   if (!(month >= 1 && month <= 12 && day >= 1 && day <= 31)) return null;
   const check = new Date(2000, month - 1, day);
   return check.getMonth() === month - 1 && check.getDate() === day ? { month, day } : null;
 }
-function parseMonthDay(value) {
+function parseBirthdayParts(value) {
   const raw = String(value || "").trim();
   if (!raw) return null;
 
   // ISO full date: year is optional knowledge for birthday reminders.
   let m = /(?:^|\D)(\d{4})-(\d{1,2})-(\d{1,2})(?:\D|$)/.exec(raw);
-  if (m) return validMonthDay(parseInt(m[2], 10), parseInt(m[3], 10));
+  if (m) {
+    const parsed = validMonthDay(parseInt(m[2], 10), parseInt(m[3], 10));
+    return parsed ? Object.assign(parsed, { year: validYear(parseInt(m[1], 10)) }) : null;
+  }
 
   // Japanese: 11月22日.
-  m = /(\d{1,2})\s*月\s*(\d{1,2})\s*日/.exec(raw);
-  if (m) return validMonthDay(parseInt(m[1], 10), parseInt(m[2], 10));
+  m = /(?:(\d{4})\s*年\s*)?(\d{1,2})\s*月\s*(\d{1,2})\s*日/.exec(raw);
+  if (m) {
+    const parsed = validMonthDay(parseInt(m[2], 10), parseInt(m[3], 10));
+    return parsed ? Object.assign(parsed, { year: m[1] ? validYear(parseInt(m[1], 10)) : "" }) : null;
+  }
 
   // Vietnamese natural forms: 22 tháng 11 / tháng 11 ngày 22.
   m = /(?:ngày\s*)?(\d{1,2})\s*(?:tháng|thg)\s*(\d{1,2})/i.exec(raw);
@@ -1726,21 +1773,82 @@ function parseMonthDay(value) {
   if (m) return validMonthDay(parseInt(m[1], 10), parseInt(m[2], 10));
 
   // Numeric input follows the app's Vietnamese-first day/month convention.
-  m = /(?:^|\D)(\d{1,2})\s*[\/.]\s*(\d{1,2})(?:\s*[\/.]\s*\d{2,4})?(?:\D|$)/.exec(raw);
-  if (m) return validMonthDay(parseInt(m[2], 10), parseInt(m[1], 10));
+  m = /(?:^|\D)(\d{1,2})\s*[\/.]\s*(\d{1,2})(?:\s*[\/.]\s*(\d{2,4}))?(?:\D|$)/.exec(raw);
+  if (m) {
+    const parsed = validMonthDay(parseInt(m[2], 10), parseInt(m[1], 10));
+    const yearRaw = m[3] ? parseInt(m[3], 10) : "";
+    return parsed ? Object.assign(parsed, { year: yearRaw ? validYear(yearRaw < 100 ? 2000 + yearRaw : yearRaw) : "" }) : null;
+  }
 
   // Existing sample/import format: Nov 22.
   m = /([A-Za-z]{3})\s*(\d{1,2})/.exec(raw);
-  if (!m) return null;
-  const month = MONTHS_MAP[(m[1][0] || "").toUpperCase() + (m[1] || "").slice(1).toLowerCase()];
-  return month ? validMonthDay(month, parseInt(m[2], 10)) : null;
+  if (m) {
+    const month = MONTHS_MAP[(m[1][0] || "").toUpperCase() + (m[1] || "").slice(1).toLowerCase()];
+    return month ? validMonthDay(month, parseInt(m[2], 10)) : null;
+  }
+
+  // Partial month-only knowledge: "Nov", "11月", "tháng 11".
+  m = /(?:^|\D)(\d{1,2})\s*月(?:\D|$)/.exec(raw) || /(?:tháng|thg)\s*(\d{1,2})(?:\D|$)/i.exec(raw);
+  if (m) {
+    const month = validMonth(parseInt(m[1], 10));
+    return month ? { month, day: "", year: "" } : null;
+  }
+  m = /(?:^|\s)(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(?:\s|$)/i.exec(raw);
+  if (m) {
+    const month = MONTHS_MAP[(m[1][0] || "").toUpperCase() + (m[1] || "").slice(1).toLowerCase()];
+    return month ? { month, day: "", year: "" } : null;
+  }
+  m = /(?:^|\D)((?:19|20)\d{2})(?:\D|$)/.exec(raw);
+  return m ? { month: "", day: "", year: validYear(parseInt(m[1], 10)) } : null;
+}
+function parseMonthDay(value) {
+  const parsed = parseBirthdayParts(value);
+  return parsed && parsed.month && parsed.day ? { month: parsed.month, day: parsed.day } : null;
+}
+function birthdayPartsFromPerson(person) {
+  const month = validMonth(parseInt(person && person.birthdayMonth, 10));
+  const day = validDay(parseInt(person && person.birthdayDay, 10));
+  const year = validYear(parseInt(person && person.birthdayYear, 10));
+  if (month || day || year) return { month, day, year };
+  const parsed = parseBirthdayParts(person && person.birthday);
+  return parsed ? { month: parsed.month || "", day: parsed.day || "", year: parsed.year || "" } : { month: "", day: "", year: "" };
+}
+function formatBirthdayParts(parts) {
+  const month = validMonth(parseInt(parts && parts.month, 10));
+  const day = validDay(parseInt(parts && parts.day, 10));
+  const year = validYear(parseInt(parts && parts.year, 10));
+  const monthName = month ? Object.keys(MONTHS_MAP).find((key) => MONTHS_MAP[key] === month) : "";
+  if (month && day && validMonthDay(month, day)) return monthName + " " + day + (year ? ", " + year : "");
+  if (month && year) return monthName + " " + year;
+  if (month) return monthName;
+  if (day && year) return "Day " + day + ", " + year;
+  if (day) return "Day " + day;
+  return year ? String(year) : "";
+}
+function normalizeBirthdayFields(person) {
+  const parts = birthdayPartsFromPerson(person || {});
+  person.birthdayMonth = parts.month ? String(parts.month) : "";
+  person.birthdayDay = parts.day ? String(parts.day) : "";
+  person.birthdayYear = parts.year ? String(parts.year) : "";
+  person.birthday = formatBirthdayParts(parts);
+  return person;
+}
+function daysUntilMonthStart(month, today) {
+  if (!validMonth(month)) return Number.POSITIVE_INFINITY;
+  const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  let next = new Date(today.getFullYear(), month - 1, 1);
+  if (next < now) next = new Date(today.getFullYear() + 1, month - 1, 1);
+  return Math.round((next.getTime() - now.getTime()) / 86400000);
 }
 function daysUntilBirthday(value, today) {
-  const parsed = parseMonthDay(value);
+  const parsed = typeof value === "object" && value ? birthdayPartsFromPerson(value) : parseMonthDay(value);
   if (!parsed) return Number.POSITIVE_INFINITY;
+  const month = validMonth(parseInt(parsed.month, 10));
+  const day = validDay(parseInt(parsed.day, 10));
+  if (!month || !day || !validMonthDay(month, day)) return Number.POSITIVE_INFINITY;
   const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  let next = new Date(today.getFullYear(), parsed.month - 1, parsed.day);
-  if (next < now) next = new Date(today.getFullYear() + 1, parsed.month - 1, parsed.day);
+  let next = new Date(today.getFullYear(), month - 1, day);
+  if (next < now) next = new Date(today.getFullYear() + 1, month - 1, day);
   return Math.round((next.getTime() - now.getTime()) / 86400000);
 }
 
@@ -1807,13 +1915,24 @@ function computeCareItems(people, todayInput) {
   (people || []).forEach((p) => {
     if (p.active === false) return;
     if (p.snoozedUntil && p.snoozedUntil > nowTs) return; // snooze/dismiss
-    if (p.birthday) {
-      const days = daysUntilBirthday(p.birthday, today);
+    const birthdayParts = birthdayPartsFromPerson(p);
+    const birthdayDisplay = formatBirthdayParts(birthdayParts);
+    if (birthdayParts.month && birthdayParts.day) {
+      const days = daysUntilBirthday(p, today);
       if (days <= 30) {
         items.push({
           personId: p.id, reason: "birthday", group: "Coming up",
           urgency: days <= 3 ? "high" : "medium", days, sortDays: days,
           actions: ["profile"],
+        });
+      }
+    } else if (birthdayParts.month && !birthdayParts.day) {
+      const days = daysUntilMonthStart(parseInt(birthdayParts.month, 10), today);
+      if (days <= 30) {
+        items.push({
+          personId: p.id, reason: "birthday_month", group: "Coming up",
+          urgency: days <= 3 ? "medium" : "low", days, sortDays: days,
+          detail: birthdayDisplay, actions: ["profile"],
         });
       }
     }
@@ -1876,9 +1995,14 @@ function homeDates() {
   const out = [];
   const today = new Date();
   activePeople().forEach((p) => {
-    if (p.birthday) {
-      const days = daysUntilBirthday(p.birthday, today);
-      if (days <= 30) out.push({ personId: p.id, kind: "birthday", label: "birthday", when: p.birthday + (days <= 7 ? " · in " + days + " days" : "") });
+    const birthdayParts = birthdayPartsFromPerson(p);
+    const birthdayDisplay = formatBirthdayParts(birthdayParts);
+    if (birthdayParts.month && birthdayParts.day) {
+      const days = daysUntilBirthday(p, today);
+      if (days <= 30) out.push({ personId: p.id, kind: "birthday", label: "birthday", when: birthdayDisplay + (days <= 7 ? " · in " + days + " days" : "") });
+    } else if (birthdayParts.month && !birthdayParts.day) {
+      const days = daysUntilMonthStart(parseInt(birthdayParts.month, 10), today);
+      if (days <= 30) out.push({ personId: p.id, kind: "birthday_month", label: "birthday_month", when: birthdayDisplay + (days <= 7 ? " · in " + days + " days" : "") });
     }
     (p.dates || []).forEach((d) => {
       if (!d || /birthday/i.test(String(d.label || ""))) return;
@@ -1984,7 +2108,7 @@ const MANUAL_SECTIONS = [
     { k: "relationshipType", label: "Relationship type", control: "select", tier: "quick", options: ["", "Key contact", "Client", "Partner", "Investor", "Mentor", "Friend", "Collaborator", "Acquaintance"] },
     { k: "company", label: "Company", control: "text", tier: "quick", autocomplete: "organization" },
     { k: "currentCity", label: "Current city", control: "location", tier: "quick", phKey: "location_ph", autocomplete: "address-level2" },
-    { k: "birthday", label: "Birthday", control: "text", tier: "quick", phKey: "birthday_flexible_ph", autocomplete: "bday" },
+    { k: "birthday", label: "Birthday", control: "birthday", tier: "quick" },
     { k: "tags", label: "Tags", control: "chips", tier: "quick" }
   ]},
   { key: "work", title: "Work notes", fields: [
@@ -2023,6 +2147,7 @@ const MANUAL_ARRAY_FIELDS = new Set([
 
 function manualHasValue(value) {
   if (Array.isArray(value)) return value.length > 0;
+  if (value && typeof value === "object") return Object.keys(value).some((key) => manualHasValue(value[key]));
   const clean = String(value == null ? "" : value).trim();
   return !!clean && clean !== "—";
 }
@@ -2040,6 +2165,9 @@ function createManualDraft(person, prefill, review) {
     let value = "";
     if (field.k === "notes" && review) {
       value = ""; // raw voice/text/card memory is stored separately
+    } else if (field.k === "birthday") {
+      value = manualHasValue(source.birthdayParts) ? source.birthdayParts : birthdayPartsFromPerson(source);
+      if (!manualHasValue(value) && person) value = birthdayPartsFromPerson(person);
     } else if (Object.prototype.hasOwnProperty.call(source, field.k) && manualHasValue(source[field.k])) {
       value = source[field.k];
     } else if (person) {
@@ -2049,7 +2177,13 @@ function createManualDraft(person, prefill, review) {
       else value = person[field.k] == null ? "" : person[field.k];
     }
     if ((field.k === "company" || field.k === "title") && value === "—") value = "";
-    draft[key] = field.control === "chips" || MANUAL_ARRAY_FIELDS.has(field.k)
+    draft[key] = field.control === "birthday"
+      ? {
+          month: value && value.month ? String(value.month) : "",
+          day: value && value.day ? String(value.day) : "",
+          year: value && value.year ? String(value.year) : "",
+        }
+      : field.control === "chips" || MANUAL_ARRAY_FIELDS.has(field.k)
       ? manualArrayValue(value)
       : String(value == null ? "" : value);
   });
@@ -2062,6 +2196,19 @@ function manualDraftToFields(draft) {
     const value = draft[field.sec + "." + field.k];
     if (field.k === "firstMetDate" || field.k === "firstMetPlace") return;
     const target = field.k === "kana" ? "nameJa" : field.k;
+    if (field.control === "birthday") {
+      const parts = value && typeof value === "object" ? value : parseBirthdayParts(value) || {};
+      const normalized = {
+        month: validMonth(parseInt(parts.month, 10)),
+        day: validDay(parseInt(parts.day, 10)),
+        year: validYear(parseInt(parts.year, 10)),
+      };
+      fields.birthdayMonth = normalized.month ? String(normalized.month) : "";
+      fields.birthdayDay = normalized.day ? String(normalized.day) : "";
+      fields.birthdayYear = normalized.year ? String(normalized.year) : "";
+      fields.birthday = formatBirthdayParts(normalized);
+      return;
+    }
     fields[target] = field.control === "chips" || MANUAL_ARRAY_FIELDS.has(field.k)
       ? manualArrayValue(value)
       : String(value == null ? "" : value).trim();
@@ -2312,7 +2459,7 @@ function parseCaptureText(text) {
    Quản lý mảng PEOPLE toàn cục + persist localStorage + đồng bộ đa tab.
    UI (app.js) chỉ đọc/ghi dữ liệu qua Store — không đụng localStorage trực tiếp.
    ============================================================ */
-const STORE_VERSION = 2;
+const STORE_VERSION = 3;
 const STORE_KEY = 'nm-data';
 
 const Store = (() => {
@@ -2379,6 +2526,7 @@ const Store = (() => {
     if (!Array.isArray(p.mutual)) p.mutual = [];
     if (!Array.isArray(p.interests)) p.interests = [];
     if (!Array.isArray(p.hobbies)) p.hobbies = [];
+    normalizeBirthdayFields(p);
     if (typeof p.workNotes !== 'string') p.workNotes = p.workNotes == null ? '' : String(p.workNotes);
     if (typeof p.familyNotes !== 'string') p.familyNotes = p.familyNotes == null ? '' : String(p.familyNotes);
     if (typeof p.interestsNotes !== 'string') p.interestsNotes = p.interestsNotes == null ? '' : String(p.interestsNotes);
@@ -2619,10 +2767,15 @@ const FIREBASE_CONFIG = {
 /* js/google-maps-config.js
    Public browser config for Google Maps on the location lens.
    Safe to commit only with a browser-restricted key.
+   - apiKey: key của bạn (bật "Maps JavaScript API" + billing trong Google Cloud Console).
+   - mapId: "DEMO_MAP_ID" chạy được ngay không cần tạo gì; muốn custom style thì tạo
+     Map ID riêng (Google Cloud Console → Google Maps Platform → Map Management)
+     rồi dán vào đây. Map KHÔNG được để trống — thiếu Map ID làm Google Maps
+     hiện lỗi "This page can't load Google Maps correctly".
 */
 window.GOOGLE_MAPS_CONFIG = Object.freeze({
   apiKey: "AIzaSyCmztW_dMzgyWq4iyzq1QeqV7dUkB7qc6U",
-  mapId: "",
+  mapId: "DEMO_MAP_ID",
 });
 
 </script>
@@ -2853,7 +3006,7 @@ const STR = {
     care_sub: "In-app reminders for birthdays, important dates, follow-ups, missed rhythm, and open promises.",
     care_group_attention: "Needs attention", care_group_coming: "Coming up",
     reason_silence: "Long silence", reason_promise: "Open promise", reason_follow_up: "Follow-up due",
-    reason_birthday: "Birthday soon", reason_date: "Important date", reason_inactive: "Rhythm missed",
+    reason_birthday: "Birthday soon", reason_birthday_month: "Birthday month", reason_date: "Important date", reason_inactive: "Rhythm missed",
     care_rhythm: "Rhythm: ", care_empty: "All caught up",
 
     ask_kicker: "Network search", ask_title: "Search your network.",
@@ -2933,10 +3086,10 @@ const STR = {
 
     cap_add_info_title: "Add information — {name}", cap_add_person_title: "Add person",
     cap_add_info_desc: "Tell me anything new about this person — AI files it in the right sections.",
-    cap_add_person_desc: "Four ways in — AI structures, you stay natural.",
+    cap_add_person_desc: "Three ways in — AI structures, you stay natural.",
     cap_every_mode_note: "Every mode stores raw + structured in parallel.",
-    mode_card: "Scan card", mode_voice: "Voice", mode_text: "Type", mode_manual: "Quick add",
-    mode_card_sub: "card photo", mode_voice_sub: "just talk", mode_text_sub: "a few lines", mode_manual_sub: "name is enough",
+    mode_card: "Scan Card", mode_voice: "Voice Add", mode_text: "Type", mode_manual: "Manual add",
+    mode_card_sub: "live camera", mode_voice_sub: "just talk", mode_text_sub: "a few lines", mode_manual_sub: "fill fields",
     voice_title: "Voice memo", voice_step_record: "1 · record",
     voice_hint_add: "Tell me what changed — new job, family, interests, promises…",
     voice_hint_new: "Talk like you're telling a friend — who, what, what's next",
@@ -2957,8 +3110,11 @@ const STR = {
     extracted: "Extracted", raw_stored: "Raw memory stored",
     record_again: "Record again",
     card_scan: "Scan name card", card_step_scan: "1 · scan", ai_reading: "AI is reading the card…",
-    card_pick_photo: "Take or choose a card photo", card_pick_hint: "AI reads Japanese name cards first. If the AI proxy is unavailable, local OCR is used.",
-    card_choose: "Choose photo", card_ocr_local: "Ready for AI card scan", card_image_preparing: "Preparing image…",
+    card_pick_photo: "Align the name card in the frame", card_pick_hint: "AI reads Japanese name cards first. If the AI proxy is unavailable, local OCR is used.",
+    card_capture: "Capture card", card_choose: "Choose photo", card_choose_instead: "Choose photo instead",
+    card_camera_starting: "Starting camera…", card_camera_align: "Align the card inside the frame.",
+    card_camera_unavailable: "Camera unavailable — choose a photo instead.", card_camera_not_ready: "Camera is not ready yet.",
+    card_ocr_local: "Ready for camera scan", card_image_preparing: "Preparing image…",
     card_ai_reading: "Reading card with AI…", card_ocr_fallback: "AI unavailable — using local OCR…",
     card_ocr_loading: "Loading OCR…", card_ocr_reading: "Reading card…", card_ocr_failed: "Could not read this card. Try a sharper photo or type it manually.",
     card_ocr_empty: "No text found. Try a sharper photo.", card_ocr_unavailable: "OCR library is unavailable. Check connection and try again.",
@@ -2974,7 +3130,7 @@ const STR = {
     let_ai: "Let AI organize",
     prog_read: "Reading your note", prog_resolve_short: "Resolving the person", prog_extract_short: "Extracting facts & follow-up",
     here_understood: "Here's what I understood", edit_text: "Edit text",
-    manual_entry: "Quick add", manual_step: "quick",
+    manual_entry: "Manual add", manual_step: "manual",
     quick_intro: "Start with what you know", quick_intro_sub: "Only a name is required. Save now or add a few useful details.",
     advanced_add: "Add details", advanced_hide: "Hide details", advanced_count: "{n} saved",
     section_basic: "Basic information", section_work: "Work notes", section_family: "Family notes",
@@ -2996,7 +3152,13 @@ const STR = {
     field_introducedBy: "Introduced by", field_helpGiven: "What I've helped with",
     field_helpReceived: "What they've helped me with", field_promises: "Promises / follow-ups",
     field_notes: "Other notes",
-    birthday_flexible_ph: "22/11, Nov 22, or around 1990", location_ph: "Choose or type a city",
+    birthday_flexible_ph: "22/11, Nov 22, or around 1990",
+    birthday_month_ph: "Month", birthday_day_ph: "Day", birthday_year_ph: "Year",
+    birthday_calendar: "Pick full birthday", birthday_partial_hint: "Use the calendar if you know the full date, or save partial details.",
+    birthday_month_1: "Jan", birthday_month_2: "Feb", birthday_month_3: "Mar", birthday_month_4: "Apr",
+    birthday_month_5: "May", birthday_month_6: "Jun", birthday_month_7: "Jul", birthday_month_8: "Aug",
+    birthday_month_9: "Sep", birthday_month_10: "Oct", birthday_month_11: "Nov", birthday_month_12: "Dec",
+    location_ph: "Choose or type a city",
     work_notes_ph: "Job, department, role, company context, skills, projects",
     family_notes_ph: "Spouse, children, birthdays, family context",
     interests_notes_ph: "Hobbies, sports, food or drink, topics they like",
@@ -3054,6 +3216,7 @@ const STR = {
     btn_load_sample: "Load sample data",
     toast_sample_loaded: "Sample data loaded — explore the app",
     care_birthday_in: "Birthday in {n} days",
+    care_birthday_month_in: "Birthday month in {n} days",
     care_date_in: "{label} in {n} days",
     care_silence_title: "{n} days since last contact",
     care_silence_days: "{n} days since last contact",
@@ -3397,6 +3560,9 @@ function renderHome() {
     if (c.reason === "birthday") {
       reasonTxt = t("care_birthday_in", { n: c.days });
       detailTxt = p.birthday;
+    } else if (c.reason === "birthday_month") {
+      reasonTxt = t("care_birthday_month_in", { n: c.days });
+      detailTxt = c.detail || p.birthday;
     } else if (c.reason === "date") {
       reasonTxt = c.date ? t("care_date_in", { label: c.date.label, n: c.days }) : t("reason_date");
       detailTxt = c.date ? c.date.when : "";
@@ -3438,9 +3604,9 @@ function renderHome() {
   const dates = homeDates().map((d) => {
     const p = byId(d.personId);
     if (!p) return "";
-    const label = d.kind === "birthday" ? t("reason_birthday") : d.label;
+    const label = d.kind === "birthday" ? t("reason_birthday") : d.kind === "birthday_month" ? t("reason_birthday_month") : d.label;
     return (
-      '<div class="date-item"><div class="di-ico">' + icon(d.kind === "birthday" ? "cake" : "cal", 14) + "</div>" +
+      '<div class="date-item"><div class="di-ico">' + icon(d.kind === "birthday" || d.kind === "birthday_month" ? "cake" : "cal", 14) + "</div>" +
       '<div style="flex:1;min-width:0"><b>' + esc(p.name) + " — " + esc(label) + "</b><span>" + esc(d.when) + "</span></div>" +
       '<button class="btn small ghost" data-id="' + p.id + '">' + t("btn_view") + "</button></div>"
     );
@@ -3553,17 +3719,18 @@ function renderPeople() {
 /* ============================================================
    RELATIONSHIP CARE
    ============================================================ */
-const REASON_LABEL = { silence: "reason_silence", promise: "reason_promise", follow_up: "reason_follow_up", birthday: "reason_birthday", date: "reason_date", inactive: "reason_inactive" };
+const REASON_LABEL = { silence: "reason_silence", promise: "reason_promise", follow_up: "reason_follow_up", birthday: "reason_birthday", birthday_month: "reason_birthday_month", date: "reason_date", inactive: "reason_inactive" };
 
 function careTitle(r, p) {
   if (r.reason === "birthday") return t("care_birthday_in", { n: r.days }) + (p.birthday ? " (" + p.birthday + ")" : "");
+  if (r.reason === "birthday_month") return t("care_birthday_month_in", { n: r.days }) + (p.birthday ? " (" + p.birthday + ")" : "");
   if (r.reason === "date") return r.date ? t("care_date_in", { label: r.date.label, n: r.days }) + " (" + r.date.when + ")" : t("reason_date");
   if (r.reason === "silence") return t("care_silence_title", { n: r.days });
   return r.followUp ? r.followUp.what : "";
 }
 
 function careContext(r, p) {
-  if (r.reason === "birthday") {
+  if (r.reason === "birthday" || r.reason === "birthday_month") {
     return (p.memories && p.memories.length) ? t("care_ctx_birthday") + " " + p.memories[p.memories.length - 1].text : t("care_ctx_birthday");
   }
   if (r.reason === "date") return t("care_ctx_date");
@@ -3612,8 +3779,8 @@ function renderCare() {
         const freq = frequencyOf(p.frequency);
         return (
           '<div class="card rem-card">' +
-          '<div class="rem-icon ' + (r.reason === "birthday" || r.reason === "date" ? "cake" : r.reason === "promise" ? "action" : r.reason === "follow_up" ? "meeting" : "alert") + '">' +
-          icon(r.reason === "birthday" ? "cake" : r.reason === "date" ? "cal" : r.reason === "promise" ? "check" : r.reason === "follow_up" ? "meeting" : "alert", 17) + "</div>" +
+          '<div class="rem-icon ' + (r.reason === "birthday" || r.reason === "birthday_month" || r.reason === "date" ? "cake" : r.reason === "promise" ? "action" : r.reason === "follow_up" ? "meeting" : "alert") + '">' +
+          icon(r.reason === "birthday" || r.reason === "birthday_month" ? "cake" : r.reason === "date" ? "cal" : r.reason === "promise" ? "check" : r.reason === "follow_up" ? "meeting" : "alert", 17) + "</div>" +
           '<div class="rem-body">' +
           '<div class="rem-person">' + avatarHTML(p, 24) + "<span>" + esc(p.name) + "</span>" +
           '<span class="reason-chip ' + r.reason + '">' + t(REASON_LABEL[r.reason]) + "</span></div>" +
@@ -3762,7 +3929,10 @@ function googleMapsApiKey() {
 }
 
 function googleMapsMapId() {
-  return String(googleMapsConfig().mapId || "").trim();
+  // Google Maps bắt buộc Map ID khi nạp thư viện marker (Advanced Marker);
+  // thiếu/trống sẽ hiện lỗi "This page can't load Google Maps correctly".
+  // DEMO_MAP_ID chạy ngay không cần tạo trong Cloud Console.
+  return String(googleMapsConfig().mapId || "DEMO_MAP_ID").trim();
 }
 
 function googleMapsEnabled() {
@@ -4170,6 +4340,10 @@ function renderProfile(id) {
   const st = strengthOf(p.strength);
   const freq = frequencyOf(p.frequency);
   const inactive = p.active === false;
+  const importantDates = [
+    ...(p.birthday ? [{ label: t("field_birthday"), when: p.birthday }] : []),
+    ...(p.dates || []),
+  ];
 
   const head =
     '<button class="btn ghost" style="margin-bottom:12px" id="back-people">' + icon("back") + " " + t("btn_back") + "</button>" +
@@ -4218,7 +4392,7 @@ function renderProfile(id) {
     '<div class="pick-row" style="margin-top:7px">' + FREQUENCIES.map((f) => '<button class="pick freq-pick' + (f.id === p.frequency ? " on" : "") + '" data-f="' + f.id + '">' + frequencyLabel(f.id) + "</button>").join("") + "</div>" +
     '<p style="font-size:11px;color:var(--ink-3);margin-top:9px">' + t("profile_care_note") + "</p></div>" +
     '<div class="card"><div class="card-title">' + icon("cake", 13) + " " + t("profile_important_dates") + "</div>" +
-    (p.dates.length ? kvList(p.dates.map((d) => ({ k: d.label, v: d.when }))) : '<span class="chip ghost">' + t("no_dates_yet") + "</span>") + "</div>" +
+    (importantDates.length ? kvList(importantDates.map((d) => ({ k: d.label, v: d.when }))) : '<span class="chip ghost">' + t("no_dates_yet") + "</span>") + "</div>" +
     '<div class="card"><div class="card-title">' + icon("tag", 13) + " " + t("profile_tags") + "</div>" +
     '<div class="chip-row">' + (p.tags || []).map((tg) => '<button class="chip chip-action tag-search" data-tag-search="' + esc(tg) + '" title="' + esc(t("tag_search_hint")) + '">#' + esc(tg) + "</button>").join("") + "</div></div>" +
     "</div>" +
@@ -4606,6 +4780,7 @@ function openCapture(mode, opts = {}) {
     voiceLang: getVoiceLang(),
     prefill: opts.prefill || {}, review: false, formDraft: null, initialFormDraft: "",
     advancedOpen: false, openSections: {}, dirty: false, nameFocused: false, aiAbort: null,
+    cardStream: null, cardCameraStarted: false,
   };
   $("#capture-modal").classList.add("open");
   renderCapture();
@@ -4622,6 +4797,7 @@ function closeCapture(force = false) {
   if (force !== true && cap.mode === "manual" && cap.dirty && !confirm(t("discard_changes"))) return false;
   clearInterval(cap.timer);
   abortCapAI();
+  stopCardCamera();
   cap.open = false;
   $("#capture-modal").classList.remove("open");
   return true;
@@ -4673,6 +4849,8 @@ function captureInputLocale() {
 
 function buildExtractPrefill(parsed, rawText) {
   const source = parsed || {};
+  const birthdayParts = parseBirthdayParts(source.birthday) || {};
+  const birthdayParsed = manualHasValue(birthdayParts);
   const workNotes = [
     source.title ? "Role/title: " + source.title : "",
     source.department ? "Department: " + source.department : "",
@@ -4689,12 +4867,17 @@ function buildExtractPrefill(parsed, rawText) {
     source.followUpWhat ? "Follow-up: " + source.followUpWhat : "",
     source.promises && source.promises.length ? "Promises: " + source.promises.join(", ") : "",
   ].filter(Boolean).join("\n");
+  const notes = [
+    source.notes || rawText || "",
+    source.birthday && !birthdayParsed ? "Birthday: " + source.birthday : "",
+  ].filter(Boolean).join("\n");
   const prefill = {
     name: source.name || "",
     relationshipType: source.relationshipType || "",
     company: source.company || "",
     currentCity: source.currentCity || "",
     birthday: source.birthday || "",
+    birthdayParts,
     workNotes,
     familyNotes: source.familyNotes || "",
     interestsNotes,
@@ -4712,7 +4895,7 @@ function buildExtractPrefill(parsed, rawText) {
     interests: source.interests || [],
     businessTopics: source.businessTopics || [],
     introducedBy: source.introducedBy || "",
-    notes: source.notes || rawText || "",
+    notes,
   };
   if (prefill.followUpWhat && !prefill.promises.length) prefill.promises = [prefill.followUpWhat];
   return prefill;
@@ -4883,12 +5066,35 @@ function manualFieldHTML(field) {
   } else if (field.control === "location") {
     control = '<input class="field-input" id="' + id + '" data-manual-key="' + key + '" list="manual-location-list" placeholder="' + esc(placeholder) + '" value="' + esc(value || "") + '"' + attrs + " />" +
       '<div class="field-help-row"><span>' + t("location_hint") + '</span><button type="button" class="field-inline-action" data-location-other="' + key + '">' + t("location_other") + "</button></div>";
+  } else if (field.control === "birthday") {
+    const parts = value && typeof value === "object" ? value : parseBirthdayParts(value) || {};
+    const month = validMonth(parseInt(parts.month, 10));
+    const day = validDay(parseInt(parts.day, 10));
+    const year = validYear(parseInt(parts.year, 10));
+    const dateValue = month && day && year ? String(year).padStart(4, "0") + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0") : "";
+    const monthOptions = ['<option value="">' + esc(t("birthday_month_ph")) + "</option>"]
+      .concat(Array.from({ length: 12 }, (_, index) => {
+        const option = index + 1;
+        return '<option value="' + option + '"' + (month === option ? " selected" : "") + ">" + esc(t("birthday_month_" + option)) + "</option>";
+      })).join("");
+    const dayOptions = ['<option value="">' + esc(t("birthday_day_ph")) + "</option>"]
+      .concat(Array.from({ length: 31 }, (_, index) => {
+        const option = index + 1;
+        return '<option value="' + option + '"' + (day === option ? " selected" : "") + ">" + option + "</option>";
+      })).join("");
+    control = '<div class="birthday-parts" data-birthday-key="' + key + '">' +
+      '<select class="field-input" data-birthday-part="' + key + '" data-part="month" aria-label="' + esc(t("birthday_month_ph")) + '">' + monthOptions + "</select>" +
+      '<select class="field-input" data-birthday-part="' + key + '" data-part="day" aria-label="' + esc(t("birthday_day_ph")) + '">' + dayOptions + "</select>" +
+      '<input class="field-input" type="number" inputmode="numeric" min="1" max="9999" data-birthday-part="' + key + '" data-part="year" placeholder="' + esc(t("birthday_year_ph")) + '" aria-label="' + esc(t("birthday_year_ph")) + '" value="' + esc(year || "") + '" />' +
+      "</div>" +
+      '<div class="birthday-calendar-row"><input class="field-input" type="date" data-birthday-date="' + key + '" value="' + esc(dateValue) + '" aria-label="' + esc(t("birthday_calendar")) + '" />' +
+      '<span>' + esc(t("birthday_partial_hint")) + "</span></div>";
   } else {
     const type = field.control === "email" || field.control === "tel" ? field.control : "text";
     control = '<input class="field-input" id="' + id + '" type="' + type + '" data-manual-key="' + key + '" placeholder="' + esc(placeholder) + '" value="' + esc(value || "") + '"' + attrs + " />";
   }
 
-  return '<div class="field' + (field.control === "textarea" ? " full" : "") + '"><label for="' + id + '">' + label + "</label>" + control + "</div>";
+  return '<div class="field' + (field.control === "textarea" || field.control === "birthday" ? " full" : "") + '"><label for="' + id + '">' + label + "</label>" + control + "</div>";
 }
 
 function manualVisibleFields() {
@@ -5146,6 +5352,29 @@ function bindManualCapture(editing) {
     const input = field && $("#f-" + field.sec + "-" + field.k);
     if (input) { input.value = ""; if (input.focus) input.focus(); }
   }));
+  $$('[data-birthday-part]', body).forEach((input) => {
+    const update = () => {
+      const key = input.dataset.birthdayPart;
+      const current = cap.formDraft[key] && typeof cap.formDraft[key] === "object" ? cap.formDraft[key] : {};
+      cap.formDraft[key] = Object.assign({}, current, { [input.dataset.part]: input.value });
+      refreshManualDirty();
+      updateManualSaveState();
+    };
+    input.addEventListener("input", update);
+    input.addEventListener("change", update);
+  });
+  $$('[data-birthday-date]', body).forEach((input) => {
+    input.addEventListener("change", () => {
+      const parts = parseBirthdayParts(input.value) || {};
+      cap.formDraft[input.dataset.birthdayDate] = {
+        month: parts.month ? String(parts.month) : "",
+        day: parts.day ? String(parts.day) : "",
+        year: parts.year ? String(parts.year) : "",
+      };
+      refreshManualDirty();
+      renderManualCapture();
+    });
+  });
 
   const advanced = $("#manual-advanced-toggle");
   if (advanced) advanced.addEventListener("click", () => {
@@ -5219,13 +5448,11 @@ function renderCapture() {
     const modes = cap.addInfo
       ? [
           ["voice", t("mode_voice"), t("mode_voice_sub"), "voice"],
-          ["text", t("mode_text"), t("mode_text_sub"), "text"],
           ["manual", t("mode_manual"), t("mode_manual_sub"), "text"]
         ]
       : [
-          ["card", t("mode_card"), t("mode_card_sub"), "card"],
           ["voice", t("mode_voice"), t("mode_voice_sub"), "voice"],
-          ["text", t("mode_text"), t("mode_text_sub"), "text"],
+          ["card", t("mode_card"), t("mode_card_sub"), "card"],
           ["manual", t("mode_manual"), t("mode_manual_sub"), "text"]
         ];
     body.innerHTML =
@@ -5241,6 +5468,7 @@ function renderCapture() {
       "</div>" +
       '<p style="font-size:11px;color:var(--ink-3);margin-top:13px">' + t("cap_every_mode_note") + "</p>";
     $$(".mode-cell", body).forEach((b) => b.addEventListener("click", () => {
+      stopCardCamera();
       cap.mode = b.dataset.mode;
       cap.sourceMode = b.dataset.mode;
       cap.step = 2;
@@ -5305,20 +5533,24 @@ function renderCapture() {
       setCapTitle(t("card_scan"), t("card_step_scan"));
       body.innerHTML =
         '<div class="ocr-surface">' +
-        '<label class="ocr-picker" for="card-photo">' +
-          '<span class="ico">' + icon("card", 24) + "</span>" +
-          "<b>" + t("card_pick_photo") + "</b>" +
-          "<p>" + t("card_pick_hint") + "</p>" +
-        "</label>" +
+        '<div class="card-camera">' +
+          '<video id="card-video" autoplay muted playsinline></video>' +
+          '<div class="card-guide"><span></span></div>' +
+          '<div class="card-camera-empty" id="card-camera-empty">' + icon("camera", 28) + '<b>' + t("card_camera_starting") + "</b></div>" +
+        "</div>" +
         '<input class="ocr-file" id="card-photo" type="file" accept="image/*" capture="environment" />' +
         (cap.photo ? '<img class="ocr-preview" src="' + cap.photo + '" alt="" />' : "") +
         '<div class="ocr-status" id="ocr-status">' + t("card_ocr_local") + "</div>" +
         '<div class="ocr-bar" aria-hidden="true"><span id="ocr-bar"></span></div>' +
         '</div>' +
-        '<div class="modal-foot ocr-foot"><button class="btn primary" id="card-choose">' + icon("camera", 13) + " " + t("card_choose") + "</button></div>";
+        '<div class="modal-foot ocr-foot"><button class="btn primary" id="card-capture" disabled>' + icon("camera", 13) + " " + t("card_capture") + "</button>" +
+        '<button class="btn ghost" id="card-choose">' + icon("image", 13) + " " + t("card_choose_instead") + "</button></div>";
       $("#card-photo").addEventListener("change", handleCardPhoto);
       $("#card-choose").addEventListener("click", () => $("#card-photo").click());
+      $("#card-capture").addEventListener("click", captureCardFrame);
+      startCardCamera();
     } else if (cap.step === 3) {
+      stopCardCamera();
       setCapTitle(t("card_read"), t("card_step_review"));
       const extracted = cardFieldsToExtract(cap.prefill || parseCardOcrText(cap.ocrText || ""));
       const extractedHTML = extracted.length
@@ -5332,7 +5564,7 @@ function renderCapture() {
         '<p style="font-size:12px;color:var(--ink-3);margin-top:10px">' + t("card_review_hint") + (cap.ocrProvider ? " " + t("card_source", { provider: cap.ocrProvider }) : "") + "</p>" +
         '<div class="modal-foot"><button class="btn ghost" id="card-rescan">' + t("rescan") + "</button>" +
         '<button class="btn primary" id="card-next">' + icon("check", 13) + " " + t("looks_right") + "</button></div>";
-      $("#card-rescan").addEventListener("click", () => { cap.step = 2; renderCapture(); });
+      $("#card-rescan").addEventListener("click", () => { stopCardCamera(); cap.cardCameraStarted = false; cap.step = 2; renderCapture(); });
       $("#card-next").addEventListener("click", () => {
         cap.ocrText = $("#card-raw").value.trim();
         if (!cap.ocrText) { toast(t("text_empty")); return; }
@@ -5611,6 +5843,74 @@ function dataUrlMime(dataUrl) {
   return m ? m[1] : "image/jpeg";
 }
 
+function cardProgressSetter() {
+  const status = $("#ocr-status");
+  const bar = $("#ocr-bar");
+  return (msg, pct) => {
+    if (status) status.textContent = msg;
+    if (bar) bar.style.width = Math.max(3, Math.round((pct || 0) * 100)) + "%";
+  };
+}
+
+function stopCardCamera() {
+  const video = $("#card-video");
+  if (video) {
+    try { video.pause(); } catch (e) { /* ignore */ }
+    video.srcObject = null;
+    video.classList.remove("ready");
+  }
+  if (!cap || !cap.cardStream) return;
+  try {
+    cap.cardStream.getTracks().forEach((track) => track.stop());
+  } catch (e) { /* ignore */ }
+  cap.cardStream = null;
+}
+
+async function startCardCamera() {
+  if (!cap.open || cap.mode !== "card" || cap.step !== 2 || cap.cardCameraStarted) return;
+  cap.cardCameraStarted = true;
+  const setProgress = cardProgressSetter();
+  const video = $("#card-video");
+  const empty = $("#card-camera-empty");
+  const capture = $("#card-capture");
+  const media = navigator.mediaDevices;
+  if (!media || !media.getUserMedia) {
+    setProgress(t("card_camera_unavailable"), 0);
+    if (empty) empty.innerHTML = icon("camera", 28) + "<b>" + t("card_camera_unavailable") + "</b>";
+    if (capture) capture.disabled = true;
+    return;
+  }
+  try {
+    setProgress(t("card_camera_starting"), 0.05);
+    const stream = await media.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+      audio: false,
+    });
+    if (!cap.open || cap.mode !== "card" || cap.step !== 2) {
+      stream.getTracks().forEach((track) => track.stop());
+      return;
+    }
+    cap.cardStream = stream;
+    if (video) {
+      video.srcObject = stream;
+      await video.play().catch(() => {});
+      video.classList.add("ready");
+    }
+    if (empty) empty.hidden = true;
+    if (capture) capture.disabled = false;
+    setProgress(t("card_camera_align"), 0.08);
+  } catch (err) {
+    console.warn("Camera unavailable", err);
+    setProgress(t("card_camera_unavailable"), 0);
+    if (empty) empty.innerHTML = icon("camera", 28) + "<b>" + t("card_camera_unavailable") + "</b>";
+    if (capture) capture.disabled = true;
+  }
+}
+
 function readFileAsDataURLPromise(file) {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
@@ -5658,41 +5958,65 @@ async function runLocalCardOcr(file, setProgress) {
   return ((result && result.data && result.data.text) || "").trim();
 }
 
+async function processCardImageDataUrl(imageDataUrl, fallbackImage, setProgress) {
+  if (!imageDataUrl) throw new Error("image-read-failed");
+  cap.photo = imageDataUrl;
+  const prev = $(".ocr-preview", $("#capture-body"));
+  if (prev) prev.src = imageDataUrl;
+  try {
+    setProgress(t("card_ai_reading"), 0.18);
+    const ai = await requestProxyCardOcr(imageDataUrl, dataUrlMime(imageDataUrl));
+    cap.ocrText = (ai.ocrText || "").trim();
+    cap.prefill = buildExtractPrefill(ai.extraction || {}, cap.ocrText || "");
+    cap.ocrProvider = "AI";
+    if (!cap.ocrText && cap.prefill && cap.prefill.notes) cap.ocrText = cap.prefill.notes;
+  } catch (err) {
+    if (err && err.name === "AbortError") return false;
+    setProgress(t("card_ocr_fallback"), 0.12);
+    const localText = await runLocalCardOcr(fallbackImage || imageDataUrl, setProgress);
+    cap.ocrText = localText;
+    cap.prefill = parseCardOcrText(localText);
+    cap.ocrProvider = "local OCR";
+  }
+  if (!cap.ocrText) { toast(t("card_ocr_empty")); return false; }
+  stopCardCamera();
+  cap.step = 3;
+  renderCapture();
+  return true;
+}
+
+async function captureCardFrame() {
+  const video = $("#card-video");
+  const setProgress = cardProgressSetter();
+  if (!video || !video.videoWidth || !video.videoHeight) {
+    toast(t("card_camera_not_ready"));
+    return;
+  }
+  try {
+    setProgress(t("card_image_preparing"), 0.1);
+    const maxSide = 1800;
+    const ratio = Math.min(1, maxSide / Math.max(video.videoWidth, video.videoHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(video.videoWidth * ratio));
+    canvas.height = Math.max(1, Math.round(video.videoHeight * ratio));
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    await processCardImageDataUrl(canvas.toDataURL("image/jpeg", 0.88), null, setProgress);
+  } catch (err) {
+    console.warn("Camera capture failed", err);
+    toast(t("card_ocr_failed"));
+    setProgress(t("card_ocr_failed"), 0);
+  }
+}
+
 async function handleCardPhoto(e) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
-  const status = $("#ocr-status");
-  const bar = $("#ocr-bar");
-  const setProgress = (msg, pct) => {
-    if (status) status.textContent = msg;
-    if (bar) bar.style.width = Math.max(3, Math.round((pct || 0) * 100)) + "%";
-  };
+  const setProgress = cardProgressSetter();
   try {
     setProgress(t("card_image_preparing"), 0.05);
     const imageDataUrl = await compressImageFile(file);
-    if (!imageDataUrl) throw new Error("image-read-failed");
-    cap.photo = imageDataUrl;
-    const prev = $(".ocr-preview", $("#capture-body"));
-    if (prev) prev.src = imageDataUrl;
-
-    try {
-      setProgress(t("card_ai_reading"), 0.18);
-      const ai = await requestProxyCardOcr(imageDataUrl, dataUrlMime(imageDataUrl));
-      cap.ocrText = (ai.ocrText || "").trim();
-      cap.prefill = buildExtractPrefill(ai.extraction || {}, cap.ocrText || "");
-      cap.ocrProvider = "AI";
-      if (!cap.ocrText && cap.prefill && cap.prefill.notes) cap.ocrText = cap.prefill.notes;
-    } catch (err) {
-      if (err && err.name === "AbortError") return;
-      setProgress(t("card_ocr_fallback"), 0.12);
-      const localText = await runLocalCardOcr(file, setProgress);
-      cap.ocrText = localText;
-      cap.prefill = parseCardOcrText(localText);
-      cap.ocrProvider = "local OCR";
-    }
-    if (!cap.ocrText) { toast(t("card_ocr_empty")); return; }
-    cap.step = 3;
-    renderCapture();
+    await processCardImageDataUrl(imageDataUrl, file, setProgress);
   } catch (err) {
     console.warn("OCR failed", err);
     toast(err && err.code === "tesseract-unavailable" ? t("card_ocr_unavailable") : t("card_ocr_failed"));

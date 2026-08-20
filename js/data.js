@@ -420,22 +420,37 @@ const personByName = (first) => PEOPLE.find((p) => p.name.split(" ")[0].toLowerC
    HOME / CARE — tính động từ PEOPLE (data thật của người dùng)
    ============================================================ */
 const MONTHS_MAP = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+function validMonth(month) {
+  return month >= 1 && month <= 12 ? month : "";
+}
+function validDay(day) {
+  return day >= 1 && day <= 31 ? day : "";
+}
+function validYear(year) {
+  return year >= 1 && year <= 9999 ? year : "";
+}
 function validMonthDay(month, day) {
   if (!(month >= 1 && month <= 12 && day >= 1 && day <= 31)) return null;
   const check = new Date(2000, month - 1, day);
   return check.getMonth() === month - 1 && check.getDate() === day ? { month, day } : null;
 }
-function parseMonthDay(value) {
+function parseBirthdayParts(value) {
   const raw = String(value || "").trim();
   if (!raw) return null;
 
   // ISO full date: year is optional knowledge for birthday reminders.
   let m = /(?:^|\D)(\d{4})-(\d{1,2})-(\d{1,2})(?:\D|$)/.exec(raw);
-  if (m) return validMonthDay(parseInt(m[2], 10), parseInt(m[3], 10));
+  if (m) {
+    const parsed = validMonthDay(parseInt(m[2], 10), parseInt(m[3], 10));
+    return parsed ? Object.assign(parsed, { year: validYear(parseInt(m[1], 10)) }) : null;
+  }
 
   // Japanese: 11月22日.
-  m = /(\d{1,2})\s*月\s*(\d{1,2})\s*日/.exec(raw);
-  if (m) return validMonthDay(parseInt(m[1], 10), parseInt(m[2], 10));
+  m = /(?:(\d{4})\s*年\s*)?(\d{1,2})\s*月\s*(\d{1,2})\s*日/.exec(raw);
+  if (m) {
+    const parsed = validMonthDay(parseInt(m[2], 10), parseInt(m[3], 10));
+    return parsed ? Object.assign(parsed, { year: m[1] ? validYear(parseInt(m[1], 10)) : "" }) : null;
+  }
 
   // Vietnamese natural forms: 22 tháng 11 / tháng 11 ngày 22.
   m = /(?:ngày\s*)?(\d{1,2})\s*(?:tháng|thg)\s*(\d{1,2})/i.exec(raw);
@@ -444,21 +459,82 @@ function parseMonthDay(value) {
   if (m) return validMonthDay(parseInt(m[1], 10), parseInt(m[2], 10));
 
   // Numeric input follows the app's Vietnamese-first day/month convention.
-  m = /(?:^|\D)(\d{1,2})\s*[\/.]\s*(\d{1,2})(?:\s*[\/.]\s*\d{2,4})?(?:\D|$)/.exec(raw);
-  if (m) return validMonthDay(parseInt(m[2], 10), parseInt(m[1], 10));
+  m = /(?:^|\D)(\d{1,2})\s*[\/.]\s*(\d{1,2})(?:\s*[\/.]\s*(\d{2,4}))?(?:\D|$)/.exec(raw);
+  if (m) {
+    const parsed = validMonthDay(parseInt(m[2], 10), parseInt(m[1], 10));
+    const yearRaw = m[3] ? parseInt(m[3], 10) : "";
+    return parsed ? Object.assign(parsed, { year: yearRaw ? validYear(yearRaw < 100 ? 2000 + yearRaw : yearRaw) : "" }) : null;
+  }
 
   // Existing sample/import format: Nov 22.
   m = /([A-Za-z]{3})\s*(\d{1,2})/.exec(raw);
-  if (!m) return null;
-  const month = MONTHS_MAP[(m[1][0] || "").toUpperCase() + (m[1] || "").slice(1).toLowerCase()];
-  return month ? validMonthDay(month, parseInt(m[2], 10)) : null;
+  if (m) {
+    const month = MONTHS_MAP[(m[1][0] || "").toUpperCase() + (m[1] || "").slice(1).toLowerCase()];
+    return month ? validMonthDay(month, parseInt(m[2], 10)) : null;
+  }
+
+  // Partial month-only knowledge: "Nov", "11月", "tháng 11".
+  m = /(?:^|\D)(\d{1,2})\s*月(?:\D|$)/.exec(raw) || /(?:tháng|thg)\s*(\d{1,2})(?:\D|$)/i.exec(raw);
+  if (m) {
+    const month = validMonth(parseInt(m[1], 10));
+    return month ? { month, day: "", year: "" } : null;
+  }
+  m = /(?:^|\s)(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(?:\s|$)/i.exec(raw);
+  if (m) {
+    const month = MONTHS_MAP[(m[1][0] || "").toUpperCase() + (m[1] || "").slice(1).toLowerCase()];
+    return month ? { month, day: "", year: "" } : null;
+  }
+  m = /(?:^|\D)((?:19|20)\d{2})(?:\D|$)/.exec(raw);
+  return m ? { month: "", day: "", year: validYear(parseInt(m[1], 10)) } : null;
+}
+function parseMonthDay(value) {
+  const parsed = parseBirthdayParts(value);
+  return parsed && parsed.month && parsed.day ? { month: parsed.month, day: parsed.day } : null;
+}
+function birthdayPartsFromPerson(person) {
+  const month = validMonth(parseInt(person && person.birthdayMonth, 10));
+  const day = validDay(parseInt(person && person.birthdayDay, 10));
+  const year = validYear(parseInt(person && person.birthdayYear, 10));
+  if (month || day || year) return { month, day, year };
+  const parsed = parseBirthdayParts(person && person.birthday);
+  return parsed ? { month: parsed.month || "", day: parsed.day || "", year: parsed.year || "" } : { month: "", day: "", year: "" };
+}
+function formatBirthdayParts(parts) {
+  const month = validMonth(parseInt(parts && parts.month, 10));
+  const day = validDay(parseInt(parts && parts.day, 10));
+  const year = validYear(parseInt(parts && parts.year, 10));
+  const monthName = month ? Object.keys(MONTHS_MAP).find((key) => MONTHS_MAP[key] === month) : "";
+  if (month && day && validMonthDay(month, day)) return monthName + " " + day + (year ? ", " + year : "");
+  if (month && year) return monthName + " " + year;
+  if (month) return monthName;
+  if (day && year) return "Day " + day + ", " + year;
+  if (day) return "Day " + day;
+  return year ? String(year) : "";
+}
+function normalizeBirthdayFields(person) {
+  const parts = birthdayPartsFromPerson(person || {});
+  person.birthdayMonth = parts.month ? String(parts.month) : "";
+  person.birthdayDay = parts.day ? String(parts.day) : "";
+  person.birthdayYear = parts.year ? String(parts.year) : "";
+  person.birthday = formatBirthdayParts(parts);
+  return person;
+}
+function daysUntilMonthStart(month, today) {
+  if (!validMonth(month)) return Number.POSITIVE_INFINITY;
+  const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  let next = new Date(today.getFullYear(), month - 1, 1);
+  if (next < now) next = new Date(today.getFullYear() + 1, month - 1, 1);
+  return Math.round((next.getTime() - now.getTime()) / 86400000);
 }
 function daysUntilBirthday(value, today) {
-  const parsed = parseMonthDay(value);
+  const parsed = typeof value === "object" && value ? birthdayPartsFromPerson(value) : parseMonthDay(value);
   if (!parsed) return Number.POSITIVE_INFINITY;
+  const month = validMonth(parseInt(parsed.month, 10));
+  const day = validDay(parseInt(parsed.day, 10));
+  if (!month || !day || !validMonthDay(month, day)) return Number.POSITIVE_INFINITY;
   const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  let next = new Date(today.getFullYear(), parsed.month - 1, parsed.day);
-  if (next < now) next = new Date(today.getFullYear() + 1, parsed.month - 1, parsed.day);
+  let next = new Date(today.getFullYear(), month - 1, day);
+  if (next < now) next = new Date(today.getFullYear() + 1, month - 1, day);
   return Math.round((next.getTime() - now.getTime()) / 86400000);
 }
 
@@ -525,13 +601,24 @@ function computeCareItems(people, todayInput) {
   (people || []).forEach((p) => {
     if (p.active === false) return;
     if (p.snoozedUntil && p.snoozedUntil > nowTs) return; // snooze/dismiss
-    if (p.birthday) {
-      const days = daysUntilBirthday(p.birthday, today);
+    const birthdayParts = birthdayPartsFromPerson(p);
+    const birthdayDisplay = formatBirthdayParts(birthdayParts);
+    if (birthdayParts.month && birthdayParts.day) {
+      const days = daysUntilBirthday(p, today);
       if (days <= 30) {
         items.push({
           personId: p.id, reason: "birthday", group: "Coming up",
           urgency: days <= 3 ? "high" : "medium", days, sortDays: days,
           actions: ["profile"],
+        });
+      }
+    } else if (birthdayParts.month && !birthdayParts.day) {
+      const days = daysUntilMonthStart(parseInt(birthdayParts.month, 10), today);
+      if (days <= 30) {
+        items.push({
+          personId: p.id, reason: "birthday_month", group: "Coming up",
+          urgency: days <= 3 ? "medium" : "low", days, sortDays: days,
+          detail: birthdayDisplay, actions: ["profile"],
         });
       }
     }
@@ -594,9 +681,14 @@ function homeDates() {
   const out = [];
   const today = new Date();
   activePeople().forEach((p) => {
-    if (p.birthday) {
-      const days = daysUntilBirthday(p.birthday, today);
-      if (days <= 30) out.push({ personId: p.id, kind: "birthday", label: "birthday", when: p.birthday + (days <= 7 ? " · in " + days + " days" : "") });
+    const birthdayParts = birthdayPartsFromPerson(p);
+    const birthdayDisplay = formatBirthdayParts(birthdayParts);
+    if (birthdayParts.month && birthdayParts.day) {
+      const days = daysUntilBirthday(p, today);
+      if (days <= 30) out.push({ personId: p.id, kind: "birthday", label: "birthday", when: birthdayDisplay + (days <= 7 ? " · in " + days + " days" : "") });
+    } else if (birthdayParts.month && !birthdayParts.day) {
+      const days = daysUntilMonthStart(parseInt(birthdayParts.month, 10), today);
+      if (days <= 30) out.push({ personId: p.id, kind: "birthday_month", label: "birthday_month", when: birthdayDisplay + (days <= 7 ? " · in " + days + " days" : "") });
     }
     (p.dates || []).forEach((d) => {
       if (!d || /birthday/i.test(String(d.label || ""))) return;
@@ -702,7 +794,7 @@ const MANUAL_SECTIONS = [
     { k: "relationshipType", label: "Relationship type", control: "select", tier: "quick", options: ["", "Key contact", "Client", "Partner", "Investor", "Mentor", "Friend", "Collaborator", "Acquaintance"] },
     { k: "company", label: "Company", control: "text", tier: "quick", autocomplete: "organization" },
     { k: "currentCity", label: "Current city", control: "location", tier: "quick", phKey: "location_ph", autocomplete: "address-level2" },
-    { k: "birthday", label: "Birthday", control: "text", tier: "quick", phKey: "birthday_flexible_ph", autocomplete: "bday" },
+    { k: "birthday", label: "Birthday", control: "birthday", tier: "quick" },
     { k: "tags", label: "Tags", control: "chips", tier: "quick" }
   ]},
   { key: "work", title: "Work notes", fields: [
@@ -741,6 +833,7 @@ const MANUAL_ARRAY_FIELDS = new Set([
 
 function manualHasValue(value) {
   if (Array.isArray(value)) return value.length > 0;
+  if (value && typeof value === "object") return Object.keys(value).some((key) => manualHasValue(value[key]));
   const clean = String(value == null ? "" : value).trim();
   return !!clean && clean !== "—";
 }
@@ -758,6 +851,9 @@ function createManualDraft(person, prefill, review) {
     let value = "";
     if (field.k === "notes" && review) {
       value = ""; // raw voice/text/card memory is stored separately
+    } else if (field.k === "birthday") {
+      value = manualHasValue(source.birthdayParts) ? source.birthdayParts : birthdayPartsFromPerson(source);
+      if (!manualHasValue(value) && person) value = birthdayPartsFromPerson(person);
     } else if (Object.prototype.hasOwnProperty.call(source, field.k) && manualHasValue(source[field.k])) {
       value = source[field.k];
     } else if (person) {
@@ -767,7 +863,13 @@ function createManualDraft(person, prefill, review) {
       else value = person[field.k] == null ? "" : person[field.k];
     }
     if ((field.k === "company" || field.k === "title") && value === "—") value = "";
-    draft[key] = field.control === "chips" || MANUAL_ARRAY_FIELDS.has(field.k)
+    draft[key] = field.control === "birthday"
+      ? {
+          month: value && value.month ? String(value.month) : "",
+          day: value && value.day ? String(value.day) : "",
+          year: value && value.year ? String(value.year) : "",
+        }
+      : field.control === "chips" || MANUAL_ARRAY_FIELDS.has(field.k)
       ? manualArrayValue(value)
       : String(value == null ? "" : value);
   });
@@ -780,6 +882,19 @@ function manualDraftToFields(draft) {
     const value = draft[field.sec + "." + field.k];
     if (field.k === "firstMetDate" || field.k === "firstMetPlace") return;
     const target = field.k === "kana" ? "nameJa" : field.k;
+    if (field.control === "birthday") {
+      const parts = value && typeof value === "object" ? value : parseBirthdayParts(value) || {};
+      const normalized = {
+        month: validMonth(parseInt(parts.month, 10)),
+        day: validDay(parseInt(parts.day, 10)),
+        year: validYear(parseInt(parts.year, 10)),
+      };
+      fields.birthdayMonth = normalized.month ? String(normalized.month) : "";
+      fields.birthdayDay = normalized.day ? String(normalized.day) : "";
+      fields.birthdayYear = normalized.year ? String(normalized.year) : "";
+      fields.birthday = formatBirthdayParts(normalized);
+      return;
+    }
     fields[target] = field.control === "chips" || MANUAL_ARRAY_FIELDS.has(field.k)
       ? manualArrayValue(value)
       : String(value == null ? "" : value).trim();
