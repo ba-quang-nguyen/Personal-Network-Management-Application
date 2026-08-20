@@ -237,8 +237,6 @@ function renderDemoPanel() {
     html += g.items.map((it) => '<button class="dp-link" data-go="' + it.go + '"><span class="dot" style="background:' + it.dot + '"></span>' + esc(it.label) + "</button>").join("");
   });
   html +=
-    '<div class="dp-title">Language</div>' +
-    '<div class="dp-row"><button class="dp-btn on" type="button">English</button></div>' +
     '<div class="dp-title">Theme</div>' +
     '<div class="dp-row"><button class="dp-btn" id="dp-theme">' + (document.documentElement.getAttribute("data-theme") === "dark" ? "☀ Light" : "🌙 Dark") + "</button></div>" +
     '<div class="dp-note">Mobile is the primary surface. The web view is the companion for big-map exploration, bulk edits and settings.</div>';
@@ -755,9 +753,6 @@ function loadGoogleMapsApi() {
 }
 
 function clearLocationMapInstance() {
-  if (locMap && locMap.provider === "leaflet" && locMap.instance && locMap.instance.remove) {
-    try { locMap.instance.remove(); } catch (e) {}
-  }
   locMap = null;
 }
 
@@ -787,54 +782,6 @@ function locationMarkerHTML(p) {
     ? '<img src="' + esc(p.photo) + '" alt="" />'
     : '<span class="loc-initials">' + esc(p.initials || p.name.slice(0, 2)) + "</span>";
   return '<div class="loc-marker" style="--c:' + esc(p.color) + '">' + inner + "</div>";
-}
-
-function renderLeafletLocationMap(people) {
-  if (typeof L === "undefined") return false;
-  $("#map-canvas").innerHTML = '<div id="location-map" class="location-map"></div>';
-  const container = $("#location-map");
-  if (!container) return false;
-
-  const map = L.map(container, { zoomControl: true });
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    maxZoom: 19
-  }).addTo(map);
-
-  const markers = [];
-  people.forEach((p) => {
-    const geo = personGeo(p);
-    if (!geo) return;
-    const markerIcon = L.divIcon({
-      className: "loc-marker-wrap",
-      html: locationMarkerHTML(p),
-      iconSize: [46, 54],
-      iconAnchor: [23, 50],
-      popupAnchor: [0, -48]
-    });
-    const m = L.marker(geo, { icon: markerIcon, title: p.name });
-    const pop = document.createElement("div");
-    pop.innerHTML = locationPopupHTML(p);
-    m.bindPopup(pop.firstChild, { closeButton: true });
-    m.on("popupopen", () => {
-      const btn = document.querySelector('.leaflet-popup-content .loc-pop-open[data-id="' + p.id + '"]');
-      if (btn && !btn._bound) {
-        btn._bound = true;
-        btn.addEventListener("click", () => go("profile", { personId: btn.dataset.id }));
-      }
-    });
-    markers.push(m);
-  });
-
-  if (markers.length) {
-    L.layerGroup(markers).addTo(map);
-    map.fitBounds(L.latLngBounds(markers.map((m) => m.getLatLng())), { padding: [40, 40] });
-  } else {
-    map.setView([35.6, 139.6], 5);
-  }
-  locMap = { provider: "leaflet", instance: map };
-  setTimeout(() => { try { if (locMap && locMap.instance) locMap.instance.invalidateSize(); } catch (e) {} }, 80);
-  return true;
 }
 
 async function renderGoogleLocationMap(people, renderId) {
@@ -984,12 +931,10 @@ function renderLocationMap() {
   if (googleMapsEnabled()) {
     renderGoogleLocationMap(people, renderId).catch(() => {
       if (renderId !== locMapRenderId || mapState.lens !== "location") return;
-      if (renderLeafletLocationMap(people)) return;
       renderLocationListFallback(groups);
     });
     return;
   }
-  if (renderLeafletLocationMap(people)) return;
   renderLocationListFallback(groups);
 }
 

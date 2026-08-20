@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * build.mjs — sinh lại omoide.html (bản single-file) từ nguồn:
- *   index.html + css/styles.css + vendor/leaflet/* + js/*.js (+ vendor/firebase/*)
+ *   index.html + css/styles.css + js/*.js (+ vendor/firebase/*)
  * Chạy:  node build.mjs
  * Deploy: node build.mjs --pages   (lắp ráp thư mục dist/ cho GitHub Pages)
  */
@@ -29,13 +29,7 @@ html = html.replace(
   '<link rel="stylesheet" href="css/styles.css?v=5" />',
   () => "<style>\n" + read("css/styles.css") + "\n</style>",
 );
-html = html.replace(
-  '<link rel="stylesheet" href="vendor/leaflet/leaflet.css" />',
-  () => "<style>\n" + read("vendor/leaflet/leaflet.css") + "\n</style>",
-);
-
 // JS — đúng thứ tự nạp
-html = inlineScript(html, '<script src="vendor/leaflet/leaflet.js"></script>', "vendor/leaflet/leaflet.js");
 html = inlineScript(html, '<script src="js/data.js?v=5"></script>', "js/data.js");
 html = inlineScript(html, '<script src="js/store.js?v=5"></script>', "js/store.js");
 html = inlineScript(html, '<script src="js/firebase-config.js"></script>', "js/firebase-config.js");
@@ -77,8 +71,6 @@ if (PAGES) {
   ["data.js", "store.js", "firebase-config.js", "firebase-config.example.js", "google-maps-config.js", "google-maps-config.example.js", "ai-proxy-config.js", "ai-proxy-config.example.js", "firebase.js", "i18n.js", "app.js"].forEach((f) =>
     copy("js/" + f, "js/" + f),
   );
-  copy("vendor/leaflet/leaflet.js", "vendor/leaflet/leaflet.js");
-  copy("vendor/leaflet/leaflet.css", "vendor/leaflet/leaflet.css");
   ["firebase-app-compat.js", "firebase-auth-compat.js", "firebase-firestore-compat.js"].forEach((f) =>
     copy("vendor/firebase/" + f, "vendor/firebase/" + f),
   );

@@ -3,7 +3,7 @@
    Precache danh sách tĩnh (mock không có build nên tên file cố định).
    KHÔNG BAO GIỜ cache host Firebase/Google — dữ liệu realtime đi qua SDK.
    ============================================================ */
-const CACHE = 'nm-v4';
+const CACHE = 'nm-v7';
 const PRECACHE = [
   './',
   './index.html',
@@ -13,9 +13,9 @@ const PRECACHE = [
   './js/i18n.js',
   './js/app.js',
   './js/firebase-config.js',
+  './js/google-maps-config.js',
+  './js/ai-proxy-config.js',
   './js/firebase.js',
-  './vendor/leaflet/leaflet.js',
-  './vendor/leaflet/leaflet.css',
   './vendor/firebase/firebase-app-compat.js',
   './vendor/firebase/firebase-auth-compat.js',
   './vendor/firebase/firebase-firestore-compat.js',
