@@ -6,7 +6,7 @@
     { "id": "D2", "issue": "Data layer", "resolution": "js/store.js (vanilla JS) — localStorage persist TOÀN BỘ + STORAGE_VERSION + đa tab", "why": "Triết lý BUILD-GUIDE: UI đọc/ghi qua store duy nhất." },
     { "id": "D3", "issue": "Data mặc định", "resolution": "Bắt đầu RỖNG; 10 người hư cấu = sample data (nút Load sample)", "why": "App cá nhân dùng data thật; sample để demo." },
     { "id": "D4", "issue": "AI capture", "resolution": "Voice dùng Web Speech API; Text/Card/Voice review ưu tiên DeepSeek qua backend proxy, fallback heuristic local khi proxy không sẵn", "why": "Frontend public không giữ API key; extraction cần backend mỏng để an toàn." },
-    { "id": "D5", "issue": "i18n", "resolution": "en + ja + vi (mặc định vi), 471 khoá/locale", "why": "Người dùng tiếng Việt; app bạn lang=vi." },
+    { "id": "D5", "issue": "Language", "resolution": "English-only UI; multi-language switching removed", "why": "Current product scope no longer needs Vietnamese or Japanese." },
     { "id": "D6", "issue": "Backend", "resolution": "Firebase (Email/Password + Firestore users/{uid}/people) — Phase sau, cùng seam", "why": "Theo BUILD-GUIDE + app bạn; tái sử dụng rules đã test." },
     { "id": "D7", "issue": "React app/", "resolution": "Giữ nguyên làm tài liệu + nơi chứa firebase rules/config/test", "why": "Không xoá — tái sử dụng ở Phase Firebase." }
   ],
@@ -26,7 +26,7 @@
     { "id": "care", "name": "Care queue tính động", "status": "pass", "evidence": "birthday/silence/promise/follow_up + snoozedUntil; badge đếm thật" },
     { "id": "ask", "name": "Ask tìm trên data thật", "status": "pass", "evidence": "analyze() data-driven (tên + từ khoá 7 field); test tanaka/suzuki/no-match PASS" },
     { "id": "map", "name": "Map với người thật", "status": "pass", "evidence": "personGeo chỉ trả tọa độ cho location hỗ trợ, không fallback Tokyo; personLinks từ connections/mutual; empty state" },
-    { "id": "i18n-vi", "name": "i18n vi (mặc định) + en + ja", "status": "pass", "evidence": "471 khoá/locale, parity test PASS; toggle VI·EN·JA" },
+    { "id": "language", "name": "English-only UI", "status": "pass", "evidence": "Language toggle removed from sidebar/settings/demo panel; app always reads English strings." },
     { "id": "single-file", "name": "omoide.html (single-file)", "status": "pass", "evidence": "build.mjs inliner; hết bug trùng <head>; 1.2MB (gồm SDK Firebase)" },
     { "id": "firebase", "name": "Firebase backend", "status": "pass", "evidence": "firebase-config + auth Email/Password + login mobile + Firestore users/{uid}/people sync (write-through + onSnapshot); test stub-SDK PASS. Chưa verify project thật." },
     { "id": "pwa", "name": "PWA (manifest + sw.js)", "status": "pass", "evidence": "manifest.webmanifest + icon.svg + sw.js (precache + KHÔNG cache Firebase) + đăng ký SW" },

@@ -237,12 +237,8 @@ function renderDemoPanel() {
     html += g.items.map((it) => '<button class="dp-link" data-go="' + it.go + '"><span class="dot" style="background:' + it.dot + '"></span>' + esc(it.label) + "</button>").join("");
   });
   html +=
-    '<div class="dp-title">' + esc(t("settings_language")) + "</div>" +
-    '<div class="dp-row">' +
-    '<button class="dp-btn' + (LANG === "vi" ? " on" : "") + '" data-lang="vi">Tiếng Việt</button>' +
-    '<button class="dp-btn' + (LANG === "en" ? " on" : "") + '" data-lang="en">English</button>' +
-    '<button class="dp-btn' + (LANG === "ja" ? " on" : "") + '" data-lang="ja">日本語</button>' +
-    "</div>" +
+    '<div class="dp-title">Language</div>' +
+    '<div class="dp-row"><button class="dp-btn on" type="button">English</button></div>' +
     '<div class="dp-title">Theme</div>' +
     '<div class="dp-row"><button class="dp-btn" id="dp-theme">' + (document.documentElement.getAttribute("data-theme") === "dark" ? "☀ Light" : "🌙 Dark") + "</button></div>" +
     '<div class="dp-note">Mobile is the primary surface. The web view is the companion for big-map exploration, bulk edits and settings.</div>';
@@ -252,7 +248,6 @@ function renderDemoPanel() {
   $$("#demo-panel .dp-link").forEach((b) =>
     b.addEventListener("click", () => demoGo(b.dataset.go))
   );
-  $$("#demo-panel .dp-btn[data-lang]").forEach((b) => b.addEventListener("click", () => setLang(b.dataset.lang)));
   $("#dp-theme").addEventListener("click", () => { toggleTheme(); renderDemoPanel(); });
 }
 
@@ -713,6 +708,213 @@ function runAsk(q) {
 let mapState = { lens: "people", focusId: null, degree: 2, topic: "", city: null };
 let mapNodes = [], mapEdges = [], mapPopNode = null;
 let locMap = null;
+let locMapRenderId = 0;
+
+function googleMapsConfig() {
+  return window.GOOGLE_MAPS_CONFIG || {};
+}
+
+function googleMapsApiKey() {
+  return String(googleMapsConfig().apiKey || "").trim();
+}
+
+function googleMapsMapId() {
+  return String(googleMapsConfig().mapId || "").trim();
+}
+
+function googleMapsEnabled() {
+  return !!googleMapsApiKey();
+}
+
+function loadGoogleMapsApi() {
+  if (window.google && window.google.maps) return Promise.resolve(window.google.maps);
+  if (!googleMapsEnabled()) return Promise.reject(new Error("google-maps-disabled"));
+  if (window.__nmGoogleMapsPromise) return window.__nmGoogleMapsPromise;
+  window.__nmGoogleMapsPromise = new Promise((resolve, reject) => {
+    const callbackName = "__nmGoogleMapsReady";
+    const script = document.createElement("script");
+    const cleanup = () => {
+      try { delete window[callbackName]; } catch (e) { window[callbackName] = null; }
+    };
+    window[callbackName] = () => {
+      cleanup();
+      resolve(window.google.maps);
+    };
+    script.src =
+      "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(googleMapsApiKey()) +
+      "&libraries=marker&callback=" + encodeURIComponent(callbackName);
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("google-maps-load-failed"));
+    };
+    document.head.appendChild(script);
+  });
+  return window.__nmGoogleMapsPromise;
+}
+
+function clearLocationMapInstance() {
+  if (locMap && locMap.provider === "leaflet" && locMap.instance && locMap.instance.remove) {
+    try { locMap.instance.remove(); } catch (e) {}
+  }
+  locMap = null;
+}
+
+function renderLocationListFallback(groups) {
+  const list = groups.map((g) => {
+    const members = (g.members || []).map((id) => byId(id)).filter((p) => p && p.active !== false);
+    if (!members.length) return "";
+    return '<div class="loc-off-row"><b>' + esc(g.label) + "</b>" +
+      members.map((p) => '<button class="link-chip" data-id="' + p.id + '">' + esc(p.name) + "</button>").join(", ") + "</div>";
+  }).join("");
+  $("#map-canvas").innerHTML =
+    '<div class="card" style="padding:16px"><div style="font-size:13px;color:var(--ink-2);margin-bottom:8px">' + t("map_offline") + "</div>" + list + "</div>";
+  $$("#map-canvas .link-chip").forEach((b) => b.addEventListener("click", () => go("profile", { personId: b.dataset.id })));
+}
+
+function locationPopupHTML(p) {
+  return '<div class="loc-pop">' +
+    '<div class="loc-pop-head">' + avatarHTML(p, 40) + "</div>" +
+    "<b>" + esc(p.name) + "</b>" +
+    '<div class="loc-pop-sub">' + esc(p.company) + " · " + esc(p.title) + "</div>" +
+    '<div class="loc-pop-city">' + icon("pin", 11) + " " + esc(p.currentCity) + "</div>" +
+    '<button class="btn small primary loc-pop-open" data-id="' + p.id + '">' + t("btn_profile") + "</button></div>";
+}
+
+function locationMarkerHTML(p) {
+  const inner = p.photo
+    ? '<img src="' + esc(p.photo) + '" alt="" />'
+    : '<span class="loc-initials">' + esc(p.initials || p.name.slice(0, 2)) + "</span>";
+  return '<div class="loc-marker" style="--c:' + esc(p.color) + '">' + inner + "</div>";
+}
+
+function renderLeafletLocationMap(people) {
+  if (typeof L === "undefined") return false;
+  $("#map-canvas").innerHTML = '<div id="location-map" class="location-map"></div>';
+  const container = $("#location-map");
+  if (!container) return false;
+
+  const map = L.map(container, { zoomControl: true });
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    maxZoom: 19
+  }).addTo(map);
+
+  const markers = [];
+  people.forEach((p) => {
+    const geo = personGeo(p);
+    if (!geo) return;
+    const markerIcon = L.divIcon({
+      className: "loc-marker-wrap",
+      html: locationMarkerHTML(p),
+      iconSize: [46, 54],
+      iconAnchor: [23, 50],
+      popupAnchor: [0, -48]
+    });
+    const m = L.marker(geo, { icon: markerIcon, title: p.name });
+    const pop = document.createElement("div");
+    pop.innerHTML = locationPopupHTML(p);
+    m.bindPopup(pop.firstChild, { closeButton: true });
+    m.on("popupopen", () => {
+      const btn = document.querySelector('.leaflet-popup-content .loc-pop-open[data-id="' + p.id + '"]');
+      if (btn && !btn._bound) {
+        btn._bound = true;
+        btn.addEventListener("click", () => go("profile", { personId: btn.dataset.id }));
+      }
+    });
+    markers.push(m);
+  });
+
+  if (markers.length) {
+    L.layerGroup(markers).addTo(map);
+    map.fitBounds(L.latLngBounds(markers.map((m) => m.getLatLng())), { padding: [40, 40] });
+  } else {
+    map.setView([35.6, 139.6], 5);
+  }
+  locMap = { provider: "leaflet", instance: map };
+  setTimeout(() => { try { if (locMap && locMap.instance) locMap.instance.invalidateSize(); } catch (e) {} }, 80);
+  return true;
+}
+
+async function renderGoogleLocationMap(people, renderId) {
+  const maps = await loadGoogleMapsApi();
+  if (renderId !== locMapRenderId || mapState.lens !== "location") return false;
+  $("#map-canvas").innerHTML = '<div id="location-map" class="location-map"></div>';
+  const container = $("#location-map");
+  if (!container) return false;
+
+  const map = new maps.Map(container, {
+    center: { lat: 35.6, lng: 139.6 },
+    zoom: 5,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+    gestureHandling: "greedy",
+    mapId: googleMapsMapId() || undefined,
+  });
+  const infoWindow = new maps.InfoWindow();
+  const bounds = new maps.LatLngBounds();
+  let count = 0;
+
+  people.forEach((p) => {
+    const geo = personGeo(p);
+    if (!geo) return;
+    count += 1;
+    const position = { lat: geo[0], lng: geo[1] };
+    bounds.extend(position);
+    const markerContent = document.createElement("div");
+    markerContent.className = "loc-marker-wrap";
+    markerContent.innerHTML = locationMarkerHTML(p);
+
+    let marker = null;
+    if (maps.marker && maps.marker.AdvancedMarkerElement) {
+      marker = new maps.marker.AdvancedMarkerElement({
+        map,
+        position,
+        title: p.name,
+        content: markerContent,
+      });
+      marker.addListener("gmp-click", () => {
+        infoWindow.setContent(locationPopupHTML(p));
+        infoWindow.open({ map, anchor: marker });
+      });
+    } else {
+      marker = new maps.Marker({
+        map,
+        position,
+        title: p.name,
+        icon: {
+          url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="46" height="54" viewBox="0 0 46 54">' +
+            '<circle cx="23" cy="23" r="21" fill="' + esc(p.color) + '" stroke="#ffffff" stroke-width="3"/>' +
+            '<path d="M17 46 L23 53 L29 46 Z" fill="#ffffff"/>' +
+            '<text x="23" y="27" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#ffffff">' + esc(p.initials || p.name.slice(0, 2)) + "</text></svg>"
+          ),
+          scaledSize: new maps.Size(46, 54),
+          anchor: new maps.Point(23, 50),
+        },
+      });
+      marker.addListener("click", () => {
+        infoWindow.setContent(locationPopupHTML(p));
+        infoWindow.open({ map, anchor: marker });
+      });
+    }
+  });
+
+  maps.event.addListener(infoWindow, "domready", () => {
+    const btn = document.querySelector(".loc-pop-open");
+    if (btn && !btn._bound) {
+      btn._bound = true;
+      btn.addEventListener("click", () => go("profile", { personId: btn.dataset.id }));
+    }
+  });
+
+  if (count > 1) map.fitBounds(bounds, 40);
+  else if (count === 1) map.setZoom(10);
+  locMap = { provider: "google", instance: map };
+  return true;
+}
 
 function renderMap() {
   // Chưa có người → empty state (app thật bắt đầu rỗng)
@@ -768,8 +970,8 @@ function renderLocationMap() {
   const groups = LENSES.location.groups;
   const people = activePeople();
 
-  // destroy previous Leaflet instance (avoid duplicates on re-render)
-  if (locMap) { try { locMap.remove(); } catch (e) {} locMap = null; }
+  clearLocationMapInstance();
+  const renderId = ++locMapRenderId;
 
   // compact legend: per-city counts (active people only)
   const counts = groups.map((g) => {
@@ -779,73 +981,16 @@ function renderLocationMap() {
   $("#map-legend").innerHTML =
     '<span><i style="background:#7A5AF8"></i>' + t("lens_location") + "</span>" +
     counts.map((c) => "<span>" + c + "</span>").join("");
-  $("#map-wrap .map-pop") && $("#map-wrap .map-pop").remove();
-
-  // offline / CDN unavailable fallback: compact text list (no big avatars)
-  if (typeof L === "undefined") {
-    const list = groups.map((g) => {
-      const members = (g.members || []).map((id) => byId(id)).filter((p) => p && p.active !== false);
-      if (!members.length) return "";
-      return '<div class="loc-off-row"><b>' + esc(g.label) + "</b>" +
-        members.map((p) => '<button class="link-chip" data-id="' + p.id + '">' + esc(p.name) + "</button>").join(", ") + "</div>";
-    }).join("");
-    $("#map-canvas").innerHTML =
-      '<div class="card" style="padding:16px"><div style="font-size:13px;color:var(--ink-2);margin-bottom:8px">' + t("map_offline") + "</div>" + list + "</div>";
-    $$("#map-canvas .link-chip").forEach((b) => b.addEventListener("click", () => go("profile", { personId: b.dataset.id })));
+  if (googleMapsEnabled()) {
+    renderGoogleLocationMap(people, renderId).catch(() => {
+      if (renderId !== locMapRenderId || mapState.lens !== "location") return;
+      if (renderLeafletLocationMap(people)) return;
+      renderLocationListFallback(groups);
+    });
     return;
   }
-
-  // interactive map with photo markers
-  $("#map-canvas").innerHTML = '<div id="location-map" class="location-map"></div>';
-  const container = $("#location-map");
-  if (!container) return;
-
-  locMap = L.map(container, { zoomControl: true });
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    maxZoom: 19
-  }).addTo(locMap);
-
-  const markers = [];
-  people.forEach((p) => {
-    const geo = personGeo(p);
-    if (!geo) return;
-    const [lat, lng] = geo;
-    const iconHtml = p.photo
-      ? '<img src="' + esc(p.photo) + '" alt="" />'
-      : '<span class="loc-initials">' + esc(p.initials || p.name.slice(0, 2)) + "</span>";
-    const markerIcon = L.divIcon({
-      className: "loc-marker-wrap",
-      html: '<div class="loc-marker" style="--c:' + esc(p.color) + '">' + iconHtml + "</div>",
-      iconSize: [46, 54],
-      iconAnchor: [23, 50],
-      popupAnchor: [0, -48]
-    });
-    const m = L.marker([lat, lng], { icon: markerIcon, title: p.name });
-
-    const pop = document.createElement("div");
-    pop.className = "loc-pop";
-    pop.innerHTML =
-      '<div class="loc-pop-head">' + avatarHTML(p, 40) + "</div>" +
-      "<b>" + esc(p.name) + "</b>" +
-      '<div class="loc-pop-sub">' + esc(p.company) + " · " + esc(p.title) + "</div>" +
-      '<div class="loc-pop-city">' + icon("pin", 11) + " " + esc(p.currentCity) + "</div>" +
-      '<button class="btn small primary loc-pop-open" data-id="' + p.id + '">' + t("btn_profile") + "</button>";
-    m.bindPopup(pop, { closeButton: true });
-    m.on("popupopen", () => {
-      const btn = pop.querySelector(".loc-pop-open");
-      if (btn && !btn._bound) { btn._bound = true; btn.addEventListener("click", () => go("profile", { personId: btn.dataset.id })); }
-    });
-    markers.push(m);
-  });
-
-  if (markers.length) {
-    L.layerGroup(markers).addTo(locMap);
-    locMap.fitBounds(L.latLngBounds(markers.map((m) => m.getLatLng())), { padding: [40, 40] });
-  } else {
-    locMap.setView([35.6, 139.6], 5);
-  }
-  setTimeout(() => { try { if (locMap) locMap.invalidateSize(); } catch (e) {} }, 80);
+  if (renderLeafletLocationMap(people)) return;
+  renderLocationListFallback(groups);
 }
 
 function debounce(fn, ms) {
@@ -1089,6 +1234,7 @@ function renderProfile(id) {
     '<button class="btn small" id="act-followup">' + t("btn_followup") + "</button>" +
     '<button class="btn small refresh-open" data-id="' + p.id + '">' + icon("refresh", 12) + " " + t("btn_refresh") + "</button>" +
     '<button class="btn small" id="act-connections">' + icon("graph", 12) + " " + t("btn_connections") + "</button>" +
+    '<button class="btn small ghost" id="act-delete">' + icon("trash", 12) + " " + t("btn_delete") + "</button>" +
     "</div></div>";
 
   const tabs =
@@ -1233,6 +1379,12 @@ function bindProfile() {
   $("#act-edit").addEventListener("click", () => openCapture("manual", { personId: p.id, edit: true }));
   $("#act-followup").addEventListener("click", () => { toast(t("toast_followup_added")); });
   $("#act-connections").addEventListener("click", () => go("map", { map: { lens: "people", focusId: p.id, topic: "" } }));
+  $("#act-delete").addEventListener("click", () => {
+    if (!confirm(t("delete_person_confirm", { name: p.name }))) return;
+    Store.deletePerson(p.id);
+    toast(t("toast_person_deleted", { name: p.name }));
+    go("people");
+  });
   $$(".refresh-open", scope).forEach((b) => b.addEventListener("click", () => go("refresh", { personId: b.dataset.id })));
   $$(".person-link", scope).forEach((b) => b.addEventListener("click", () => b.dataset.id && go("profile", { personId: b.dataset.id })));
   $$(".strength-pick", scope).forEach((b) => b.addEventListener("click", () => {
@@ -1378,18 +1530,13 @@ function renderSettings() {
     '<div class="screen-head"><div class="kicker">' + t("settings_kicker") + "</div>" +
     '<h1 class="screen-title">' + t("settings_title") + "</h1>" +
     '<p class="screen-sub">' + t("settings_sub") + "</p></div>" +
-    '<div class="card"><div class="card-title">' + icon("globe", 13) + " " + t("settings_language") + "</div>" +
-    '<div class="setting-row"><div><b>' + t("settings_language_desc") + "</b></div></div>" +
-    '<div class="pick-row" style="margin-top:8px">' +
-    '<button class="pick lang-pick' + (LANG === "vi" ? " on" : "") + '" data-lang="vi">' + t("lang_vi") + "</button>" +
-    '<button class="pick lang-pick' + (LANG === "en" ? " on" : "") + '" data-lang="en">' + t("lang_en") + "</button>" +
-    '<button class="pick lang-pick' + (LANG === "ja" ? " on" : "") + '" data-lang="ja">' + t("lang_ja") + "</button>" +
-    "</div></div>" +
     '<div class="card"><div class="card-title">' + icon("users", 13) + " " + t("settings_network") + "</div>" +
     '<div class="setting-row"><div><b>' + t("settings_network_desc") + "</b></div></div>" +
     PEOPLE.map((p) =>
       '<div class="setting-row"><div><b>' + esc(p.name) + "</b><span>" + esc(p.company) + "</span></div>" +
-      '<span class="net-switch' + (p.active !== false ? " on" : "") + '" data-id="' + p.id + '" role="switch" aria-checked="' + (p.active !== false) + '"><i></i></span></div>'
+      '<div style="display:flex;align-items:center;gap:8px">' +
+      '<button class="btn small ghost net-delete" data-id="' + p.id + '">' + icon("trash", 12) + " " + t("btn_delete") + "</button>" +
+      '<span class="net-switch' + (p.active !== false ? " on" : "") + '" data-id="' + p.id + '" role="switch" aria-checked="' + (p.active !== false) + '"><i></i></span></div></div>'
     ).join("") +
     "</div>" +
     '<div class="card"><div class="card-title">' + icon("merge", 13) + " " + t("settings_duplicates") + "</div>" +
@@ -1469,7 +1616,14 @@ function renderSettings() {
   });
   const lb = $("#logout-btn");
   if (lb) lb.addEventListener("click", () => { Firebase.signOut().catch(() => { /* ignore */ }); });
-  $$(".lang-pick", $("#screen-settings")).forEach((b) => b.addEventListener("click", () => setLang(b.dataset.lang)));
+  $$(".net-delete", $("#screen-settings")).forEach((b) => b.addEventListener("click", () => {
+    const person = byId(b.dataset.id);
+    if (!person) return;
+    if (!confirm(t("delete_person_confirm", { name: person.name }))) return;
+    Store.deletePerson(person.id);
+    renderSettings();
+    toast(t("toast_person_deleted", { name: person.name }));
+  }));
   $$(".net-switch", $("#screen-settings")).forEach((b) => b.addEventListener("click", () => { toggleActive(b.dataset.id); renderSettings(); }));
 }
 
@@ -1589,7 +1743,7 @@ async function requestProxyExtraction(mode, text) {
       signal: controller.signal,
       body: JSON.stringify({
         mode,
-        locale: LANG,
+        locale: "en",
         text,
         existingPeople: existingPeopleHints(),
       }),
@@ -2161,7 +2315,7 @@ function startVoiceRecognition() {
   if (!SR) return false;
   try {
     speechRec = new SR();
-    speechRec.lang = LANG === "ja" ? "ja-JP" : LANG === "vi" ? "vi-VN" : "en-US";
+    speechRec.lang = "en-US";
     speechRec.continuous = true;
     speechRec.interimResults = false;
     let final = "";
@@ -2631,12 +2785,6 @@ function init() {
   const vSaved = localStorage.getItem("nm-view") || localStorage.getItem("omoide-view");
   setView(vParam || vSaved || "mobile");
 
-  // language — mặc định tiếng Việt (không đoán theo navigator)
-  const lParam = new URLSearchParams(location.search).get("lang");
-  const lSaved = localStorage.getItem("nm-lang");
-  const lInit = lParam || lSaved || "vi";
-  LANG = ["en", "vi", "ja"].includes(lInit) ? lInit : "vi";
-
   // data — js/store.js: localStorage (local-only) HOẶC Firestore (Firebase đã cấu hình)
   Store.subscribe(() => { if (!cap.open) renderAll(); });
   Store.init();
@@ -2678,12 +2826,9 @@ function init() {
   $("#ask-submit").addEventListener("click", () => runAsk($("#ask-input").value.trim() || QUICK_QUESTIONS[0]));
   $("#ask-input").addEventListener("keydown", (e) => { if (e.key === "Enter") runAsk($("#ask-input").value.trim() || QUICK_QUESTIONS[0]); });
 
-  // theme / view / lang toggles (web sidebar)
+  // theme / view toggles (web sidebar)
   $("#theme-toggle").addEventListener("click", toggleTheme);
   $("#view-toggle-web").addEventListener("click", () => setView("mobile"));
-  $("#lang-toggle-web").addEventListener("click", () => {
-    setLang(LANG === "vi" ? "en" : LANG === "en" ? "ja" : "vi");
-  });
 
   updateCareBadge();
   updateUserChip();

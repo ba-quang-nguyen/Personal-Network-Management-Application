@@ -19,7 +19,7 @@ node build.mjs                # sinh lại omoide.html (bản single-file)
 - CRUD người + meetings/memories/follow-up, photos, circles, active — persist sau F5.
 - Home (care/upcoming/recent), Care queue (sinh nhật/im lặng/lời hứa), Ask (tìm data thật), Map (7 lens + Leaflet location).
 - Export/Import JSON, Merge trùng, Delete all.
-- i18n **vi / en / ja** (mặc định vi).
+- English-only UI.
 
 ## AI proxy (DeepSeek)
 

@@ -39,7 +39,8 @@ html = inlineScript(html, '<script src="vendor/leaflet/leaflet.js"></script>', "
 html = inlineScript(html, '<script src="js/data.js?v=5"></script>', "js/data.js");
 html = inlineScript(html, '<script src="js/store.js?v=5"></script>', "js/store.js");
 html = inlineScript(html, '<script src="js/firebase-config.js"></script>', "js/firebase-config.js");
-html = inlineScript(html, '<script src="js/ai-proxy-config.js"></script>', "js/ai-proxy-config.js");
+html = inlineScript(html, '<script src="js/google-maps-config.js?v=6"></script>', "js/google-maps-config.js");
+html = inlineScript(html, '<script src="js/ai-proxy-config.js?v=6"></script>', "js/ai-proxy-config.js");
 html = inlineScript(html, '<script src="js/firebase.js?v=5"></script>', "js/firebase.js");
 html = inlineScript(html, '<script src="js/i18n.js?v=5"></script>', "js/i18n.js");
 html = inlineScript(html, '<script src="js/app.js?v=5"></script>', "js/app.js");
@@ -73,7 +74,7 @@ if (PAGES) {
   copy("sw.js", "sw.js");
   copy("icon.svg", "icon.svg");
   copy("css/styles.css", "css/styles.css");
-  ["data.js", "store.js", "firebase-config.js", "firebase-config.example.js", "ai-proxy-config.js", "ai-proxy-config.example.js", "firebase.js", "i18n.js", "app.js"].forEach((f) =>
+  ["data.js", "store.js", "firebase-config.js", "firebase-config.example.js", "google-maps-config.js", "google-maps-config.example.js", "ai-proxy-config.js", "ai-proxy-config.example.js", "firebase.js", "i18n.js", "app.js"].forEach((f) =>
     copy("js/" + f, "js/" + f),
   );
   copy("vendor/leaflet/leaflet.js", "vendor/leaflet/leaflet.js");

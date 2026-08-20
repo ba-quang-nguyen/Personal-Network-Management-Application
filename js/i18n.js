@@ -219,6 +219,7 @@ const STR = {
     toast_filtered: "Filtered by {name}",
     toast_created: "Created — {name} (profile grows over time)",
     toast_updated_profile: "Profile updated — {name}",
+    toast_person_deleted: "Deleted {name}.",
     toast_photo_saved: "Photo saved",
     toast_photo_removed: "Photo removed",
     toast_photo_added: "Photo added — add a note if you like",
@@ -251,6 +252,7 @@ const STR = {
     toast_exported: "Backup downloaded — yours forever.",
     settings_delete_confirm: "Delete ALL people and memories? This cannot be undone.",
     toast_deleted_all: "All data deleted.",
+    delete_person_confirm: "Delete {name}? This cannot be undone.",
     settings_dup_sub: "same person detected — merge memories into one profile",
     settings_no_duplicates: "No duplicates detected.",
     settings_sample_row: "Sample data",
@@ -505,6 +507,7 @@ const STR = {
     toast_filtered: "Đã lọc theo {name}",
     toast_created: "Đã tạo — {name} (hồ sơ sẽ lớn dần theo thời gian)",
     toast_updated_profile: "Đã cập nhật hồ sơ — {name}",
+    toast_person_deleted: "Đã xoá {name}.",
     toast_photo_saved: "Đã lưu ảnh",
     toast_photo_removed: "Đã gỡ ảnh",
     toast_photo_added: "Đã thêm ảnh — thêm ghi chú nếu muốn",
@@ -537,6 +540,7 @@ const STR = {
     toast_exported: "Đã tải bản sao lưu — mãi là của bạn.",
     settings_delete_confirm: "Xoá TẤT CẢ người và ký ức? Không thể hoàn tác.",
     toast_deleted_all: "Đã xoá toàn bộ dữ liệu.",
+    delete_person_confirm: "Xoá {name}? Không thể hoàn tác.",
     settings_dup_sub: "phát hiện cùng một người — gộp ký ức vào một hồ sơ",
     settings_no_duplicates: "Không phát hiện trùng lặp.",
     settings_sample_row: "Dữ liệu mẫu",
@@ -791,6 +795,7 @@ const STR = {
     toast_filtered: "{name}で絞り込み",
     toast_created: "{name}を作成 — プロフィールは時間とともに育ちます",
     toast_updated_profile: "プロフィールを更新 — {name}",
+    toast_person_deleted: "{name}を削除しました。",
     toast_photo_saved: "写真を保存しました",
     toast_photo_removed: "写真を削除しました",
     toast_photo_added: "写真を追加 — メモを付けられます",
@@ -823,6 +828,7 @@ const STR = {
     toast_exported: "バックアップをダウンロード — いつまでもあなたのもの。",
     settings_delete_confirm: "すべての人と記憶を削除しますか？元に戻せません。",
     toast_deleted_all: "全データを削除しました。",
+    delete_person_confirm: "{name}を削除しますか？元に戻せません。",
     settings_dup_sub: "同じ人物を検出 — 記憶を1つのプロフィールに統合",
     settings_no_duplicates: "重複は検出されませんでした。",
     settings_sample_row: "サンプルデータ",
@@ -863,26 +869,14 @@ const STR = {
   }
 };
 
-let LANG = "en";
-
 function t(key, vars) {
-  let s = (STR[LANG] && STR[LANG][key]) || (STR.en && STR.en[key]) || key;
+  let s = (STR.en && STR.en[key]) || key;
   if (vars) {
     Object.keys(vars).forEach((k) => {
       s = s.split("{" + k + "}").join(vars[k]);
     });
   }
   return s;
-}
-
-function getLang() { return LANG; }
-
-function setLang(l, rerender = true) {
-  l = ["en", "vi", "ja"].includes(l) ? l : "en";
-  LANG = l;
-  try { localStorage.setItem("nm-lang", l); } catch (e) {}
-  if (typeof applyStaticI18n === "function") applyStaticI18n();
-  if (rerender && typeof window !== "undefined" && typeof renderAll === "function") renderAll();
 }
 
 function applyStaticI18n() {
