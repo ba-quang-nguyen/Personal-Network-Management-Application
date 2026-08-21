@@ -112,7 +112,7 @@ const STR = {
     settings_kicker: "Profile & preferences", settings_title: "Settings",
     settings_sub: "Your profile and app preferences.",
     settings_profile_name: "Name", settings_profile_photo: "Photo",
-    settings_profile_color: "Avatar color", settings_profile_email: "Email",
+    settings_profile_email: "Email",
     settings_profile_email_none: "Offline-first — no account needed.",
     btn_change_photo: "Change photo", btn_remove_photo: "Remove photo",
     toast_photo_too_large: "Photo too large — choose a smaller image.",

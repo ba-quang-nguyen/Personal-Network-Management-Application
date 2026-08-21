@@ -69,6 +69,15 @@ function avatarHTML(p, px) {
   return '<div class="avatar" style="width:' + px + 'px;height:' + px + 'px;font-size:' + fs + 'px;background:' + p.color + '">' + esc(p.initials || p.name.slice(0, 2)) + "</div>";
 }
 
+/** Màu avatar "You" suy ra từ tên (không còn picker màu — ổn định theo tên). */
+function nameColor(name) {
+  const palette = ["#E0452C", "#B45F06", "#3E7BB6", "#2E7D5B", "#8D867C", "#201D1A"];
+  const s = String(name || "You");
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return palette[h % palette.length];
+}
+
 function toast(msg, iconName) {
   // Settings: "Action feedback" off → bỏ qua mọi toast.
   if (Store && Store.getSettings && !Store.getSettings().notif.toast) return;
@@ -1346,8 +1355,7 @@ function renderSettings() {
   const prof = S.profile || {};
   const pname = prof.name || "";
   const pInitials = (pname.split(/\s+/).map((w) => w[0]).join("") || "Yo").slice(0, 2).toUpperCase();
-  const avatarObj = { name: pname || t("you"), photo: prof.photo || "", color: prof.color || "#201D1A", initials: pInitials };
-  const swatches = ["#E0452C", "#B45F06", "#3E7BB6", "#2E7D5B", "#8D867C", "#201D1A"];
+  const avatarObj = { name: pname || t("you"), photo: prof.photo || "", color: nameColor(pname || t("you")), initials: pInitials };
   const seg = (opts, cur, attr) => opts.map((o) =>
     '<button type="button" class="opt' + (o.v === cur ? " active" : "") + '" data-' + attr + '="' + o.v + '">' + o.label + "</button>"
   ).join("");
@@ -1374,25 +1382,13 @@ function renderSettings() {
     '<div class="setting-row" style="align-items:flex-start;padding-top:14px">' + avatarHTML(avatarObj, 52) +
     '<div style="flex:1;min-width:0"><label class="set-label" for="profile-name">' + t("settings_profile_name") + "</label>" +
     '<input class="set-input" id="profile-name" type="text" value="' + esc(pname) + '" placeholder="' + t("you") + '" maxlength="40" /></div></div>' +
-    '<div class="setting-row"><span class="set-ico">' + icon("user", 16) + "</span><div><b>" + t("settings_profile_color") + "</b></div>" +
-    '<div class="color-swatches">' + swatches.map((c) =>
-      '<button type="button" class="swatch' + (prof.color === c ? " on" : "") + '" data-color="' + c + '" style="background:' + c + '" aria-label="' + c + '"></button>'
-    ).join("") + "</div></div>" +
     '<div class="setting-row"><span class="set-ico">' + icon("camera", 16) + "</span><div><b>" + t("settings_profile_photo") + "</b><span>JPG/PNG · small</span></div>" +
     '<button class="btn small ghost s-act" id="profile-photo-btn">' + t(prof.photo ? "btn_change_photo" : "btn_add_photo") + "</button>" +
     (prof.photo ? '<button class="btn small ghost s-act" id="profile-photo-remove">' + t("btn_remove_photo") + "</button>" : "") +
     '<input type="file" id="profile-photo-file" accept="image/*" hidden /></div>' +
     '<div class="setting-row"><span class="set-ico">' + icon("mail", 16) + "</span><div><b>" + t("settings_profile_email") + "</b><span>" +
     (fbUser && fbUser.email ? esc(fbUser.email) : (fbEnabled() ? t("auth_not_signed_in") : t("settings_profile_email_none"))) +
-    "</span></div></div>" +
-    (fbEnabled()
-      ? (fbUser
-          ? '<div class="setting-row"><span class="set-ico">' + icon("user", 16) + "</span><div><b>" + t("auth_sign_out") + "</b><span>" + t("auth_sync_note") + "</span></div>" +
-            '<button class="btn small ghost s-act" id="logout-btn">' + t("auth_sign_out") + "</button></div>"
-          : '<div class="setting-row"><span class="set-ico">' + icon("user", 16) + "</span><div><b>" + t("auth_sign_in") + "</b><span>" + t("auth_sync_note") + "</span></div>" +
-            '<button class="btn small primary s-act" id="login-btn">' + t("auth_sign_in") + "</button></div>")
-      : "") +
-    "</div>" +
+    "</span></div></div></div>" +
 
     // ---------- Appearance ----------
     '<div class="set-section">' + t("settings_appearance") + "</div>" +
@@ -1429,7 +1425,14 @@ function renderSettings() {
     dataCard +
 
     // ---------- About footer ----------
-    '<div class="set-about">' + esc(APP_NAME) + " · " + t("settings_about_line") + "</div>";
+    '<div class="set-about">' + esc(APP_NAME) + " · " + t("settings_about_line") + "</div>" +
+
+    // ---------- Sign in / Sign out (đáy màn hình — tránh ấn nhầm) ----------
+    (fbEnabled()
+      ? (fbUser
+          ? '<div class="set-foot-action"><button class="btn danger-link full" id="logout-btn">' + t("auth_sign_out") + "</button></div>"
+          : '<div class="set-foot-action"><button class="btn primary full" id="login-btn">' + t("auth_sign_in") + "</button></div>")
+      : "");
 
   // theme
   $$("#theme-seg .opt").forEach((b) => b.addEventListener("click", () => {
@@ -1446,7 +1449,6 @@ function renderSettings() {
   $("#notif-toast").addEventListener("click", () => Store.setSettings({ notif: { toast: !Store.getSettings().notif.toast } }));
   // profile
   $("#profile-name").addEventListener("change", (e) => Store.setSettings({ profile: { name: e.target.value.trim() } }));
-  $$(".color-swatches .swatch").forEach((b) => b.addEventListener("click", () => Store.setSettings({ profile: { color: b.dataset.color } })));
   $("#profile-photo-btn").addEventListener("click", () => $("#profile-photo-file").click());
   $("#profile-photo-file").addEventListener("change", (e) => {
     const f = e.target.files && e.target.files[0];
@@ -3001,7 +3003,7 @@ function updateUserChip() {
   const name = fbEnabled() && fbUser ? (fbUser.email || prof.name || t("you")) : (prof.name || t("you"));
   if (b) b.textContent = name;
   if (av) {
-    av.style.background = prof.color || "#201D1A";
+    av.style.background = nameColor(name);
     if (prof.photo) {
       av.classList.add("photo");
       av.innerHTML = '<img src="' + esc(prof.photo) + '" alt="' + esc(name) + '" />';
