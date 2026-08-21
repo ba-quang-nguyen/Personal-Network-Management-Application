@@ -110,6 +110,7 @@ function dateKey(s) {
    VIEW (mobile / web) + THEME
    ============================================================ */
 let view = "mobile";
+let settingsNameEditing = false;
 
 function isCompactViewport() {
   return typeof window !== "undefined" && window.matchMedia && window.matchMedia("(max-width: 560px)").matches;
@@ -1356,6 +1357,7 @@ function renderSettings() {
   const pname = prof.name || "";
   const pInitials = (pname.split(/\s+/).map((w) => w[0]).join("") || "Yo").slice(0, 2).toUpperCase();
   const avatarObj = { name: pname || t("you"), photo: prof.photo || "", color: nameColor(pname || t("you")), initials: pInitials };
+  const profilePhotoLabel = t(prof.photo ? "btn_change_photo" : "btn_add_photo");
   const seg = (opts, cur, attr) => opts.map((o) =>
     '<button type="button" class="opt' + (o.v === cur ? " active" : "") + '" data-' + attr + '="' + o.v + '">' + o.label + "</button>"
   ).join("");
@@ -1378,14 +1380,18 @@ function renderSettings() {
 
     // ---------- Account ----------
     '<div class="set-section">' + t("auth_account") + "</div>" +
-    '<div class="card set-card">' +
-    '<div class="setting-row" style="align-items:flex-start;padding-top:14px">' + avatarHTML(avatarObj, 52) +
-    '<div style="flex:1;min-width:0"><label class="set-label" for="profile-name">' + t("settings_profile_name") + "</label>" +
-    '<input class="set-input" id="profile-name" type="text" value="' + esc(pname) + '" placeholder="' + t("you") + '" maxlength="40" /></div></div>' +
-    '<div class="setting-row"><span class="set-ico">' + icon("camera", 16) + "</span><div><b>" + t("settings_profile_photo") + "</b><span>JPG/PNG · small</span></div>" +
-    '<button class="btn small ghost s-act" id="profile-photo-btn">' + t(prof.photo ? "btn_change_photo" : "btn_add_photo") + "</button>" +
-    (prof.photo ? '<button class="btn small ghost s-act" id="profile-photo-remove">' + t("btn_remove_photo") + "</button>" : "") +
-    '<input type="file" id="profile-photo-file" accept="image/*" hidden /></div>' +
+    '<div class="card set-card settings-account-card">' +
+    '<button type="button" class="settings-avatar-button" id="profile-photo-btn" aria-label="' + esc(profilePhotoLabel) + '">' +
+    avatarHTML(avatarObj, 96) + '<span class="settings-avatar-camera" aria-hidden="true">' + icon("camera", 14) + '</span></button>' +
+    '<input type="file" id="profile-photo-file" accept="image/*" hidden />' +
+    '<div class="settings-account-name"><span class="set-label">' + t("settings_profile_name") + "</span>" +
+    (settingsNameEditing
+      ? '<div class="settings-name-edit-row"><input class="set-input" id="profile-name" type="text" value="' + esc(pname) + '" placeholder="' + t("you") + '" maxlength="40" />' +
+        '<button class="btn small primary s-act" id="profile-name-save">' + t("btn_save") + '</button>' +
+        '<button class="btn small ghost s-act" id="profile-name-cancel">' + t("btn_cancel") + '</button></div>'
+      : '<div class="settings-name-display-row"><div class="settings-name-value">' + esc(pname || t("you")) + '</div>' +
+        '<button class="btn small ghost s-act" id="profile-name-edit">' + t("btn_edit") + '</button></div>') +
+    "</div>" +
     '<div class="setting-row"><span class="set-ico">' + icon("mail", 16) + "</span><div><b>" + t("settings_profile_email") + "</b><span>" +
     (fbUser && fbUser.email ? esc(fbUser.email) : (fbEnabled() ? t("auth_not_signed_in") : t("settings_profile_email_none"))) +
     "</span></div></div></div>" +
@@ -1448,7 +1454,29 @@ function renderSettings() {
   $("#notif-care").addEventListener("click", () => Store.setSettings({ notif: { care: !Store.getSettings().notif.care } }));
   $("#notif-toast").addEventListener("click", () => Store.setSettings({ notif: { toast: !Store.getSettings().notif.toast } }));
   // profile
-  $("#profile-name").addEventListener("change", (e) => Store.setSettings({ profile: { name: e.target.value.trim() } }));
+  const editName = $("#profile-name-edit");
+  if (editName) editName.addEventListener("click", () => {
+    settingsNameEditing = true;
+    renderSettings();
+    const input = $("#profile-name");
+    if (input) { input.focus(); input.select(); }
+  });
+  const saveName = () => {
+    const input = $("#profile-name");
+    if (!input) return;
+    Store.setSettings({ profile: { name: input.value.trim() } });
+    settingsNameEditing = false;
+    renderSettings();
+  };
+  const cancelName = $("#profile-name-cancel");
+  if (cancelName) cancelName.addEventListener("click", () => { settingsNameEditing = false; renderSettings(); });
+  const saveNameButton = $("#profile-name-save");
+  if (saveNameButton) saveNameButton.addEventListener("click", saveName);
+  const profileName = $("#profile-name");
+  if (profileName) profileName.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") saveName();
+    if (e.key === "Escape") { settingsNameEditing = false; renderSettings(); }
+  });
   $("#profile-photo-btn").addEventListener("click", () => $("#profile-photo-file").click());
   $("#profile-photo-file").addEventListener("change", (e) => {
     const f = e.target.files && e.target.files[0];
@@ -1459,9 +1487,6 @@ function renderSettings() {
     r.onload = () => Store.setSettings({ profile: { photo: String(r.result) } });
     r.readAsDataURL(f);
   });
-  const pr = $("#profile-photo-remove");
-  if (pr) pr.addEventListener("click", () => Store.setSettings({ profile: { photo: "" } }));
-
   // account — login / logout
   const lb = $("#logout-btn");
   if (lb) lb.addEventListener("click", () => { Firebase.signOut().catch(() => { /* ignore */ }); });

@@ -1148,7 +1148,7 @@ body.view-mobile .location-map { height: 340px; }
   display: inline-flex; align-items: center; flex-shrink: 0;
   color: var(--ink-3); margin-top: 1px;
 }
-.setting-row > div:not(.seg):not(.set-select) { flex: 1; min-width: 0; }
+.setting-row > div:not(.seg):not(.set-select):not(.avatar) { flex: 1; min-width: 0; }
 .set-label {
   display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.4px;
   text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px;
@@ -1159,6 +1159,37 @@ body.view-mobile .location-map { height: 340px; }
   padding: 8px 12px; font-size: 14px; color: var(--ink); outline: none;
 }
 .set-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.settings-account-card {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding-top: 18px; padding-bottom: 16px;
+}
+.settings-avatar-button {
+  position: relative; display: grid; place-items: center; width: 96px; height: 96px;
+  border-radius: 50%; flex: 0 0 auto; overflow: visible;
+}
+.settings-avatar-button .avatar {
+  width: 96px !important; height: 96px !important; border-radius: 50%;
+  font-size: 31px !important;
+}
+.settings-avatar-button .avatar.photo { overflow: hidden; }
+.settings-avatar-button .avatar.photo img { border-radius: 50%; }
+.settings-avatar-camera {
+  position: absolute; right: 0; bottom: 2px; width: 30px; height: 30px;
+  display: grid; place-items: center; border-radius: 50%;
+  background: var(--surface); color: var(--ink-2); border: 1px solid var(--line);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+.settings-account-name { width: 100%; display: flex; flex-direction: column; gap: 7px; }
+.settings-name-display-row,
+.settings-name-edit-row {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.settings-name-value {
+  max-width: 210px; min-height: 34px; display: flex; align-items: center;
+  color: var(--ink); font-size: 18px; font-weight: 600; line-height: 1.2;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.settings-name-edit-row .set-input { max-width: 210px; }
 .seg {
   display: inline-flex; background: var(--surface-2);
   border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px;
@@ -3570,6 +3601,7 @@ function dateKey(s) {
    VIEW (mobile / web) + THEME
    ============================================================ */
 let view = "mobile";
+let settingsNameEditing = false;
 
 function isCompactViewport() {
   return typeof window !== "undefined" && window.matchMedia && window.matchMedia("(max-width: 560px)").matches;
@@ -4816,6 +4848,7 @@ function renderSettings() {
   const pname = prof.name || "";
   const pInitials = (pname.split(/\s+/).map((w) => w[0]).join("") || "Yo").slice(0, 2).toUpperCase();
   const avatarObj = { name: pname || t("you"), photo: prof.photo || "", color: nameColor(pname || t("you")), initials: pInitials };
+  const profilePhotoLabel = t(prof.photo ? "btn_change_photo" : "btn_add_photo");
   const seg = (opts, cur, attr) => opts.map((o) =>
     '<button type="button" class="opt' + (o.v === cur ? " active" : "") + '" data-' + attr + '="' + o.v + '">' + o.label + "</button>"
   ).join("");
@@ -4838,14 +4871,18 @@ function renderSettings() {
 
     // ---------- Account ----------
     '<div class="set-section">' + t("auth_account") + "</div>" +
-    '<div class="card set-card">' +
-    '<div class="setting-row" style="align-items:flex-start;padding-top:14px">' + avatarHTML(avatarObj, 52) +
-    '<div style="flex:1;min-width:0"><label class="set-label" for="profile-name">' + t("settings_profile_name") + "</label>" +
-    '<input class="set-input" id="profile-name" type="text" value="' + esc(pname) + '" placeholder="' + t("you") + '" maxlength="40" /></div></div>' +
-    '<div class="setting-row"><span class="set-ico">' + icon("camera", 16) + "</span><div><b>" + t("settings_profile_photo") + "</b><span>JPG/PNG · small</span></div>" +
-    '<button class="btn small ghost s-act" id="profile-photo-btn">' + t(prof.photo ? "btn_change_photo" : "btn_add_photo") + "</button>" +
-    (prof.photo ? '<button class="btn small ghost s-act" id="profile-photo-remove">' + t("btn_remove_photo") + "</button>" : "") +
-    '<input type="file" id="profile-photo-file" accept="image/*" hidden /></div>' +
+    '<div class="card set-card settings-account-card">' +
+    '<button type="button" class="settings-avatar-button" id="profile-photo-btn" aria-label="' + esc(profilePhotoLabel) + '">' +
+    avatarHTML(avatarObj, 96) + '<span class="settings-avatar-camera" aria-hidden="true">' + icon("camera", 14) + '</span></button>' +
+    '<input type="file" id="profile-photo-file" accept="image/*" hidden />' +
+    '<div class="settings-account-name"><span class="set-label">' + t("settings_profile_name") + "</span>" +
+    (settingsNameEditing
+      ? '<div class="settings-name-edit-row"><input class="set-input" id="profile-name" type="text" value="' + esc(pname) + '" placeholder="' + t("you") + '" maxlength="40" />' +
+        '<button class="btn small primary s-act" id="profile-name-save">' + t("btn_save") + '</button>' +
+        '<button class="btn small ghost s-act" id="profile-name-cancel">' + t("btn_cancel") + '</button></div>'
+      : '<div class="settings-name-display-row"><div class="settings-name-value">' + esc(pname || t("you")) + '</div>' +
+        '<button class="btn small ghost s-act" id="profile-name-edit">' + t("btn_edit") + '</button></div>') +
+    "</div>" +
     '<div class="setting-row"><span class="set-ico">' + icon("mail", 16) + "</span><div><b>" + t("settings_profile_email") + "</b><span>" +
     (fbUser && fbUser.email ? esc(fbUser.email) : (fbEnabled() ? t("auth_not_signed_in") : t("settings_profile_email_none"))) +
     "</span></div></div></div>" +
@@ -4908,7 +4945,29 @@ function renderSettings() {
   $("#notif-care").addEventListener("click", () => Store.setSettings({ notif: { care: !Store.getSettings().notif.care } }));
   $("#notif-toast").addEventListener("click", () => Store.setSettings({ notif: { toast: !Store.getSettings().notif.toast } }));
   // profile
-  $("#profile-name").addEventListener("change", (e) => Store.setSettings({ profile: { name: e.target.value.trim() } }));
+  const editName = $("#profile-name-edit");
+  if (editName) editName.addEventListener("click", () => {
+    settingsNameEditing = true;
+    renderSettings();
+    const input = $("#profile-name");
+    if (input) { input.focus(); input.select(); }
+  });
+  const saveName = () => {
+    const input = $("#profile-name");
+    if (!input) return;
+    Store.setSettings({ profile: { name: input.value.trim() } });
+    settingsNameEditing = false;
+    renderSettings();
+  };
+  const cancelName = $("#profile-name-cancel");
+  if (cancelName) cancelName.addEventListener("click", () => { settingsNameEditing = false; renderSettings(); });
+  const saveNameButton = $("#profile-name-save");
+  if (saveNameButton) saveNameButton.addEventListener("click", saveName);
+  const profileName = $("#profile-name");
+  if (profileName) profileName.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") saveName();
+    if (e.key === "Escape") { settingsNameEditing = false; renderSettings(); }
+  });
   $("#profile-photo-btn").addEventListener("click", () => $("#profile-photo-file").click());
   $("#profile-photo-file").addEventListener("change", (e) => {
     const f = e.target.files && e.target.files[0];
@@ -4919,9 +4978,6 @@ function renderSettings() {
     r.onload = () => Store.setSettings({ profile: { photo: String(r.result) } });
     r.readAsDataURL(f);
   });
-  const pr = $("#profile-photo-remove");
-  if (pr) pr.addEventListener("click", () => Store.setSettings({ profile: { photo: "" } }));
-
   // account — login / logout
   const lb = $("#logout-btn");
   if (lb) lb.addEventListener("click", () => { Firebase.signOut().catch(() => { /* ignore */ }); });
